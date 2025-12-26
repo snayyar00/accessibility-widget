@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MdFileDownload,
   MdEmail,
@@ -546,6 +546,10 @@ const ProofOfEffortToolkit: React.FC = () => {
   );
   const history = useHistory();
 
+  // Refs for focus management
+  const documentViewerRef = useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+
   // Redux state
   const currentDomain = useSelector(
     (state: RootState) => state.report.selectedDomain,
@@ -637,6 +641,107 @@ const ProofOfEffortToolkit: React.FC = () => {
 
     return undefined;
   }, [openDropdownIndex]);
+
+  // Focus trap for document viewer modal
+  useEffect(() => {
+    if (!selectedDocument || !documentViewerRef.current) {
+      return;
+    }
+
+    const modal = documentViewerRef.current;
+
+    // Store the previously active element
+    previousActiveElementRef.current =
+      (document.activeElement as HTMLElement) || null;
+
+    // Get all focusable elements within the modal
+    const getFocusableElements = (): HTMLElement[] => {
+      const focusableSelectors = [
+        'button:not([disabled])',
+        'a[href]',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])',
+      ];
+      const elements = Array.from(
+        modal.querySelectorAll(focusableSelectors.join(', ')),
+      ) as HTMLElement[];
+      // Filter out elements that are not visible or have display: none
+      return elements.filter(
+        (el) =>
+          el.offsetParent !== null &&
+          !el.hasAttribute('aria-hidden') &&
+          window.getComputedStyle(el).visibility !== 'hidden',
+      );
+    };
+
+    // Focus the first focusable element
+    const focusableElements = getFocusableElements();
+    if (focusableElements.length > 0) {
+      // Try to focus the close button first, otherwise focus the first element
+      const closeButton = modal.querySelector(
+        'button[aria-label*="Close document viewer"]',
+      ) as HTMLElement;
+      if (closeButton && focusableElements.includes(closeButton)) {
+        setTimeout(() => closeButton.focus(), 100);
+      } else {
+        setTimeout(() => focusableElements[0].focus(), 100);
+      }
+    }
+
+    // Handle Tab key to trap focus
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    // Handle Escape key to close
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedDocument(null);
+        setPdfViewerUrl((prevUrl) => {
+          if (prevUrl) {
+            URL.revokeObjectURL(prevUrl);
+          }
+          return null;
+        });
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+    document.addEventListener('keydown', handleEscapeKey);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleTabKey);
+      document.removeEventListener('keydown', handleEscapeKey);
+
+      // Restore focus to the previously active element
+      if (previousActiveElementRef.current) {
+        previousActiveElementRef.current.focus();
+      }
+    };
+  }, [selectedDocument]);
 
   const handleSendViaEmail = () => {
     if (!currentDomain) {
@@ -1614,10 +1719,13 @@ const ProofOfEffortToolkit: React.FC = () => {
 
   const handleCloseDocument = () => {
     setSelectedDocument(null);
-    setPdfViewerUrl(null);
-    if (pdfViewerUrl) {
-      URL.revokeObjectURL(pdfViewerUrl);
-    }
+    setPdfViewerUrl((prevUrl) => {
+      if (prevUrl) {
+        URL.revokeObjectURL(prevUrl);
+      }
+      return null;
+    });
+    // Focus will be restored by the focus trap cleanup effect
   };
 
   const handleDropdownToggle = (index: number) => {
@@ -1824,7 +1932,13 @@ const ProofOfEffortToolkit: React.FC = () => {
             style={{ borderColor: '#A2ADF3', minHeight: 0 }}
           >
             {selectedDocument ? (
-              <>
+              <div
+                ref={documentViewerRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="document-viewer-title"
+                className="flex flex-col h-full"
+              >
                 {/* Document Header */}
                 <div className="p-4 border-b border-gray-200">
                   {/* Desktop Layout */}
@@ -1834,11 +1948,15 @@ const ProofOfEffortToolkit: React.FC = () => {
                         onClick={handlePreviousDocument}
                         disabled={currentDocumentIndex === 0}
                         className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Previous document"
                       >
-                        <MdArrowBack className="w-4 h-4" />
+                        <MdArrowBack className="w-4 h-4" aria-hidden="true" />
                       </button>
                       <div className="bg-blue-50 px-3 py-1.5 rounded-lg">
-                        <h1 className="text-base font-medium text-gray-900">
+                        <h1
+                          id="document-viewer-title"
+                          className="text-base font-medium text-gray-900"
+                        >
                           {selectedDocument.name}
                         </h1>
                         <p className="text-xs text-gray-600 mt-1">
@@ -1849,8 +1967,9 @@ const ProofOfEffortToolkit: React.FC = () => {
                         onClick={handleNextDocument}
                         disabled={currentDocumentIndex === documents.length - 1}
                         className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Next document"
                       >
-                        <MdArrowForward className="w-4 h-4" />
+                        <MdArrowForward className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                     <div className="flex items-center gap-3">
@@ -1860,8 +1979,9 @@ const ProofOfEffortToolkit: React.FC = () => {
                       <button
                         onClick={handleCloseDocument}
                         className="p-1.5 rounded-full hover:bg-gray-100"
+                        aria-label="Close document viewer"
                       >
-                        <MdClose className="w-4 h-4" />
+                        <MdClose className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -1871,7 +1991,10 @@ const ProofOfEffortToolkit: React.FC = () => {
                     <div className="flex flex-col items-center gap-4 px-2">
                       {/* Report name with close button */}
                       <div className="bg-blue-50 px-4 py-3 rounded-lg w-full max-w-xs relative">
-                        <h1 className="text-sm font-medium text-gray-900 text-center leading-tight pr-8">
+                        <h1
+                          id="document-viewer-title-mobile"
+                          className="text-sm font-medium text-gray-900 text-center leading-tight pr-8"
+                        >
                           {selectedDocument.name}
                         </h1>
                         <p className="text-xs text-gray-600 text-center mt-1 pr-8">
@@ -1881,8 +2004,12 @@ const ProofOfEffortToolkit: React.FC = () => {
                         <button
                           onClick={handleCloseDocument}
                           className="absolute top-2 right-2 p-1 rounded-full bg-white hover:bg-gray-100 transition-colors shadow-sm"
+                          aria-label="Close document viewer"
                         >
-                          <MdClose className="w-4 h-4 text-gray-600" />
+                          <MdClose
+                            className="w-4 h-4 text-gray-600"
+                            aria-hidden="true"
+                          />
                         </button>
                       </div>
 
@@ -1892,8 +2019,12 @@ const ProofOfEffortToolkit: React.FC = () => {
                           onClick={handlePreviousDocument}
                           disabled={currentDocumentIndex === 0}
                           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Previous document"
                         >
-                          <MdArrowBack className="w-5 h-5 text-gray-600" />
+                          <MdArrowBack
+                            className="w-5 h-5 text-gray-600"
+                            aria-hidden="true"
+                          />
                         </button>
                         <button
                           onClick={handleNextDocument}
@@ -1901,8 +2032,12 @@ const ProofOfEffortToolkit: React.FC = () => {
                             currentDocumentIndex === documents.length - 1
                           }
                           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Next document"
                         >
-                          <MdArrowForward className="w-5 h-5 text-gray-600" />
+                          <MdArrowForward
+                            className="w-5 h-5 text-gray-600"
+                            aria-hidden="true"
+                          />
                         </button>
                       </div>
 
@@ -1944,13 +2079,16 @@ const ProofOfEffortToolkit: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </>
+              </div>
             ) : (
               /* Default Content when no document is selected */
               <div className="flex-1 flex items-center justify-center py-12">
                 <div className="text-center max-w-md mx-auto px-6">
                   <div className="pb-8">
-                    <FiFile className="w-16 h-16 text-blue-600 mx-auto" />
+                    <FiFile
+                      className="w-16 h-16 text-blue-600 mx-auto"
+                      aria-hidden="true"
+                    />
                   </div>
                   <h2 className="text-2xl font-medium text-gray-900 mb-6">
                     Legal Docs for Your Team
@@ -1978,13 +2116,13 @@ const ProofOfEffortToolkit: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <MdEmail className="w-4 h-4" />
+                          <MdEmail className="w-4 h-4" aria-hidden="true" />
                           Send via email
                         </>
                       )}
                     </button>
                   </div>
-                  <div className="poe-documents-count text-sm text-gray-500 mt-3">
+                  <div className="poe-documents-count text-sm text-gray-700 mt-3">
                     {documents.length} Documents
                   </div>
                 </div>
@@ -2009,11 +2147,14 @@ const ProofOfEffortToolkit: React.FC = () => {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
-                      <FiFile className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <FiFile
+                        className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+                        aria-hidden="true"
+                      />
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-gray-900">
+                        <h3 className="text-sm font-semibold text-gray-900">
                           {document.name}
-                        </h4>
+                        </h3>
                         <p className="text-xs text-gray-500 mt-1">
                           {document.creationDate}
                           {document.type === 'monthly-report' &&
@@ -2034,21 +2175,28 @@ const ProofOfEffortToolkit: React.FC = () => {
                           e.stopPropagation();
                           handleDropdownToggle(index);
                         }}
+                        aria-label={`More options for ${document.name}`}
+                        aria-expanded={openDropdownIndex === index}
+                        aria-haspopup="true"
                       >
                         <MdMoreVert
                           className="w-4 h-4"
                           style={{ color: '#445AE7' }}
+                          aria-hidden="true"
                         />
                       </button>
 
                       {/* Dropdown menu */}
                       {openDropdownIndex === index && (
                         <div
+                          role="menu"
+                          aria-label={`Options for ${document.name}`}
                           className={`absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-32 ${
                             index === 0 ? 'poe-dropdown-menu' : ''
                           }`}
                         >
                           <button
+                            role="menuitem"
                             onClick={() =>
                               handleDropdownAction(document, 'view')
                             }
@@ -2065,6 +2213,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                             View
                           </button>
                           <button
+                            role="menuitem"
                             onClick={() =>
                               handleDropdownAction(document, 'download')
                             }
@@ -2106,12 +2255,12 @@ const ProofOfEffortToolkit: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <MdFileDownload className="w-4 h-4" />
+                    <MdFileDownload className="w-4 h-4" aria-hidden="true" />
                     Download
                   </>
                 )}
               </button>
-              <div className="poe-documents-count text-sm text-gray-500 mt-3 text-center">
+              <div className="poe-documents-count text-sm text-gray-700 mt-3 text-center">
                 {documents.length} Documents
               </div>
             </div>

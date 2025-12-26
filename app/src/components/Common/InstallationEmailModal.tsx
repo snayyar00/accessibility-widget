@@ -219,7 +219,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4"
       style={{
         animation: 'fadeIn 0.2s ease-out',
       }}
@@ -239,18 +239,21 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
         aria-modal="true"
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
-        className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+        className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-auto overflow-hidden flex flex-col"
         style={{
           animation: 'slideUp 0.3s ease-out',
           boxShadow:
             '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+          maxHeight: 'calc(100vh - 16px)',
+          maxWidth: 'calc(100vw - 16px)',
+          minWidth: '280px',
         }}
       >
         {/* Modal Header */}
         <div
-          className="p-8 text-white relative overflow-hidden"
+          className="p-4 sm:p-8 text-white relative overflow-hidden flex-shrink-0"
           style={{
-            background: 'linear-gradient(135deg, #445AE7 0%, #4A8BB5 100%)',
+            background: 'linear-gradient(135deg, #3A4FD1 0%, #3D7A9E 100%)',
           }}
         >
           {/* Decorative background pattern */}
@@ -259,14 +262,14 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
           </div>
 
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
-                <FaEnvelope className="w-7 h-7" aria-hidden="true" />
+          <div className="relative flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 rounded-xl sm:rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30 flex-shrink-0">
+                <FaEnvelope className="w-5 h-5 sm:w-7 sm:h-7" aria-hidden="true" />
               </div>
-              <div>
-                <h2 id="modal-title" className="text-xl font-bold mb-1">{title}</h2>
-                <p id="modal-description" className="text-white text-sm font-medium" style={{ color: '#FFFFFF' }}>
+              <div className="min-w-0 flex-1">
+                <h2 id="modal-title" className="text-base sm:text-xl font-bold mb-0.5 sm:mb-1 truncate">{title}</h2>
+                <p id="modal-description" className="text-white text-xs sm:text-sm font-medium line-clamp-2" style={{ color: '#FFFFFF' }}>
                   {description}
                 </p>
               </div>
@@ -275,7 +278,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
               ref={closeButtonRef}
               onClick={handleModalClose}
               disabled={isLoading}
-              className="w-10 h-10 rounded-xl backdrop-blur-sm border flex items-center justify-center transition-all duration-200 disabled:opacity-50 hover:scale-105"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl backdrop-blur-sm border flex items-center justify-center transition-all duration-200 disabled:opacity-50 hover:scale-105 flex-shrink-0"
               aria-label="Close"
               style={{
                 backgroundColor: 'rgba(255, 255, 255, 0.5)',
@@ -283,7 +286,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
               }}
             >
               <FaTimes 
-                className="w-5 h-5" 
+                className="w-4 h-4 sm:w-5 sm:h-5" 
                 aria-hidden="true"
                 style={{ color: '#111827' }}
               />
@@ -292,7 +295,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-8">
+        <div className="p-4 sm:p-8 overflow-y-auto flex-1 min-h-0">
           {/* Status announcement region - announces loading and success states */}
           <div
             role="status"
@@ -306,10 +309,10 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
 
           {!sendSuccess ? (
             <>
-              <p className="text-sm text-gray-700 mb-4" style={{ color: '#374151' }}>
+              <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4" style={{ color: '#374151' }}>
                 Fields marked with an asterisk (*) are required.
               </p>
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <label
                   htmlFor="email"
                   className="block text-sm font-bold text-gray-800 mb-3"
@@ -370,7 +373,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
 
               {bulletPoints && bulletPoints.length > 0 && (
                 <div
-                  className="rounded-2xl p-6 mb-8 border-2"
+                  className="rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-8 border-2"
                   style={{
                     background:
                       'linear-gradient(135deg, #F8FBFF 0%, #E8F4FD 100%)',
@@ -406,7 +409,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                 disabled={isLoading || !email.trim()}
                 aria-busy={isLoading}
                 aria-describedby={isLoading ? 'loading-announcement' : undefined}
-                className="w-full py-4 px-6 text-white rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-3 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full py-3 sm:py-4 px-4 sm:px-6 text-white rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-2 sm:gap-3 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base"
                 style={{
                   background:
                     isLoading || !email.trim()
