@@ -245,6 +245,23 @@ const AIInsights: React.FC = () => {
                         fontSize: '16px',
                       },
                     }),
+                    indicatorSeparator: () => ({
+                      display: 'none',
+                    }),
+                    dropdownIndicator: (provided: any) => ({
+                      ...provided,
+                      color: '#767676',
+                      '&:hover': {
+                        color: '#767676',
+                      },
+                    }),
+                    clearIndicator: (provided: any) => ({
+                      ...provided,
+                      color: '#767676',
+                      '&:hover': {
+                        color: '#767676',
+                      },
+                    }),
                   }}
                 />
               </div>

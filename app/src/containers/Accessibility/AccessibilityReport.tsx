@@ -79,6 +79,7 @@ import { json } from 'stream/consumers';
 import jsPDF from 'jspdf';
 import autoTable, { __createTable, __drawTable } from 'jspdf-autotable';
 import Select from 'react-select/creatable';
+import { components } from 'react-select';
 import Favicon from '@/components/Common/Favicon';
 import { set } from 'lodash';
 import Modal from '@/components/Common/Modal';
@@ -172,6 +173,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   // Modal state for success message with report link
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState<string>('');
+  const screenReaderAnnouncementRef = useRef<HTMLDivElement>(null);
+  // Modal state for full site scan notification
+  const [isFullSiteScanModalOpen, setIsFullSiteScanModalOpen] = useState(false);
 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
   const [showLangTooltip, setShowLangTooltip] = useState(false);
@@ -291,6 +295,25 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     }
   }, [selectedDomainFromRedux]);
 
+  // Show toast and announce to screen readers when success modal opens
+  useEffect(() => {
+    if (isSuccessModalOpen) {
+      // Show toast notification
+      toast.success('Report Generated Successfully');
+      
+      // Announce to screen readers
+      if (screenReaderAnnouncementRef.current) {
+        screenReaderAnnouncementRef.current.textContent = 'Report Generated Successfully! Your accessibility report is ready to view.';
+        // Clear after announcement to allow re-announcement if modal opens again
+        setTimeout(() => {
+          if (screenReaderAnnouncementRef.current) {
+            screenReaderAnnouncementRef.current.textContent = '';
+          }
+        }, 1000);
+      }
+    }
+  }, [isSuccessModalOpen]);
+
   useEffect(() => {
     if (selectedDomainFromRedux && siteOptions.length > 0) {
       const matchedOption = siteOptions.find(
@@ -334,6 +357,37 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (isMounted.current) {
       setcorrectDomain(validDomain);
     }
+
+    // For full site scans, don't show loading and show email notification instead
+    if (isFullSiteScan) {
+      dispatch(setSelectedDomain(validDomain));
+      try {
+        const { data } = await startJobQuery({
+          variables: {
+            url: encodeURIComponent(validDomain),
+            use_cache: scanType === 'cached' && !isFullSiteScan,
+            full_site_scan: isFullSiteScan,
+          },
+        });
+        if (
+          data &&
+          data.startAccessibilityReportJob &&
+          data.startAccessibilityReportJob.jobId
+        ) {
+          // Show modal instead of toast
+          setIsFullSiteScanModalOpen(true);
+          // Don't set jobId or isGenerating - let it run in background
+          // The backend will email the user when the report is ready
+        } else {
+          toast.error('Failed to start report job.');
+        }
+      } catch (error) {
+        toast.error('Failed to start report job.');
+      }
+      return;
+    }
+
+    // Normal scan flow (non-full site scan)
     dispatch(setIsGenerating(true));
     dispatch(setSelectedDomain(validDomain));
     try {
@@ -587,6 +641,21 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
   return (
     <div>
+      {/* Screen reader announcement region */}
+      <div
+        ref={screenReaderAnnouncementRef}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        style={{
+          position: 'absolute',
+          left: '-10000px',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+        }}
+      />
       <TourGuide
         steps={accessibilityTourSteps}
         tourKey={tourKeys.accessibility}
@@ -617,12 +686,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           >
             {/* Description text */}
             <div className="mb-6 text-left">
-              <p
+              <h2
                 className="text-2xl font-semibold"
                 style={{ color: baseColors.grayDark2 }}
               >
                 Scanner
-              </p>
+              </h2>
               <p
                 className="text-base mt-2"
                 style={{ color: baseColors.grayText }}
@@ -633,9 +702,15 @@ const AccessibilityReport = ({ currentDomain }: any) => {
             </div>
 
             {/* Single row: Language, Domain input, Scan Type, Checkbox, and Free Scan button */}
-            <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
+            <div className="flex flex-col lg:flex-row items-end gap-3 w-full">
               {/* Language Selector */}
               <div className="w-full lg:w-auto lg:min-w-[140px]">
+                <label
+                  htmlFor="language-select"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                >
+                  Language
+                </label>
                 <Tooltip
                   title="Please select a language before scanning."
                   open={showLangTooltip}
@@ -644,6 +719,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 >
                   <div className="relative">
                     <select
+                      id="language-select"
                       value={currentLanguage}
                       onChange={(e) => {
                         setCurrentLanguage(e.target.value);
@@ -677,7 +753,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                       <svg
                         className="w-4 h-4"
-                        style={{ color: baseColors.grayMuted }}
+                        style={{ color: '#767676' }}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -696,7 +772,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
               {/* Domain Input */}
               <div className="w-full flex-1">
+                <label
+                  htmlFor="domain-select-input"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                >
+                  Domain name
+                </label>
                 <Select
+                  inputId="domain-select-input"
                   options={siteOptions}
                   value={
                     selectedOption ||
@@ -740,6 +823,50 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   }
                   classNamePrefix="react-select"
                   className="w-full"
+                  components={{
+                    ClearIndicator: (props: any) => {
+                      const {
+                        innerProps,
+                        isDisabled,
+                        clearValue,
+                      } = props;
+                      
+                      // Enhance innerProps to make it focusable and keyboard accessible
+                      const enhancedInnerProps = {
+                        ...innerProps,
+                        tabIndex: isDisabled ? -1 : 0,
+                        role: 'button',
+                        'aria-label': 'Clear selection',
+                        onClick: (e: React.MouseEvent) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isDisabled && clearValue) {
+                            clearValue();
+                          }
+                          // Also call original onClick if it exists
+                          if (innerProps.onClick) {
+                            innerProps.onClick(e);
+                          }
+                        },
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isDisabled && clearValue) {
+                              clearValue();
+                            }
+                          } else if (innerProps.onKeyDown) {
+                            innerProps.onKeyDown(e);
+                          }
+                        },
+                      };
+
+                      return components.ClearIndicator({
+                        ...props,
+                        innerProps: enhancedInnerProps,
+                      });
+                    },
+                  }}
                   styles={{
                     control: (provided: any, state: any) => ({
                       ...provided,
@@ -769,15 +896,41 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       color: baseColors.grayDark,
                       fontSize: '16px',
                     }),
+                    indicatorSeparator: () => ({
+                      display: 'none',
+                    }),
+                    dropdownIndicator: (provided: any) => ({
+                      ...provided,
+                      color: '#767676',
+                      '&:hover': {
+                        color: '#767676',
+                      },
+                    }),
+                    clearIndicator: (provided: any) => ({
+                      ...provided,
+                      color: '#767676',
+                      '&:hover': {
+                        color: '#767676',
+                      },
+                    }),
                   }}
                 />
               </div>
 
               {/* Scan Type Selector */}
               <div className="w-full lg:w-auto lg:min-w-[220px] scan-type-selector">
+                <label
+                  htmlFor="quick-scan-select"
+                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                >
+                  Quick scan
+                </label>
                 <div ref={dropdownRef} className="relative">
                   <button
+                    id="quick-scan-select"
                     type="button"
+                    aria-expanded={isDropdownOpen}
+                    aria-haspopup="listbox"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="w-full px-3 py-2 pr-8 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 transition-all flex items-center justify-between"
                     style={{
@@ -813,12 +966,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       className={`w-4 h-4 transition-transform ${
                         isDropdownOpen ? 'rotate-180' : ''
                       }`}
-                      style={{ color: baseColors.grayMuted }}
+                      style={{ color: '#767676' }}
                     />
                   </button>
 
                   {isDropdownOpen && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <div
+                      role="listbox"
+                      aria-labelledby="quick-scan-select"
+                      className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg"
+                    >
                       {scanTypeOptions.map((option) => {
                         const IconComponent = option.icon;
                         return (
@@ -965,12 +1122,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h2
+                      <h3
                         className="text-base sm:text-lg font-bold mb-1"
                         style={{ color: baseColors.white }}
                       >
                         Comprehensive Analysis
-                      </h2>
+                      </h3>
                       <p
                         className="text-xs sm:text-sm leading-tight"
                         style={{ color: baseColors.blueStats }}
@@ -1041,12 +1198,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h2
+                      <h3
                         className="text-base sm:text-lg font-bold mb-1"
                         style={{ color: baseColors.white }}
                       >
                         Detailed Reports
-                      </h2>
+                      </h3>
                       <p
                         className="text-xs sm:text-sm leading-tight"
                         style={{ color: baseColors.blueStats }}
@@ -1103,12 +1260,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h2
+                      <h3
                         className="text-base sm:text-lg font-bold mb-1"
                         style={{ color: baseColors.white }}
                       >
                         Improve User Experience
-                      </h2>
+                      </h3>
                       <p
                         className="text-xs sm:text-sm leading-tight"
                         style={{ color: baseColors.blueStats }}
@@ -1146,44 +1303,56 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
                     }}
                   >
-                    <h3
+                    <h2
                       className="text-xl sm:text-2xl font-medium"
                       style={{ color: baseColors.grayDark2 }}
                     >
                       Scan history
-                    </h3>
+                    </h2>
                   </div>
 
-                  {/* Column Headers */}
-                  <div className="hidden md:grid grid-cols-4 gap-4 mb-4 px-4">
-                    <div
-                      className="text-sm font-medium uppercase tracking-wider"
-                      style={{ color: baseColors.brandPrimary }}
-                    >
-                      Sites
-                    </div>
-                    <div
-                      className="text-sm font-medium uppercase tracking-wider text-center"
-                      style={{ color: baseColors.brandPrimary }}
-                    >
-                      Last scanned
-                    </div>
-                    <div
-                      className="text-sm font-medium uppercase tracking-wider text-center"
-                      style={{ color: baseColors.brandPrimary }}
-                    >
-                      Score
-                    </div>
-                    <div
-                      className="text-sm font-medium uppercase tracking-wider text-center"
-                      style={{ color: baseColors.brandPrimary }}
-                    >
-                      Action
-                    </div>
-                  </div>
-
-                  {/* Site Cards */}
-                  <div className="space-y-3 max-w-full">
+                  {/* Table for Desktop - Semantic HTML for accessibility */}
+                  <table 
+                    className="block md:table w-full" 
+                    aria-label="Scan history"
+                    style={{ borderCollapse: 'separate', borderSpacing: '0 1rem' }}
+                  >
+                    <caption className="sr-only">
+                      Table showing scan history with site URLs, last scanned dates, accessibility scores, and action menus
+                    </caption>
+                    <thead className="hidden md:table-header-group">
+                      <tr className="mb-4">
+                        <th
+                          className="text-sm font-medium uppercase tracking-wider text-left px-4 pb-4"
+                          style={{ color: baseColors.brandPrimary }}
+                          scope="col"
+                        >
+                          Sites
+                        </th>
+                        <th
+                          className="text-sm font-medium uppercase tracking-wider text-center px-4 pb-4"
+                          style={{ color: baseColors.brandPrimary }}
+                          scope="col"
+                        >
+                          Last scanned
+                        </th>
+                        <th
+                          className="text-sm font-medium uppercase tracking-wider text-center px-4 pb-4"
+                          style={{ color: baseColors.brandPrimary }}
+                          scope="col"
+                        >
+                          Score
+                        </th>
+                        <th
+                          className="text-sm font-medium uppercase tracking-wider text-center px-4 pb-4"
+                          style={{ color: baseColors.brandPrimary }}
+                          scope="col"
+                        >
+                          <div className="flex justify-center items-center">Action</div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="max-w-full">
                     {processedReportKeys.map((row: any, idx: number) => {
                       const dateObj = new Date(Number(row.created_at));
                       const timeAgo = (() => {
@@ -1224,13 +1393,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       const actualScore = Math.round(row.enhancedScore || 0);
 
                       return (
-                        <div
+                        <tr
                           key={row.r2_key}
-                          className="block md:grid md:grid-cols-4 gap-4 md:items-center p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-hidden md:overflow-visible w-full cursor-pointer"
+                          className="block md:table-row p-3 sm:p-4 rounded-lg border hover:shadow-md transition-all duration-200 group relative overflow-visible w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] mb-4"
                           style={{
                             backgroundColor: baseColors.cardLight,
                             borderColor: baseColors.cardBorder,
                           }}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`View accessibility scan report for ${row.url} with score ${actualScore}`}
                           onClick={() => {
                             setReportUrl(
                               `/${row.r2_key}?domain=${encodeURIComponent(
@@ -1239,9 +1411,22 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             );
                             setIsSuccessModalOpen(true);
                           }}
+                          onKeyDown={(e) => {
+                            // Only trigger when the card itself is focused, not when interacting with inner controls
+                            if (e.currentTarget !== e.target) return;
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setReportUrl(
+                                `/${row.r2_key}?domain=${encodeURIComponent(
+                                  row.url,
+                                )}`,
+                              );
+                              setIsSuccessModalOpen(true);
+                            }
+                          }}
                         >
-                          {/* Mobile Layout */}
-                          <div className="md:hidden space-y-3 w-full max-w-full overflow-hidden">
+                          {/* Mobile Layout - Wrapped in td for valid HTML */}
+                          <td colSpan={4} className="md:hidden space-y-3 w-full max-w-full overflow-visible block">
                             {/* Site Info with 3-dots menu */}
                             <div className="flex items-center justify-between w-full max-w-full">
                               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1326,7 +1511,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 {/* Mobile Dropdown Menu */}
                                 {openDropdown === row.r2_key && (
                                   <div
-                                    className="absolute top-10 w-44 sm:w-48 rounded-lg shadow-lg z-50 py-2"
+                                    className="absolute top-10 w-44 sm:w-48 rounded-lg shadow-lg py-2"
                                     style={{
                                       backgroundColor: baseColors.white,
                                       border: `1px solid ${baseColors.cardBorderPurple}`,
@@ -1334,6 +1519,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                       minWidth: '180px',
                                       right: '0',
                                       left: 'auto',
+                                      zIndex: 9999,
+                                      position: 'absolute',
                                     }}
                                     onClick={(e) => e.stopPropagation()}
                                   >
@@ -1530,66 +1717,57 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          </td>
 
                           {/* Site Info - Desktop Only */}
-                          <div className="hidden md:flex items-center gap-3">
-                            <div className="flex-shrink-0">
-                              {getFaviconUrl(row.url) ? (
-                                <img
-                                  src={getFaviconUrl(row.url)!}
-                                  alt=""
-                                  className="w-8 h-8 rounded"
-                                  onError={(e) => {
-                                    (
-                                      e.target as HTMLImageElement
-                                    ).style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-8 h-8 rounded bg-red-500 flex items-center justify-center">
-                                  <span className="text-white text-xs font-bold">
-                                    {row.url.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              {/* Mobile (≤768px): Show 5 letters, Desktop (>768px): Show full with truncate */}
-                              <div
-                                className="font-medium"
-                                style={{ color: baseColors.grayDark2 }}
-                              >
-                                <span className="hidden sm:inline">
-                                  {row.url
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '')
-                                    .substring(0, 7)}
-                                  {row.url
-                                    .replace(/^https?:\/\//, '')
-                                    .replace(/^www\./, '').length > 7 && '...'}
-                                </span>
-                                <span className="sm:hidden truncate">
+                          <td className="hidden md:table-cell p-3 sm:p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0">
+                                {getFaviconUrl(row.url) ? (
+                                  <img
+                                    src={getFaviconUrl(row.url)!}
+                                    alt=""
+                                    className="w-8 h-8 rounded"
+                                    onError={(e) => {
+                                      (
+                                        e.target as HTMLImageElement
+                                      ).style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded bg-red-500 flex items-center justify-center">
+                                    <span className="text-white text-xs font-bold">
+                                      {row.url.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                {/* Mobile (≤768px): Show 5 letters, Desktop (>768px): Show full with truncate */}
+                                <div
+                                  className="font-medium"
+                                  style={{ color: baseColors.grayDark2 }}
+                                >
                                   {row.url
                                     .replace(/^https?:\/\//, '')
                                     .replace(/^www\./, '')}
-                                </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </td>
 
                           {/* Last Scanned - Desktop Only */}
-                          <div className="hidden md:block text-center">
+                          <td className="hidden md:table-cell text-center p-3 sm:p-4">
                             <div
                               className="text-sm"
                               style={{ color: baseColors.grayMuted }}
                             >
                               {timeAgo}
                             </div>
-                          </div>
+                          </td>
 
                           {/* Desktop Score */}
-                          <div className="hidden md:block text-center">
+                          <td className="hidden md:table-cell text-center p-3 sm:p-4">
                             <span
                               className="inline-flex items-center justify-center w-10 h-10 rounded text-sm font-semibold"
                               style={{
@@ -1603,45 +1781,46 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                             >
                               {actualScore}
                             </span>
-                          </div>
+                          </td>
 
                           {/* Desktop 3-Dots Menu */}
-                          <div
-                            className="hidden md:flex justify-center relative"
+                          <td
+                            className="hidden md:table-cell text-center p-3 sm:p-4"
                             data-dropdown
                           >
-                            <button
-                              className="p-1 rounded hover:bg-gray-100 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenDropdown(
-                                  openDropdown === row.r2_key
-                                    ? null
-                                    : row.r2_key,
-                                );
-                              }}
-                              aria-label={`Open actions menu for ${row.url}`}
-                              style={{
-                                backgroundColor:
-                                  openDropdown === row.r2_key
-                                    ? baseColors.white
-                                    : 'transparent',
-                              }}
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                                style={{ color: baseColors.brandPrimary }}
+                            <div className="flex justify-center items-center relative">
+                              <button
+                                className="p-1 rounded hover:bg-gray-100 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenDropdown(
+                                    openDropdown === row.r2_key
+                                      ? null
+                                      : row.r2_key,
+                                  );
+                                }}
+                                aria-label={`Open actions menu for ${row.url}`}
+                                style={{
+                                  backgroundColor:
+                                    openDropdown === row.r2_key
+                                      ? baseColors.white
+                                      : 'transparent',
+                                }}
                               >
-                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                              </svg>
-                            </button>
+                                <svg
+                                  className="w-5 h-5"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                  style={{ color: baseColors.brandPrimary }}
+                                >
+                                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                </svg>
+                              </button>
 
-                            {/* Desktop Dropdown Menu */}
-                            {openDropdown === row.r2_key && (
+                              {/* Desktop Dropdown Menu */}
+                              {openDropdown === row.r2_key && (
                               <div
-                                className="absolute top-10 w-48 rounded-lg shadow-lg z-50 py-2"
+                                className="absolute top-10 w-48 rounded-lg shadow-lg py-2"
                                 style={{
                                   backgroundColor: baseColors.white,
                                   border: `1px solid ${baseColors.cardBorderPurple}`,
@@ -1649,6 +1828,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   minWidth: '180px',
                                   right: '0',
                                   left: 'auto',
+                                  zIndex: 9999,
+                                  position: 'absolute',
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                               >
@@ -1798,12 +1979,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   )}
                                 </button>
                               </div>
-                            )}
-                          </div>
-                        </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </div>
+                    </tbody>
+                  </table>
                 </div>
               )}
 
@@ -1830,12 +2013,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       borderBottom: `2px solid ${baseColors.cardBorderPurple}`,
                     }}
                   >
-                    <h3
+                    <h2
                       className="text-xl sm:text-2xl font-medium"
                       style={{ color: baseColors.grayDark2 }}
                     >
                       Scan history
-                    </h3>
+                    </h2>
                   </div>
 
                   {/* Empty State Content */}
@@ -1860,13 +2043,173 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               )}
           </div>
 
+          {/* Full Site Scan Modal */}
+          <Modal isOpen={isFullSiteScanModalOpen}>
+            <div 
+              className="relative w-full overflow-hidden"
+              style={{
+                background: 'transparent',
+              }}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setIsFullSiteScanModalOpen(false)}
+                className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:scale-110"
+                style={{
+                  backgroundColor: baseColors.grayLight,
+                  color: baseColors.grayMedium,
+                }}
+                aria-label="Close modal"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              {/* Gradient Header */}
+              <div
+                className="px-8 pt-10 pb-6"
+                style={{
+                  background: `linear-gradient(135deg, ${baseColors.brandPrimary} 0%, ${baseColors.brandPrimaryDark} 100%)`,
+                }}
+              >
+                {/* Animated Icon */}
+                <div className="flex justify-center mb-4">
+                  <div 
+                    className="relative w-20 h-20 rounded-full flex items-center justify-center shadow-xl animate-pulse"
+                    style={{
+                      background: `linear-gradient(135deg, ${baseColors.white} 0%, ${baseColors.blueLight} 100%)`,
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-full animate-ping opacity-20"
+                      style={{ backgroundColor: baseColors.white }}
+                    ></div>
+                    {/* Clock Icon */}
+                    <svg
+                      className="w-10 h-10 relative z-10"
+                      style={{ color: baseColors.brandPrimary }}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <h2 
+                  className="text-3xl font-bold mb-2"
+                  style={{ color: baseColors.white }}
+                >
+                  Full Site Scan Started
+                </h2>
+                <p 
+                  className="text-base opacity-90"
+                  style={{ color: baseColors.white }}
+                >
+                  Your comprehensive scan is in progress
+                </p>
+              </div>
+
+              {/* Content */}
+              <div className="px-8 py-6 rounded-b-[10px]">
+                <div className="space-y-4 mb-6">
+                  <div className="flex items-start space-x-3">
+                    <div 
+                      className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
+                      style={{ backgroundColor: baseColors.blueLight }}
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        style={{ color: baseColors.brandPrimary }}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <p 
+                      className="text-base leading-relaxed"
+                      style={{ color: baseColors.grayDark2 }}
+                    >
+                      Full site scan takes time as it scans multiple pages across your website to provide a comprehensive accessibility analysis.
+                    </p>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <div 
+                      className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
+                      style={{ backgroundColor: baseColors.infoBackground }}
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        style={{ color: baseColors.brandPrimary }}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <p 
+                      className="text-base leading-relaxed"
+                      style={{ color: baseColors.grayDark2 }}
+                    >
+                      We will inform you once the scan is complete through email. You'll receive a detailed report with all the findings.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <button
+                  onClick={() => setIsFullSiteScanModalOpen(false)}
+                  className="w-full py-3.5 px-6 rounded-xl font-semibold text-base transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${baseColors.brandPrimary} 0%, ${baseColors.brandPrimaryDark} 100%)`,
+                    color: baseColors.white,
+                  }}
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </Modal>
+
           {/* Success Modal with link to open report */}
-          <Modal isOpen={isSuccessModalOpen}>
+          <Modal 
+            isOpen={isSuccessModalOpen}
+            ariaLabelledBy="success-modal-title"
+            ariaDescribedBy="success-modal-description"
+          >
             <div className="p-8 text-center relative">
               <button
                 onClick={() => setIsSuccessModalOpen(false)}
                 className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors"
-                aria-label="Close modal"
+                aria-label="Close"
               >
                 <svg
                   className="w-5 h-5 mx-auto"
@@ -1889,10 +2232,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   color="green"
                   className="mx-auto mb-4"
                 />
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                <h2 
+                  id="success-modal-title" 
+                  className="text-2xl font-bold text-gray-800 mb-2"
+                  tabIndex={-1}
+                >
                   Report Generated Successfully!
                 </h2>
-                <p className="text-gray-600">
+                <p id="success-modal-description" className="text-gray-600">
                   Your accessibility report is ready to view.
                 </p>
               </div>

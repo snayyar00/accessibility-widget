@@ -3,6 +3,7 @@ import { combineResolvers } from 'graphql-resolvers'
 import { normalizeEmail } from '../../helpers/string.helper'
 import { changePasswordUser } from '../../services/authentication/change-password.service'
 import { forgotPasswordUser } from '../../services/authentication/forgot-password.service'
+import { impersonateUser } from '../../services/authentication/impersonate.service'
 import { loginUser } from '../../services/authentication/login.service'
 import { registerUser } from '../../services/authentication/register.service'
 import { resetPasswordUser } from '../../services/authentication/reset-password.service'
@@ -12,7 +13,7 @@ import { getLicenseOwnerInfo, updateLicenseOwnerInfo } from '../../services/user
 import { getUserNotificationSettingsService, updateProfile, updateUserNotificationSettings } from '../../services/user/update-user.service'
 import { changeCurrentOrganization } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
-import { allowedOrganization, isAuthenticated } from './authorization.resolver'
+import { allowedOrganization, isAuthenticated, isSuperAdmin } from './authorization.resolver'
 
 type Register = {
   email: string
@@ -113,6 +114,11 @@ const resolvers = {
 
     changeCurrentOrganization: combineResolvers(allowedOrganization, isAuthenticated, async (_, { organizationId, userId }, { user }) => {
       return await changeCurrentOrganization(user, organizationId, userId)
+    }),
+
+    impersonateUser: combineResolvers(allowedOrganization, isAuthenticated, isSuperAdmin, async (_, { email, targetUserPassword }, { user }) => {
+      const result = await impersonateUser(user, normalizeEmail(email), targetUserPassword)
+      return result
     }),
   },
 }
