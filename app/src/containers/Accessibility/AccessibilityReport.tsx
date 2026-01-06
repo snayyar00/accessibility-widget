@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import './Accessibility.css'; // Ensure your CSS file includes styles for the accordion
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
-import { FaUniversalAccess, FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { FaUniversalAccess, FaCheckCircle, FaCircle, FaTimes, FaClock } from 'react-icons/fa';
 import { Zap, RefreshCw, BarChart3, ChevronDown } from 'lucide-react';
 import { TbZoomScanFilled } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
@@ -4006,160 +4006,130 @@ const AccessibilityReport = ({ currentDomain }: any) => {
           </div>
 
           {/* Full Site Scan Modal */}
-          <Modal isOpen={isFullSiteScanModalOpen}>
-            <div 
-              className="relative w-full overflow-hidden"
+          {isFullSiteScanModalOpen && (
+            <div
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
               style={{
-                background: 'transparent',
+                animation: 'fadeIn 0.2s ease-out',
               }}
             >
-              {/* Close Button */}
-              <button
-                onClick={() => setIsFullSiteScanModalOpen(false)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:scale-110"
-                style={{
-                  backgroundColor: baseColors.grayLight,
-                  color: baseColors.grayMedium,
-                }}
-                aria-label="Close modal"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-
-              {/* Gradient Header */}
+              {/* Backdrop */}
               <div
-                className="px-8 pt-10 pb-6"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 style={{
-                  background: `linear-gradient(135deg, ${baseColors.brandPrimary} 0%, ${baseColors.brandPrimaryDark} 100%)`,
+                  animation: 'fadeIn 0.2s ease-out',
+                }}
+                onClick={() => setIsFullSiteScanModalOpen(false)}
+              />
+
+              {/* Modal */}
+              <div
+                className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+                style={{
+                  animation: 'slideUp 0.3s ease-out',
+                  boxShadow:
+                    '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
                 }}
               >
-                {/* Animated Icon */}
-                <div className="flex justify-center mb-4">
-                  <div 
-                    className="relative w-20 h-20 rounded-full flex items-center justify-center shadow-xl animate-pulse"
-                    style={{
-                      background: `linear-gradient(135deg, ${baseColors.white} 0%, ${baseColors.blueLight} 100%)`,
-                    }}
-                  >
-                    <div className="absolute inset-0 rounded-full animate-ping opacity-20"
-                      style={{ backgroundColor: baseColors.white }}
-                    ></div>
-                    {/* Clock Icon */}
-                    <svg
-                      className="w-10 h-10 relative z-10"
-                      style={{ color: baseColors.brandPrimary }}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <h2 
-                  className="text-3xl font-bold mb-2"
-                  style={{ color: baseColors.white }}
-                >
-                  Full Site Scan Started
-                </h2>
-                <p 
-                  className="text-base opacity-90"
-                  style={{ color: baseColors.white }}
-                >
-                  Your comprehensive scan is in progress
-                </p>
-              </div>
-
-              {/* Content */}
-              <div className="px-8 py-6 rounded-b-[10px]">
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-start space-x-3">
-                    <div 
-                      className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
-                      style={{ backgroundColor: baseColors.blueLight }}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        style={{ color: baseColors.brandPrimary }}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                    <p 
-                      className="text-base leading-relaxed"
-                      style={{ color: baseColors.grayDark2 }}
-                    >
-                      Full site scan takes time as it scans multiple pages across your website to provide a comprehensive accessibility analysis.
-                    </p>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <div 
-                      className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mt-0.5"
-                      style={{ backgroundColor: baseColors.infoBackground }}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        style={{ color: baseColors.brandPrimary }}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                    <p 
-                      className="text-base leading-relaxed"
-                      style={{ color: baseColors.grayDark2 }}
-                    >
-                      We will inform you once the scan is complete through email. You'll receive a detailed report with all the findings.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                <button
-                  onClick={() => setIsFullSiteScanModalOpen(false)}
-                  className="w-full py-3.5 px-6 rounded-xl font-semibold text-base transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
+                {/* Modal Header */}
+                <div
+                  className="p-8 text-white relative overflow-hidden"
                   style={{
-                    background: `linear-gradient(135deg, ${baseColors.brandPrimary} 0%, ${baseColors.brandPrimaryDark} 100%)`,
-                    color: baseColors.white,
+                    backgroundColor: '#0052CC',
                   }}
                 >
-                  Got it
-                </button>
+                  {/* Decorative background pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
+                  </div>
+
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+                        <FaClock className="w-7 h-7" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold mb-1">Full Site Scan Started</h3>
+                        <p className="text-white/90 text-sm font-medium">
+                          Your comprehensive scan is in progress
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsFullSiteScanModalOpen(false)}
+                      className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    >
+                      <FaTimes className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-8">
+                  <div
+                    className="rounded-2xl p-6 mb-8 border-2"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #F8FBFF 0%, #E8F4FD 100%)',
+                      borderColor: '#E1F0F7',
+                    }}
+                  >
+                    <ul className="text-sm text-gray-700 space-y-3 font-medium">
+                      <li className="flex items-center gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: '#0052CC' }}
+                        ></div>
+                        Full site scan takes time as it scans multiple pages across your website to provide a comprehensive accessibility analysis.
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: '#0052CC' }}
+                        ></div>
+                        We will inform you once the scan is complete through email. You'll receive a detailed report with all the findings.
+                      </li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={() => setIsFullSiteScanModalOpen(false)}
+                    className="w-full py-4 px-6 text-white rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
+                    style={{
+                      backgroundColor: '#0052CC',
+                      boxShadow:
+                        '0 10px 25px -5px rgba(0, 82, 204, 0.4), 0 4px 6px -2px rgba(0, 82, 204, 0.1)',
+                    }}
+                  >
+                    Got it
+                  </button>
+                </div>
               </div>
+
+              <style>{`
+                @keyframes fadeIn {
+                  from {
+                    opacity: 0;
+                  }
+                  to {
+                    opacity: 1;
+                  }
+                }
+                
+                @keyframes slideUp {
+                  from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+              `}</style>
             </div>
-          </Modal>
+          )}
 
           {/* Success Modal with link to open report */}
           <Modal isOpen={isSuccessModalOpen}>
