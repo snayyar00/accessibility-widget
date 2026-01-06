@@ -25,10 +25,26 @@ const widgetResolvers = {
         }
 
         // Validate email format
-        const emailValidationResult = emailValidation(email)
+        const emailValidationResult = await emailValidation(email)
 
         if (Array.isArray(emailValidationResult) && emailValidationResult.length > 0) {
-          throw new Error('Invalid email format')
+          // Extract validation error messages for better error reporting
+          const errorMessages = emailValidationResult
+            .map((err) => {
+              // fastest-validator ValidationError has message, type, field properties
+              if (err.message) {
+                return err.message
+              }
+              // Fallback: construct message from type and field
+              return err.type === 'email' 
+                ? `The email address "${email}" is not valid`
+                : `Validation failed for ${err.field || 'email'}: ${err.type || 'invalid format'}`
+            })
+            .filter(Boolean) // Remove any empty messages
+            .join('; ')
+          
+          const finalMessage = errorMessages || `The email address "${email}" is not valid`
+          throw new Error(finalMessage)
         }
 
         // Send the installation instructions
