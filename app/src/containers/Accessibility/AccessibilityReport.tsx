@@ -1912,7 +1912,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
               {/* Modal */}
               <div
-                className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+                className="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden"
                 style={{
                   animation: 'slideUp 0.3s ease-out',
                   boxShadow:
@@ -1921,7 +1921,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               >
                 {/* Modal Header */}
                 <div
-                  className="p-8 text-white relative overflow-hidden"
+                  className="p-8 md:p-10 text-white relative overflow-hidden"
                   style={{
                     backgroundColor: '#0052CC',
                   }}
@@ -1934,12 +1934,14 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
                   <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
-                        <FaClock className="w-7 h-7" />
+                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+                        <FaClock className="w-8 h-8" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold mb-1">Full Site Scan Started</h3>
-                        <p className="text-white/90 text-sm font-medium">
+                        <h3 className="text-3xl font-bold mb-2 leading-tight">
+                          Full Site Scan Started
+                        </h3>
+                        <p className="text-white/90 text-base font-medium">
                           Your comprehensive scan is in progress
                         </p>
                       </div>
@@ -1954,16 +1956,16 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 </div>
 
                 {/* Modal Body */}
-                <div className="p-8">
+                <div className="p-8 md:p-10">
                   <div
-                    className="rounded-2xl p-6 mb-8 border-2"
+                    className="rounded-2xl p-7 mb-8 border-2"
                     style={{
                       background:
                         'linear-gradient(135deg, #F8FBFF 0%, #E8F4FD 100%)',
                       borderColor: '#E1F0F7',
                     }}
                   >
-                    <ul className="text-sm text-gray-700 space-y-3 font-medium">
+                    <ul className="text-base text-gray-700 space-y-4 font-medium">
                       <li className="flex items-center gap-3">
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
