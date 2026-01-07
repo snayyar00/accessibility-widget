@@ -57,16 +57,22 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
       });
     };
 
-    // Focus the first focusable element or the modal itself
+    // Focus the dialog first so screen readers announce the role and label
+    // Then move focus to the first focusable element
     const focusables = getFocusableElements();
     const firstFocusable = focusables[0] || modal;
     
     // Small delay to ensure modal is fully rendered
     setTimeout(() => {
-      if (firstFocusable === modal) {
-        modal.focus();
-      } else {
-        firstFocusable.focus();
+      // Focus the dialog first to trigger screen reader announcement
+      modal.focus();
+      
+      // Then move focus to the first focusable element after a brief delay
+      // This allows screen readers to announce the dialog before moving focus
+      if (firstFocusable !== modal) {
+        setTimeout(() => {
+          firstFocusable.focus();
+        }, 100);
       }
     }, 50);
 
@@ -159,6 +165,7 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="quote-modal-title"
+        aria-label="Tell us about your project"
         aria-describedby="quote-modal-description"
         tabIndex={-1}
       >
@@ -173,7 +180,7 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-all duration-200"
+              className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-full p-2 transition-all duration-200"
               aria-label="Close modal"
             >
               <FiX className="w-5 h-5" />
@@ -184,32 +191,41 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Required Fields Instructions */}
+            <p className="text-sm text-gray-600 mb-2" role="note" aria-live="polite">
+              Fields marked with an asterisk (<span className="text-red-500">*</span>) are required.
+            </p>
+            
             {/* Project Name and Type - Side by Side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-gray-700 font-medium mb-1.5 text-sm">
-                  Name your project <span className="text-red-500">*</span>
+                <label htmlFor="project-name" className="block text-gray-700 font-medium mb-1.5 text-sm">
+                  Name your project <span className="text-red-500" aria-label="required">*</span>
                 </label>
                 <input
+                  id="project-name"
                   type="text"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                   placeholder="i.e., Company Name, Project Name"
-                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 placeholder:text-[#374151]"
+                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 placeholder:text-[#374151]"
                   required
+                  aria-required="true"
                 />
               </div>
 
               <div>
-                <label className="block text-gray-700 font-medium mb-1.5 text-sm">
-                  Project Type <span className="text-red-500">*</span>
+                <label htmlFor="project-type" className="block text-gray-700 font-medium mb-1.5 text-sm">
+                  Project Type <span className="text-red-500" aria-label="required">*</span>
                 </label>
                 <div className="relative">
                   <select
+                    id="project-type"
                     value={projectType}
                     onChange={(e) => setProjectType(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 text-gray-700 font-medium bg-white"
+                    className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 text-gray-700 font-medium bg-white"
                     required
+                    aria-required="true"
                   >
                     <option value="">Select project type</option>
                     <option value="file-accessibility">File Accessibility</option>
@@ -224,29 +240,32 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
 
             {/* Project Details */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1.5 text-sm">
-                Project details <span className="text-red-500">*</span>
+              <label htmlFor="project-details" className="block text-gray-700 font-medium mb-1.5 text-sm">
+                Project details <span className="text-red-500" aria-label="required">*</span>
               </label>
               <textarea
+                id="project-details"
                 value={projectDetails}
                 onChange={(e) => setProjectDetails(e.target.value)}
                 placeholder="Include relevant details like deadlines, instructions, questions..."
                 rows={3}
-                className="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 resize-none placeholder:text-[#374151]"
+                className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 resize-none placeholder:text-[#374151]"
                 required
+                aria-required="true"
               />
             </div>
 
             {/* Frequency */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1.5 text-sm">
+              <label htmlFor="frequency" className="block text-gray-700 font-medium mb-1.5 text-sm">
                 Frequency
               </label>
               <div className="relative">
                 <select
+                  id="frequency"
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 text-gray-700 font-medium bg-white"
+                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 text-gray-700 font-medium bg-white"
                 >
                   <option value="">Select frequency</option>
                   <option value="one-time">One-time</option>
@@ -260,20 +279,23 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
 
             {/* Project Links */}
             <div>
-              <label className="block text-gray-700 font-medium mb-1.5 text-sm">
-                Add your project's links <span className="text-red-500">*</span>
+              <label htmlFor="project-link-0" className="block text-gray-700 font-medium mb-1.5 text-sm">
+                Add your project's links <span className="text-red-500" aria-label="required">*</span>
               </label>
               {links.map((link, index) => (
                 <div key={index} className="mb-2">
                   <div className="relative">
-                    <FiLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#445AE7] w-4 h-4" />
+                    <FiLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#445AE7] w-4 h-4" aria-hidden="true" />
                     <input
+                      id={index === 0 ? "project-link-0" : `project-link-${index}`}
                       type="url"
                       value={link}
                       onChange={(e) => handleLinkChange(index, e.target.value)}
                       placeholder="https://"
-                      className="w-full pl-10 pr-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 placeholder:text-[#374151]"
+                      className="w-full pl-10 pr-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 placeholder:text-[#374151]"
                       required={index === 0}
+                      aria-required={index === 0}
+                      aria-label={index === 0 ? "Add your project's links" : `Project link ${index + 1}`}
                     />
                   </div>
                 </div>

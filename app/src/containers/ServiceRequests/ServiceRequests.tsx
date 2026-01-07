@@ -191,7 +191,10 @@ const ServiceRequests: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight text-white">
+                <h1 
+                  className="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight text-white"
+                  aria-label="Professional Accessibility Services"
+                >
                   Professional<br />
                   <span className="text-white">
                     Accessibility Services
@@ -387,12 +390,12 @@ const ServiceRequests: React.FC = () => {
             }}
           >
             <div>
-              <h3 
+              <h2 
                 className="text-xl sm:text-2xl font-medium"
                 style={{ color: baseColors.grayDark2 }}
               >
                 Manage your projects
-              </h3>
+              </h2>
             </div>
             
             {/* Action Buttons */}
@@ -556,7 +559,7 @@ const ServiceRequests: React.FC = () => {
                         View
                       </a>
                     ) : (
-                      <span className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-xs font-semibold">
+                      <span className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-800 rounded-lg text-xs font-semibold">
                         <svg className="w-3.5 h-3.5 mr-1.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                         </svg>
@@ -656,12 +659,12 @@ const ServiceRequests: React.FC = () => {
                   })}
                 </div>
                 <div className="flex-1">
-                  <h2
+                  <h3
                     className="text-xl sm:text-2xl font-bold mb-3"
                     style={{ color: baseColors.white }}
                   >
                     {service.title}
-                  </h2>
+                  </h3>
                   <p
                     className="text-sm sm:text-base leading-relaxed mb-4"
                     style={{ 
