@@ -1691,14 +1691,14 @@ ${
                           borderColor: '#0033ed',
                           color: '#0033ed',
                           '&:focus-visible': {
-                            outline: '4px solid #07aced !important',
-                            outlineOffset: '4px !important',
-                            boxShadow: '0 0 0 4px rgba(7, 172, 237, 0.5), 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                            outline: 'none !important',
+                            boxShadow:
+                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
                           },
                           '&:focus': {
-                            outline: '4px solid #07aced !important',
-                            outlineOffset: '4px !important',
-                            boxShadow: '0 0 0 4px rgba(7, 172, 237, 0.5), 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                            outline: 'none !important',
+                            boxShadow:
+                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
                           },
                           '&:hover': {
                             backgroundColor: '#f8faff',
@@ -1722,14 +1722,14 @@ ${
                           fontWeight: '600',
                           backgroundColor: '#0033ed',
                           '&:focus-visible': {
-                            outline: '4px solid #07aced !important',
-                            outlineOffset: '4px !important',
-                            boxShadow: '0 0 0 4px rgba(7, 172, 237, 0.5), 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                            outline: 'none !important',
+                            boxShadow:
+                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
                           },
                           '&:focus': {
-                            outline: '4px solid #07aced !important',
-                            outlineOffset: '4px !important',
-                            boxShadow: '0 0 0 4px rgba(7, 172, 237, 0.5), 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                            outline: 'none !important',
+                            boxShadow:
+                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
                           },
                           '&:hover': {
                             backgroundColor: '#0029c7',
@@ -1914,9 +1914,9 @@ ${
                       error={!!formErrors.companyName}
                       helperText={formErrors.companyName}
                       inputProps={{
-                        'aria-required': 'true',
-                        'aria-label': 'Company Name, required',
-                        'aria-invalid': !!formErrors.companyName,
+                        'aria-required': true,
+                        'aria-label': 'Company Name',
+                        'aria-invalid': formErrors.companyName ? true : false,
                         'aria-describedby': formErrors.companyName
                           ? 'company-name-error'
                           : undefined,
@@ -1949,9 +1949,9 @@ ${
                       error={!!formErrors.websiteUrl}
                       helperText={formErrors.websiteUrl}
                       inputProps={{
-                        'aria-required': 'true',
-                        'aria-label': 'Website URL, required',
-                        'aria-invalid': !!formErrors.websiteUrl,
+                        'aria-required': true,
+                        'aria-label': 'Website URL',
+                        'aria-invalid': formErrors.websiteUrl ? true : false,
                         'aria-describedby': formErrors.websiteUrl
                           ? 'website-url-error'
                           : undefined,
@@ -1985,9 +1985,9 @@ ${
                       error={!!formErrors.contactEmail}
                       helperText={formErrors.contactEmail}
                       inputProps={{
-                        'aria-required': 'true',
-                        'aria-label': 'Contact Email, required',
-                        'aria-invalid': !!formErrors.contactEmail,
+                        'aria-required': true,
+                        'aria-label': 'Contact Email',
+                        'aria-invalid': formErrors.contactEmail ? true : false,
                         'aria-describedby': formErrors.contactEmail
                           ? 'contact-email-error'
                           : undefined,
@@ -2357,14 +2357,15 @@ ${
                             'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
                         },
                         '&:focus-visible': {
-                          outline: '4px solid #07aced !important',
-                          outlineOffset: '4px !important',
-                          boxShadow: '0 0 0 4px rgba(7, 172, 237, 0.5), 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                          outline: 'none !important',
+                          boxShadow:
+                            // 3px white ring against the blue button + 5px dark ring against the light background
+                            '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
                         },
                         '&:focus': {
-                          outline: '4px solid #07aced !important',
-                          outlineOffset: '4px !important',
-                          boxShadow: '0 0 0 4px rgba(7, 172, 237, 0.5), 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                          outline: 'none !important',
+                          boxShadow:
+                            '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
                         },
                         '&:hover': {
                           background: '#2c3a99',

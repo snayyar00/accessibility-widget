@@ -338,8 +338,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                     }`}
                     disabled={isLoading}
                     required
-                    aria-required="true"
-                    aria-describedby={emailError ? 'email-error' : 'email-hint'}
+                    aria-describedby={emailError ? 'email-error' : 'email-help'}
                     aria-invalid={!!emailError}
                     style={{
                       backgroundColor: '#FAFBFC',
@@ -354,8 +353,8 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                     <FaEnvelope className="w-4 h-4 text-gray-400" aria-hidden="true" />
                   </div>
                 </div>
-                <p id="email-hint" className="sr-only">
-                  Required
+                <p id="email-help" className="sr-only">
+                  Enter the email address where you want to receive the toolkit.
                 </p>
                 {emailError && (
                   <p 
