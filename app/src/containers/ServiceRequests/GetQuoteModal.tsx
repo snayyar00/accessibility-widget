@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FiX, FiPlay, FiLink, FiPlus, FiChevronDown, FiChevronRight } from 'react-icons/fi';
 import { useMutation } from '@apollo/client';
 import { toast } from 'sonner';
@@ -9,6 +9,9 @@ interface GetQuoteModalProps {
   onClose: () => void;
 }
 
+const focusableSelectors =
+  'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
   const [projectName, setProjectName] = useState('');
   const [projectType, setProjectType] = useState('');
@@ -17,6 +20,8 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
   const [links, setLinks] = useState(['']);
 
   const [createQuoteRequest, { loading }] = useMutation(createQuoteRequestMutation);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const lastActiveRef = useRef<HTMLElement | null>(null);
 
   const handleAddLink = () => {
     setLinks([...links, '']);
@@ -27,6 +32,87 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
     newLinks[index] = value;
     setLinks(newLinks);
   };
+
+  // Focus trap implementation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Store the element that had focus before opening the modal
+    lastActiveRef.current = document.activeElement as HTMLElement;
+
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    const getFocusableElements = () => {
+      return Array.from(
+        modal.querySelectorAll<HTMLElement>(focusableSelectors),
+      ).filter((el) => {
+        const style = window.getComputedStyle(el);
+        return (
+          !el.hasAttribute('disabled') &&
+          !el.getAttribute('aria-hidden') &&
+          style.display !== 'none' &&
+          style.visibility !== 'hidden'
+        );
+      });
+    };
+
+    // Focus the first focusable element or the modal itself
+    const focusables = getFocusableElements();
+    const firstFocusable = focusables[0] || modal;
+    
+    // Small delay to ensure modal is fully rendered
+    setTimeout(() => {
+      if (firstFocusable === modal) {
+        modal.focus();
+      } else {
+        firstFocusable.focus();
+      }
+    }, 50);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+
+      const currentFocusables = getFocusableElements();
+      if (currentFocusables.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const currentIndex = currentFocusables.indexOf(
+        document.activeElement as HTMLElement,
+      );
+
+      let nextIndex = currentIndex;
+      if (event.shiftKey) {
+        // Shift + Tab: move to previous element, or wrap to last
+        nextIndex =
+          currentIndex <= 0
+            ? currentFocusables.length - 1
+            : currentIndex - 1;
+      } else {
+        // Tab: move to next element, or wrap to first
+        nextIndex =
+          currentIndex === currentFocusables.length - 1
+            ? 0
+            : currentIndex + 1;
+      }
+
+      event.preventDefault();
+      currentFocusables[nextIndex].focus();
+    };
+
+    modal.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      modal.removeEventListener('keydown', handleKeyDown);
+      // Return focus to the element that had focus before opening the modal
+      const lastActive = lastActiveRef.current;
+      if (lastActive && document.contains(lastActive)) {
+        lastActive.focus();
+      }
+    };
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,16 +149,27 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed top-0 left-0 w-full h-full bg-sapphire-blue/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100 transform animate-fadeIn">
+    <div 
+      className="fixed top-0 left-0 w-full h-full bg-sapphire-blue/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+      aria-hidden={!isOpen}
+    >
+      <div
+        ref={modalRef}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-100 transform animate-fadeIn focus:outline-none"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quote-modal-title"
+        aria-describedby="quote-modal-description"
+        tabIndex={-1}
+      >
         <div className="p-5 md:p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-100">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#445AE7] to-[#667eea] bg-clip-text text-transparent">
+              <h2 id="quote-modal-title" className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#445AE7] to-[#667eea] bg-clip-text text-transparent">
                 Tell us about your project
               </h2>
-              <p className="text-gray-500 text-sm mt-0.5">We'll get back to you with a custom quote</p>
+              <p id="quote-modal-description" className="text-gray-500 text-sm mt-0.5">We'll get back to you with a custom quote</p>
             </div>
             <button
               onClick={onClose}
@@ -98,7 +195,7 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                   placeholder="i.e., Company Name, Project Name"
-                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200"
+                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 placeholder:text-[#374151]"
                   required
                 />
               </div>
@@ -135,7 +232,7 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                 onChange={(e) => setProjectDetails(e.target.value)}
                 placeholder="Include relevant details like deadlines, instructions, questions..."
                 rows={3}
-                className="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 resize-none"
+                className="w-full px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 resize-none placeholder:text-[#374151]"
                 required
               />
             </div>
@@ -175,7 +272,7 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                       value={link}
                       onChange={(e) => handleLinkChange(index, e.target.value)}
                       placeholder="https://"
-                      className="w-full pl-10 pr-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200"
+                      className="w-full pl-10 pr-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 placeholder:text-[#374151]"
                       required={index === 0}
                     />
                   </div>
