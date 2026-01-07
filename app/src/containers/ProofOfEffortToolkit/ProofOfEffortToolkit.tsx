@@ -549,6 +549,8 @@ const ProofOfEffortToolkit: React.FC = () => {
   // Refs for focus management
   const documentViewerRef = useRef<HTMLDivElement>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement | null>(null);
+  const dropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   // Redux state
   const currentDomain = useSelector(
@@ -628,18 +630,93 @@ const ProofOfEffortToolkit: React.FC = () => {
     };
   }, [pdfViewerUrl]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside + focus trap within dropdown
   useEffect(() => {
-    const handleClickOutside = () => {
+    if (openDropdownIndex === null) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (
+        (dropdownMenuRef.current &&
+          dropdownMenuRef.current.contains(target as Node)) ||
+        (dropdownTriggerRef.current &&
+          dropdownTriggerRef.current.contains(target as Node))
+      ) {
+        return;
+      }
       setOpenDropdownIndex(null);
     };
 
-    if (openDropdownIndex !== null) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const menu = dropdownMenuRef.current;
+      if (!menu) return;
+
+      const focusableItems = Array.from(
+        menu.querySelectorAll<HTMLButtonElement>('button:not([disabled])'),
+      );
+      if (focusableItems.length === 0) return;
+
+      const firstItem = focusableItems[0];
+      const lastItem = focusableItems[focusableItems.length - 1];
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpenDropdownIndex(null);
+        // Restore focus to the trigger
+        if (dropdownTriggerRef.current) {
+          setTimeout(() => dropdownTriggerRef.current?.focus(), 0);
+        }
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        const activeElement = document.activeElement as HTMLElement | null;
+        const isInMenu = !!activeElement && menu.contains(activeElement);
+
+        // If focus has escaped the menu while it's open, bring it back in
+        if (!isInMenu) {
+          event.preventDefault();
+          if (event.shiftKey) {
+            lastItem.focus();
+          } else {
+            firstItem.focus();
+          }
+          return;
+        }
+
+        if (event.shiftKey) {
+          if (activeElement === firstItem) {
+            event.preventDefault();
+            lastItem.focus();
+          }
+        } else {
+          if (activeElement === lastItem) {
+            event.preventDefault();
+            firstItem.focus();
+          }
+        }
+      }
+    };
+
+    // When menu opens, move focus to first item
+    if (dropdownMenuRef.current) {
+      const firstItem = dropdownMenuRef.current.querySelector<
+        HTMLButtonElement
+      >('button:not([disabled])');
+      if (firstItem) {
+        setTimeout(() => firstItem.focus(), 0);
+      }
     }
 
-    return undefined;
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [openDropdownIndex]);
 
   // Focus trap for document viewer modal
@@ -699,6 +776,21 @@ const ProofOfEffortToolkit: React.FC = () => {
 
       const firstElement = focusableElements[0];
       const lastElement = focusableElements[focusableElements.length - 1];
+
+      // If focus has somehow moved outside the dialog while it's open,
+      // immediately bring it back inside to preserve the focus trap.
+      const activeElement = document.activeElement as HTMLElement | null;
+      const isInModal = !!activeElement && modal.contains(activeElement);
+
+      if (!isInModal) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          lastElement.focus();
+        } else {
+          firstElement.focus();
+        }
+        return;
+      }
 
       if (e.shiftKey) {
         // Shift + Tab
@@ -2171,6 +2263,11 @@ const ProofOfEffortToolkit: React.FC = () => {
                         className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${
                           index === 0 ? 'poe-document-dropdown' : ''
                         }`}
+                        ref={
+                          openDropdownIndex === index
+                            ? dropdownTriggerRef
+                            : undefined
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDropdownToggle(index);
@@ -2191,6 +2288,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                         <div
                           role="menu"
                           aria-label={`Options for ${document.name}`}
+                          ref={dropdownMenuRef}
                           className={`absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-32 ${
                             index === 0 ? 'poe-dropdown-menu' : ''
                           }`}
