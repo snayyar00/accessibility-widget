@@ -39,7 +39,7 @@ const LegalResources: React.FC = () => {
   const handlePreview = async (type: 'legal-action-response-plan' | 'trusted-certification') => {
     try {
       setIsLoadingPreview(true);
-      
+
       const token = getAuthenticationCookie();
       const backendUrl = process.env.REACT_APP_BACKEND_URL;
       
@@ -87,13 +87,13 @@ const LegalResources: React.FC = () => {
         window.URL.revokeObjectURL(previewPdfUrl);
       }
       
-      // Set PDF URL and open preview
+      // Set PDF URL for preview (modal will open after loading state ends)
       setPreviewPdfUrl(pdfUrl);
       setPreviewContent(''); // Clear HTML content
       setIsPreviewOpen(true);
+      setIsLoadingPreview(false);
     } catch (error) {
       toast.error('Failed to load PDF preview. Please try again.');
-    } finally {
       setIsLoadingPreview(false);
     }
   };
@@ -110,6 +110,7 @@ const LegalResources: React.FC = () => {
     }
     setIsPreviewOpen(false);
     setPreviewContent('');
+    setIsLoadingPreview(false);
   };
 
   // Download PDF for Legal Action Response Plan from server
@@ -338,21 +339,31 @@ const LegalResources: React.FC = () => {
                 </p>
                 <div className="flex flex-col md:flex-row gap-3">
                   <button
-                    className="px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium border-2 hover:shadow-sm w-full md:w-auto"
+                    className="px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium border-2 hover:shadow-sm w-full md:w-auto disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       borderColor: baseColors.brandPrimary,
                       color: baseColors.brandPrimary,
                       backgroundColor: 'transparent',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = baseColors.blueLight;
+                      if (!isLoadingPreview) {
+                        e.currentTarget.style.backgroundColor = baseColors.blueLight;
+                      }
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                     onClick={() => handlePreview('legal-action-response-plan')}
+                    disabled={isLoadingPreview}
                   >
-                    Preview
+                    {isLoadingPreview ? (
+                      <>
+                        <CircularProgress size={14} style={{ color: baseColors.brandPrimary }} />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      <span>Preview</span>
+                    )}
                   </button>
                   <button
                     className="px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2 border-2 hover:shadow-sm w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
@@ -400,21 +411,31 @@ const LegalResources: React.FC = () => {
                 </p>
                 <div className="flex flex-col md:flex-row gap-3">
                   <button
-                    className="px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium border-2 hover:shadow-sm w-full md:w-auto"
+                    className="px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium border-2 hover:shadow-sm w-full md:w-auto disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       borderColor: baseColors.brandPrimary,
                       color: baseColors.brandPrimary,
                       backgroundColor: 'transparent',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = baseColors.blueLight;
+                      if (!isLoadingPreview) {
+                        e.currentTarget.style.backgroundColor = baseColors.blueLight;
+                      }
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                     onClick={() => handlePreview('trusted-certification')}
+                    disabled={isLoadingPreview}
                   >
-                    Preview
+                    {isLoadingPreview ? (
+                      <>
+                        <CircularProgress size={14} style={{ color: baseColors.brandPrimary }} />
+                        <span>Loading...</span>
+                      </>
+                    ) : (
+                      <span>Preview</span>
+                    )}
                   </button>
                   <button
                     className="px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2 border-2 hover:shadow-sm w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
@@ -689,11 +710,7 @@ const LegalResources: React.FC = () => {
                 flexDirection: 'column',
               }}
             >
-              {isLoadingPreview ? (
-                <div className="flex items-center justify-center h-full">
-                  <CircularProgress size={40} style={{ color: baseColors.brandPrimary }} />
-                </div>
-              ) : previewPdfUrl ? (
+              {previewPdfUrl ? (
                 <div className="flex-1 w-full overflow-hidden" style={{ minHeight: '600px' }}>
                   <iframe
                     src={previewPdfUrl}
