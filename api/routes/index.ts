@@ -3,6 +3,7 @@ import { Router } from 'express'
 import chatRoutes from './chat.routes'
 import formRoutes from './form.routes'
 import legalSupportRoutes from './legal-support.routes'
+import imageProxyRoutes from './image-proxy.routes'
 import monitoringRoutes from './monitoring.routes'
 import proofOfEffortRoutes from './proof-of-effort.routes'
 import reportsRoutes from './reports.routes'
@@ -23,5 +24,6 @@ router.use(legalSupportRoutes)
 router.use(chatRoutes)
 router.use(monitoringRoutes)
 router.use(sitesRoutes)
+router.use(imageProxyRoutes)
 
 export default router
