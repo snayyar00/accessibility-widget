@@ -2166,7 +2166,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                           e.stopPropagation();
                           handleDropdownToggle(index);
                         }}
-                        aria-label={`More options for ${document.name}`}
+                        aria-label={document.name ? `More options for ${document.name}` : 'More options'}
                         aria-expanded={openDropdownIndex === index}
                         aria-haspopup="true"
                       >
