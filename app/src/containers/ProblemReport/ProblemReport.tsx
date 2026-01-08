@@ -42,6 +42,7 @@ const ProblemReport: React.FC = () => {
   const [isDomainDropdownOpen, setIsDomainDropdownOpen] = useState(false);
 
   const isMounted = useRef(true);
+  const scrollableContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch user sites
   const { data: sitesData, loading: sitesLoading } =
@@ -193,6 +194,50 @@ const ProblemReport: React.FC = () => {
     } catch (error) {
       console.error('Error toggling fixed status:', error);
       // You might want to show a toast notification here
+    }
+  };
+
+  // Handle keyboard navigation for scrollable region
+  const handleScrollableKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!scrollableContainerRef.current) return;
+
+    const scrollAmount = 100; // pixels to scroll per key press
+    const container = scrollableContainerRef.current;
+
+    switch (e.key) {
+      case 'ArrowDown':
+      case 'PageDown':
+        e.preventDefault();
+        container.scrollBy({
+          top: scrollAmount,
+          behavior: 'smooth',
+        });
+        break;
+      case 'ArrowUp':
+      case 'PageUp':
+        e.preventDefault();
+        container.scrollBy({
+          top: -scrollAmount,
+          behavior: 'smooth',
+        });
+        break;
+      case 'Home':
+        e.preventDefault();
+        container.scrollTo({
+          top: 0,
+          behavior: 'smooth',
+        });
+        break;
+      case 'End':
+        e.preventDefault();
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth',
+        });
+        break;
+      default:
+        // Allow other keys to work normally
+        break;
     }
   };
 
@@ -406,7 +451,14 @@ const ProblemReport: React.FC = () => {
                   </div>
 
                   {/* Scrollable Issues Container */}
-                  <div className="max-h-80 sm:max-h-96 md:max-h-[28rem] lg:max-h-[32rem] overflow-y-auto pr-1 sm:pr-2 issues-scrollbar">
+                  <div
+                    ref={scrollableContainerRef}
+                    className="max-h-80 sm:max-h-96 md:max-h-[28rem] lg:max-h-[32rem] overflow-y-auto pr-1 sm:pr-2 issues-scrollbar focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    tabIndex={0}
+                    role="region"
+                    aria-label={`Problem reports list with ${filteredProblems.length} ${statusFilter === 'active' ? 'active' : 'solved'} issues. Use arrow keys to scroll.`}
+                    onKeyDown={handleScrollableKeyDown}
+                  >
                     <div className="space-y-3 sm:space-y-4">
                       {filteredProblems.map((problem) => (
                         <div key={problem.id} className="problem-card">

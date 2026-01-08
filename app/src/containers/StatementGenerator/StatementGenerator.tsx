@@ -1640,7 +1640,8 @@ ${
                     id={`format-panel-${selectedFormat}`}
                     aria-labelledby={`format-tab-${selectedFormat}`}
                     tabIndex={0}
-                    className="bg-[#edf2fd] p-6 pr-4 rounded-2xl max-h-[600px] overflow-y-auto mb-6 border border-[#A2ADF3] custom-scrollbar"
+                    aria-label={`Generated statement in ${selectedFormat} format. Use arrow keys to scroll.`}
+                    className="bg-[#edf2fd] p-6 pr-4 rounded-2xl max-h-[600px] overflow-y-auto mb-6 border border-[#A2ADF3] custom-scrollbar focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     style={{
                       fontFamily:
                         selectedFormat === 'html' ? 'inherit' : 'monospace',
@@ -1767,10 +1768,10 @@ ${
 
           {/* Form Section */}
           <div
-            className="bg-white rounded-3xl shadow-lg border border-gray-200 h-fit company-form-section lg:max-w-lg max-h-[800px] overflow-y-auto custom-scrollbar"
+            className="bg-white rounded-3xl shadow-lg border border-gray-200 h-fit company-form-section lg:max-w-lg max-h-[800px] overflow-y-auto custom-scrollbar focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             tabIndex={0}
             role="region"
-            aria-label="Company information form"
+            aria-label="Company information form. Use arrow keys, Page Up, Page Down, Home, or End to scroll."
           >
             <div className="p-8">
               {showEnhancePage ? (
@@ -1920,6 +1921,7 @@ ${
                         'aria-describedby': formErrors.companyName
                           ? 'company-name-error'
                           : undefined,
+                        autoComplete: 'organization',
                         onPaste: (e) => {
                           // Explicitly allow paste
                           e.stopPropagation();
@@ -2103,10 +2105,10 @@ ${
                               />
                             </div>
                             <div
-                              className="max-h-60 overflow-auto custom-scrollbar"
+                              className="max-h-60 overflow-auto custom-scrollbar focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                               tabIndex={0}
                               role="region"
-                              aria-label="Language options"
+                              aria-label="Language options. Use arrow keys, Page Up, Page Down, Home, or End to scroll."
                             >
                               {filteredLanguages.map((lang) => (
                                 <button
@@ -2205,6 +2207,9 @@ ${
                                 placeholder={organizationName}
                                 variant="outlined"
                                 size="small"
+                                inputProps={{
+                                  autoComplete: 'organization',
+                                }}
                                 sx={{
                                   '& .MuiOutlinedInput-input::placeholder': {
                                     color: '#6B7280',
