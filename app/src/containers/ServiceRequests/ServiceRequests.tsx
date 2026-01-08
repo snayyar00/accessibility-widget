@@ -16,9 +16,10 @@ const ServiceRequests: React.FC = () => {
   const { data: userData } = useSelector((state: RootState) => state.user);
   useDocumentHeader({ title: 'Service Requests' });
 
-  // Check if user's organization ID is 1 or 87
+  // Check if user's organization ID matches allowed org
   const currentOrganizationId = userData?.current_organization_id;
-  const hasAccess = currentOrganizationId === 1 || currentOrganizationId === 87;
+  const allowedOrgId = Number(process.env.REACT_APP_CURRENT_ORG || '1');
+  const hasAccess = currentOrganizationId === allowedOrgId;
 
   if (!hasAccess) {
     return <Redirect to="/dashboard" />;

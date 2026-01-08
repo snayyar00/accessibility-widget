@@ -279,10 +279,11 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
           <Switch>
             {routes
               .filter((route) => {
-                // Hide service-requests route if organization ID is not 1 or 87
+                // Hide service-requests route if organization ID doesn't match allowed org
                 if (route.path === '/service-requests') {
                   const currentOrganizationId = userData?.current_organization_id;
-                  return currentOrganizationId === 1 || currentOrganizationId === 87;
+                  const allowedOrgId = Number(process.env.REACT_APP_CURRENT_ORG || '1');
+                  return currentOrganizationId === allowedOrgId;
                 }
                 return true;
               })

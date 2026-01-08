@@ -126,9 +126,8 @@ const Sidebar = () => {
   }, [isMobile, isOpen, lockedOpen, dispatch]);
 
   const { data: userData } = useSelector((state: RootState) => state.user);
-  const showServiceRequests =
-    userData?.current_organization_id === 1 ||
-    userData?.current_organization_id === 87;
+  const allowedOrgId = Number(process.env.REACT_APP_CURRENT_ORG || '1');
+  const showServiceRequests = userData?.current_organization_id === allowedOrgId;
   const showAdminControls = Boolean(userData?.isAdminOrOwnerOrSuper);
 
   // Helper function to check if a route is active
@@ -1021,7 +1020,7 @@ const Sidebar = () => {
                   </div>
                 </NavLink>
 
-                {/* Service Requests - Only show for organization ID 1 or 87 */}
+                {/* Service Requests - Only show for allowed organization ID */}
                 {showServiceRequests && (
                   <NavLink
                     to="/service-requests"
