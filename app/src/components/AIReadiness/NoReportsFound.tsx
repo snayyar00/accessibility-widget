@@ -31,7 +31,7 @@ const NoReportsFound: React.FC = () => {
         transition={{ delay: 0.4, duration: 0.5 }}
         className="text-center"
       >
-        <p className="text-gray-700 text-base sm:text-lg md:text-xl font-normal">
+        <p className="text-gray-400 text-base sm:text-lg md:text-xl font-normal">
           No reports found matching your criteria.
         </p>
       </motion.div>

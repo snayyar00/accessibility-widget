@@ -275,14 +275,10 @@ const ProblemReport: React.FC = () => {
               </div>
 
               {!loader && (
-                <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:items-end pl-2 pt-2 pb-4">
-                  <div className="w-full md:w-auto relative">
-                    <label htmlFor="issue-filter-select" className="sr-only">
-                      Filter issues
-                    </label>
+                <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:items-center pl-2 pt-2 pb-4">
+                  <div className="w-full lg:w-auto relative">
                     <select
-                      id="issue-filter-select"
-                      className="w-full md:w-auto text-xs sm:text-sm md:text-base inline-flex items-center justify-center pl-3 pr-8 py-2 sm:pl-4 sm:pr-10 sm:py-2 md:pl-5 md:pr-12 md:py-3 border border-transparent font-medium rounded-md text-white bg-[#3343AD] hover:bg-[#2a3699] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3343AD] transition-colors duration-200 appearance-none cursor-pointer"
+                      className="w-full lg:w-auto text-xs sm:text-sm md:text-base inline-flex items-center justify-center pl-3 pr-8 py-2 sm:pl-4 sm:pr-10 sm:py-2 md:pl-5 md:pr-12 md:py-3 border border-transparent font-medium rounded-md text-white bg-[#3343AD] hover:bg-[#2a3699] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3343AD] transition-colors duration-200 appearance-none cursor-pointer"
                       value={filter}
                       onChange={(e) =>
                         setFilter(e.target.value as typeof filter)
@@ -312,16 +308,9 @@ const ProblemReport: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="w-full md:flex-1 relative">
-                    <label
-                      htmlFor="site-url-search"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Search by site URL
-                    </label>
+                  <div className="w-full lg:flex-1 relative">
                     <div className="relative">
                       <input
-                        id="site-url-search"
                         type="text"
                         className="w-full px-3 py-2 sm:px-4 sm:py-2 md:px-5 md:py-3 border border-gray-300 rounded-md text-xs sm:text-sm md:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500 pr-8 sm:pr-10"
                         placeholder="Search by site URL"
@@ -331,7 +320,6 @@ const ProblemReport: React.FC = () => {
                         }
                         onFocus={() => setIsDomainDropdownOpen(true)}
                         disabled={sitesLoading}
-                        aria-label="Search by site URL"
                       />
                       <button
                         type="button"
@@ -339,14 +327,11 @@ const ProblemReport: React.FC = () => {
                         onClick={() =>
                           setIsDomainDropdownOpen(!isDomainDropdownOpen)
                         }
-                        aria-label="More options"
-                        aria-expanded={isDomainDropdownOpen}
                       >
                         <svg
-                          className={`h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 transition-transform ${
+                          className={`h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-gray-400 transition-transform ${
                             isDomainDropdownOpen ? 'rotate-180' : ''
                           }`}
-                          style={{ color: '#767676' }}
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -362,10 +347,7 @@ const ProblemReport: React.FC = () => {
                     </div>
 
                     {isDomainDropdownOpen && (
-                      <div 
-                        className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
-                        aria-live="polite"
-                      >
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                         <div className="py-1">
                           {filteredDomains.map((site: Site | null | undefined) => (
                             <div
@@ -413,13 +395,11 @@ const ProblemReport: React.FC = () => {
                     <div className="flex gap-8 mb-3">
                       {/* Active Issues Filter */}
                       <div
-                        className="cursor-pointer transition-all duration-200"
-                        style={{
-                          color:
-                            statusFilter === 'active'
-                              ? '#1f2937'
-                              : '#656D7D',
-                        }}
+                        className={`cursor-pointer transition-all duration-200 ${
+                          statusFilter === 'active'
+                            ? 'text-gray-800'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
                         onClick={() => setStatusFilter('active')}
                       >
                         <h3 className="text-base font-medium">Active issues</h3>
@@ -430,13 +410,11 @@ const ProblemReport: React.FC = () => {
 
                       {/* Solved Issues Filter */}
                       <div
-                        className="cursor-pointer transition-all duration-200"
-                        style={{
-                          color:
-                            statusFilter === 'solved'
-                              ? '#1f2937'
-                              : '#656D7D',
-                        }}
+                        className={`cursor-pointer transition-all duration-200 ${
+                          statusFilter === 'solved'
+                            ? 'text-gray-800'
+                            : 'text-gray-400 hover:text-gray-600'
+                        }`}
                         onClick={() => setStatusFilter('solved')}
                       >
                         <h3 className="text-base font-medium">Solved issues</h3>
@@ -475,15 +453,14 @@ const ProblemReport: React.FC = () => {
                         <div className="mx-auto mb-6">
                           <img
                             src={notFoundImage}
-                            alt=""
-                            role="presentation"
+                            alt="No reports found"
                             className="mx-auto h-32 w-auto"
                           />
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
                           No problem reports
                         </h3>
-                        <p className="text-sm" style={{ color: '#676D7B' }}>
+                        <p className="text-sm text-gray-500">
                           You haven't received any problem reports yet. They
                           will appear here when users report issues with your
                           websites.
@@ -496,8 +473,7 @@ const ProblemReport: React.FC = () => {
                         <div className="mx-auto mb-6">
                           <img
                             src={notFoundImage}
-                            alt=""
-                            role="presentation"
+                            alt="No reports found"
                             className="mx-auto h-32 w-auto"
                           />
                         </div>

@@ -91,11 +91,10 @@ const EmailModal: React.FC<EmailModalProps> = ({
                   error ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Enter email address"
-                autoComplete="email"
                 disabled={isLoading}
                 required
               />
-              {error && <p className="mt-1 text-sm" style={{ color: '#E7074F' }}>{error}</p>}
+              {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
             </div>
 
             {/* Buttons */}

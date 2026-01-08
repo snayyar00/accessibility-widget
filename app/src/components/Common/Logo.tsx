@@ -26,7 +26,7 @@ const Logo: React.FC<LogoProps> = ({ className = '' }) => {
           alt={organization.name}
         />
       ) : (
-        <LogoIcon aria-label="Webability logo" role="img" />
+        <LogoIcon />
       )}
     </div>
   );

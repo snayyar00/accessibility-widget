@@ -6,7 +6,6 @@ import * as yup from 'yup';
 import { useMutation } from '@apollo/client';
 import { useHistory } from 'react-router-dom';
 import SignInForm from '@/components/Auth/SignInForm';
-import AccessibilityBanner from '@/components/Auth/AccessibilityBanner';
 import loginQuery from '@/queries/auth/login';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { setAuthenticationCookie } from '@/utils/cookie';
@@ -157,7 +156,7 @@ const SignIn: React.FC = () => {
   }
   return (
     <div className="flex min-h-screen sm:flex-col">
-      <main className="w-[45%] flex justify-center items-center sm:w-full">
+      <div className="w-[45%] flex justify-center items-center sm:w-full">
         <SignInForm
           onSubmit={handleSubmit(onSubmit)}
           register={register}
@@ -167,16 +166,14 @@ const SignIn: React.FC = () => {
           customErrorMessage={getErrorMessage(currentErrorCode)}
           showForgotPasswordLink={isAccountLocked(currentErrorCode)}
         />
-      </main>
+      </div>
       <div className="w-[55%] sm:hidden flex items-center justify-end p-5 relative">
         <img
           src="/images/auth/auth_image1.png"
-          alt=""
-          role="presentation"
+          alt="Authentication"
           className="h-[95vh] object-contain ml-auto"
           style={{ maxWidth: '90%' }}
         />
-        <AccessibilityBanner />
       </div>
     </div>
   );

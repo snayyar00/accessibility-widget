@@ -193,12 +193,7 @@ const AIInsights: React.FC = () => {
             {/* Input Section */}
             <div className="flex flex-col md:flex-row gap-3 sm:gap-4 mb-6">
               <div className="flex-1">
-                <label htmlFor="analyze-website-select" className="sr-only">
-                  Analyze Your Website
-                </label>
                 <Select
-                  inputId="analyze-website-select"
-                  aria-label="Analyze Your Website"
                   options={siteOptions}
                   value={selectedOption}
                   onChange={(selected: OptionType | null) => {
@@ -244,27 +239,10 @@ const AIInsights: React.FC = () => {
                     }),
                     placeholder: (provided: any) => ({
                       ...provided,
-                      color: '#4b5563',
+                      color: '#9ca3af',
                       fontSize: '14px',
                       '@media (min-width: 640px)': {
                         fontSize: '16px',
-                      },
-                    }),
-                    indicatorSeparator: () => ({
-                      display: 'none',
-                    }),
-                    dropdownIndicator: (provided: any) => ({
-                      ...provided,
-                      color: '#767676',
-                      '&:hover': {
-                        color: '#767676',
-                      },
-                    }),
-                    clearIndicator: (provided: any) => ({
-                      ...provided,
-                      color: '#767676',
-                      '&:hover': {
-                        color: '#767676',
                       },
                     }),
                   }}
@@ -276,25 +254,15 @@ const AIInsights: React.FC = () => {
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base"
                 onClick={handleDomainAnalysis}
                 disabled={isAnalyzing}
-                aria-label={isAnalyzing ? "Analyzing website, please wait" : "Analyze website"}
               >
                 {isAnalyzing ? (
-                  <CircularProgress size={18} sx={{ color: 'white' }} aria-hidden="true" />
+                  <CircularProgress size={18} sx={{ color: 'white' }} />
                 ) : (
-                  <Search className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+                  <Search className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
                 <span className="hidden sm:inline">Analyze now</span>
                 <span className="sm:hidden">Analyze</span>
               </button>
-            </div>
-            
-            {/* Screen reader announcement for loading state */}
-            <div 
-              className="sr-only" 
-              aria-live="polite" 
-              aria-atomic="true"
-            >
-              {isAnalyzing && 'Analyzing website, please wait'}
             </div>
           </div>
 

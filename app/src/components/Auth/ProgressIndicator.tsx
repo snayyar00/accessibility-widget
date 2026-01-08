@@ -76,13 +76,10 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
                 
                 {/* Description */}
                 <div className="text-center">
-                  <p 
-                    className={`step-text text-sm text-center transform
-                      ${isActive ? "active" : ""}
-                      ${isUpcoming && animDirection === 'forward' ? "opacity-50" : "translate-y-0 opacity-100"}
-                    `}
-                    style={isActive ? { color: '#0074E8' } : isCompleted ? { color: '#0074E8' } : { color: '#475569' }}
-                  >
+                  <p className={`step-text text-sm text-center transform
+                    ${isActive ? "active" : isCompleted ? "text-primary" : "text-gray-600"}
+                    ${isUpcoming && animDirection === 'forward' ? "opacity-50" : "translate-y-0 opacity-100"}
+                  `}>
                     {t(step.description)}
                   </p>
                 </div>
@@ -158,10 +155,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
                   <p className={`step-text text-sm font-medium ${isActive ? "active" : "text-gray-800"}`}>
                     {t(step.title)}
                   </p>
-                  <p 
-                    className={`text-xs`}
-                    style={isActive || isCompleted ? { color: '#0074E8' } : { color: '#475569' }}
-                  >
+                  <p className={`text-xs ${isActive || isCompleted ? "text-primary" : "text-gray-600"}`}>
                     {t(step.description)}
                   </p>
                 </div>

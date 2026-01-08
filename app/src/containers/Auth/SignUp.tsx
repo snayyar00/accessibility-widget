@@ -9,7 +9,6 @@ import { useHistory } from 'react-router-dom';
 
 import SignUpForm from '@/components/Auth/SignUpForm';
 import AuthAdsArea from '@/components/Auth/AuthAds';
-import AccessibilityBanner from '@/components/Auth/AccessibilityBanner';
 import registerQuery from '@/queries/auth/register';
 import getQueryParam from '@/utils/getQueryParam';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
@@ -259,7 +258,7 @@ const SignUp: React.FC = () => {
 
   return (
     <div className="flex h-screen sm:flex-col overflow-hidden">
-      <main className="w-[80%] flex justify-end items-start sm:w-full lg:pl-16 overflow-y-auto pt-8 no-scrollbar">
+      <div className="w-[80%] flex justify-end items-start sm:w-full lg:pl-16 overflow-y-auto pt-8 no-scrollbar">
         <SignUpForm
           onSubmit={handleSubmit(onSubmit)}
           register={register}
@@ -272,16 +271,14 @@ const SignUp: React.FC = () => {
             planName ? t('Sign_up.text.next') : 'Finish Sign Up',
           )}
         />
-      </main>
+      </div>
       <div className="w-[55%] sm:hidden flex items-center justify-end p-5 relative overflow-hidden">
         <img
           src="/images/auth/auth_image1.png"
-          alt=""
-          role="presentation"
+          alt="Authentication"
           className="h-[95vh] object-contain ml-auto"
           style={{ maxWidth: '90%' }}
         />
-        <AccessibilityBanner />
       </div>
     </div>
   );

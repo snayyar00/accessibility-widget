@@ -39,7 +39,6 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
   const [couponCode, setCouponCode] = useState<string>('');
   const [discountApplied, setDiscountApplied] = useState<boolean>(false);
   const [copyTooltip, setCopyTooltip] = useState<string>('Copy code');
-  const neutralRadioBorder = '#8B95A4';
   const { data: userData } = useSelector((state: RootState) => state.user);
 
   const reasons = [
@@ -164,21 +163,11 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
         </h2>
 
         <div className="mb-6">
-          <h3
-            className="text-lg font-semibold text-gray-800 mb-4"
-            aria-hidden="true"
-          >
-            {isCancel
-              ? "Please tell us why you're canceling this subscription:"
-              : "Please tell us why you're deleting this site:"}
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            {isCancel ? 'Please tell us why you\'re canceling this subscription:' : 'Please tell us why you\'re deleting this site:'}
           </h3>
 
-          <fieldset className="space-y-3">
-            <legend id="delete-reason-legend" className="sr-only">
-              {isCancel
-                ? "Please tell us why you're canceling this subscription:"
-                : "Please tell us why you're deleting this site:"}
-            </legend>
+          <div className="space-y-3">
             {reasons.map((reason) => (
               <div key={reason.id} className="group">
                 <label
@@ -201,13 +190,10 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
                     />
                     <div
                       className={`w-5 h-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
-                        selectedReason === reason.id ? 'border-red-500 bg-red-500' : 'bg-white'
-                      }`}
-                      style={
                         selectedReason === reason.id
-                          ? undefined
-                          : { borderColor: neutralRadioBorder }
-                      }
+                          ? 'border-red-500 bg-red-500'
+                          : 'border-gray-300 group-hover:border-gray-400'
+                      }`}
                     >
                       {selectedReason === reason.id && (
                         <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -226,7 +212,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
                 </label>
               </div>
             ))}
-          </fieldset>
+          </div>
 
           {selectedReason === 'other' && (
             <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">

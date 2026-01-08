@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { MdWarning, MdDeleteForever, MdClose } from 'react-icons/md';
 
@@ -29,95 +29,8 @@ const DeleteAccountModal: React.FC<Props> = ({
   error,
 }) => {
   const { t } = useTranslation();
-  const modalRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const emailInputRef = useRef<HTMLInputElement | null>(null);
-  const previousActiveElementRef = useRef<HTMLElement | null>(null);
-
-  // Combined ref callback for email input
-  const emailInputCallbackRef = useCallback(
-    (element: HTMLInputElement | null) => {
-      emailInputRef.current = element;
-      register(element);
-    },
-    [register],
-  );
-
-  // Get all focusable elements within the modal
-  const getFocusableElements = (): HTMLElement[] => {
-    if (!modalRef.current) return [];
-    const focusableSelectors = [
-      'button:not([disabled])',
-      'input:not([disabled])',
-      'textarea:not([disabled])',
-      'select:not([disabled])',
-      'a[href]',
-      '[tabindex]:not([tabindex="-1"])',
-    ].join(', ');
-    return Array.from(
-      modalRef.current.querySelectorAll<HTMLElement>(focusableSelectors),
-    );
-  };
-
-  // Handle focus trapping
-  useEffect(() => {
-    if (!isOpen) return;
-
-    // Store the element that had focus before the modal opened
-    previousActiveElementRef.current = document.activeElement as HTMLElement;
-
-    // Set initial focus to the close button or email input
-    const focusableElements = getFocusableElements();
-    if (focusableElements.length > 0) {
-      // Try to focus the close button first, otherwise the email input
-      const closeButton = focusableElements.find(
-        (el) => el === closeButtonRef.current,
-      );
-      const emailInput = focusableElements.find(
-        (el) => el === emailInputRef.current,
-      );
-      (closeButton || emailInput || focusableElements[0])?.focus();
-    }
-
-    // Handle Tab key trapping
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-
-      const focusableElements = getFocusableElements();
-      if (focusableElements.length === 0) return;
-
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-
-      if (e.shiftKey) {
-        // Shift + Tab
-        if (document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        }
-      } else {
-        // Tab
-        if (document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      // Restore focus to the previous element when modal closes
-      if (previousActiveElementRef.current) {
-        previousActiveElementRef.current.focus();
-      }
-    };
-  }, [isOpen]);
-
   return (
     <Modal isOpen={isOpen}>
-      <div ref={modalRef}>
       {/* Header with warning icon */}
       <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-[10px] relative">
         <div className="flex items-center gap-3">
@@ -127,11 +40,9 @@ const DeleteAccountModal: React.FC<Props> = ({
           <h2 className="text-xl font-bold">{t('Profile.label.delete')}</h2>
         </div>
         <button
-          ref={closeButtonRef}
           onClick={closeModal}
-          className="absolute top-4 right-4 text-white hover:text-red-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-red-500 rounded"
+          className="absolute top-4 right-4 text-white hover:text-red-200 transition-colors"
           disabled={loading}
-          aria-label="Close"
         >
           <MdClose className="w-5 h-5" />
         </button>
@@ -166,29 +77,21 @@ const DeleteAccountModal: React.FC<Props> = ({
                   type="email"
                   id="email"
                   name="email"
-                  ref={emailInputCallbackRef}
+                  ref={register}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors text-gray-900 placeholder-gray-500"
                   placeholder="Enter your email address"
-                  autoComplete="email"
                   disabled={loading}
-                  aria-describedby="email-error"
-                  aria-required="true"
-                  aria-invalid={!!errors?.email?.message || !!error}
                 />
-                <div
-                  id="email-error"
-                  className="mt-2 text-sm text-red-600"
-                  role="alert"
-                  aria-live="assertive"
-                  aria-atomic="true"
-                  aria-relevant="additions text"
-                >
-                  {errors?.email?.message
-                    ? String(t(errors.email.message))
-                    : error
-                      ? 'Failed to delete account. Please try again.'
-                      : ''}
-                </div>
+                {errors?.email?.message && (
+                  <div className="mt-2 text-sm text-red-600">
+                    {String(t(errors.email.message))}
+                  </div>
+                )}
+                {error && (
+                  <div className="mt-2 text-sm text-red-600">
+                    Failed to delete account. Please try again.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -227,7 +130,6 @@ const DeleteAccountModal: React.FC<Props> = ({
           </div>
         </div>
       </form>
-      </div>
     </Modal>
   );
 };

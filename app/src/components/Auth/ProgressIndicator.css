@@ -57,7 +57,7 @@
 }
 
 .progress-indicator .step-text.active {
-  color: #0074E8;
+  color: var(--primary-color, #007bff);
   font-weight: 500;
   transform: scale(1.1);
 }

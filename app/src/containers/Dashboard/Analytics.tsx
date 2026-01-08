@@ -10,7 +10,7 @@ import {
   FaUser,
   FaWheelchair,
 } from 'react-icons/fa';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -115,77 +115,6 @@ const ChartCard: React.FC<{
 }) => {
   // Using baseColors directly
   // Custom tooltip to match the dark bubble style with a value and change percentage
-  const [activeIndex, setActiveIndex] = useState(
-    Math.max((data?.length ?? 1) - 1, 0),
-  );
-  const [isChartFocused, setIsChartFocused] = useState(false);
-  const chartRef = React.useRef<HTMLDivElement | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
-
-  useEffect(() => {
-    setActiveIndex(Math.max((data?.length ?? 1) - 1, 0));
-    setShowTooltip(false);
-  }, [data]);
-
-  useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowTooltip(false);
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, []);
-
-  const getPercentChange = () => {
-    if (!data || !data.length) return 0;
-    const current = data?.[activeIndex];
-    if (!current) return 0;
-    const previousValue =
-      activeIndex > 0 ? Number(data[activeIndex - 1]?.[dataKey] ?? 0) : 0;
-    const currentValue = Number(current?.[dataKey] ?? 0);
-    return previousValue > 0
-      ? ((currentValue - previousValue) / previousValue) * 100
-      : 0;
-  };
-
-  const activePoint = data?.[activeIndex];
-  const percentChange = getPercentChange();
-  const isUp = percentChange >= 0;
-
-  const formattedDate = activePoint
-    ? new Date(activePoint.date).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-      })
-    : '';
-  const formattedValue = activePoint
-    ? Number(activePoint[dataKey] ?? 0).toLocaleString()
-    : '';
-  const indicatorLeftPercent =
-    (data?.length ?? 0) > 1
-      ? (activeIndex / Math.max((data?.length ?? 1) - 1, 1)) * 100
-      : 0;
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
-      setShowTooltip(false);
-      return;
-    }
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
-    e.preventDefault();
-    setShowTooltip(true);
-    if (e.key === 'ArrowLeft') {
-      setActiveIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'ArrowRight') {
-      setActiveIndex((i) => Math.min(i + 1, (data?.length ?? 1) - 1));
-    } else if (e.key === 'Home') {
-      setActiveIndex(0);
-    } else if (e.key === 'End') {
-      setActiveIndex(Math.max((data?.length ?? 1) - 1, 0));
-    }
-  };
-
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const currentValue = Number(payload[0].value ?? 0);
@@ -205,7 +134,7 @@ const ChartCard: React.FC<{
             style={{
               background: baseColors.blueTooltip,
               color: 'white',
-              boxShadow: '0 12px 28px rgba(11,75,102,0.25)',          
+              boxShadow: '0 12px 28px rgba(11,75,102,0.25)',
               minWidth: 160,
             }}
           >
@@ -259,13 +188,12 @@ const ChartCard: React.FC<{
     >
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h2
+          <h3
             className="text-lg font-semibold"
             style={{ color: baseColors.grayText }}
-            aria-level={2}
           >
             {title}
-          </h2>
+          </h3>
           {subtitle && (
             <p className="text-xs" style={{ color: baseColors.grayText }}>
               {subtitle}
@@ -274,38 +202,17 @@ const ChartCard: React.FC<{
         </div>
         {timeRange && onChangeTimeRange && (
           <select
-            className="py-1.5 px-3 rounded-lg text-sm appearance-none bg-no-repeat pr-6"
+            className="border border-gray-300 py-1.5 px-3 rounded-lg focus:outline-none text-sm appearance-none bg-no-repeat pr-6"
             style={{
-              backgroundColor: '#006BD6',
-              color: '#E4F2FF',
+              backgroundColor: baseColors.brandPrimary,
+              color: baseColors.white,
               backgroundImage:
-                "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%23E4F2FF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m7 10 5 5 5-5'/%3e%3c/svg%3e\")",
-              backgroundSize: '18px 18px',
-              backgroundPosition: 'calc(100% - 12px) center',
-              paddingRight: '2.8rem',
-              minHeight: '40px',
-              border: '2px solid transparent',
-              outline: 'none',
-              boxShadow: 'none',
-              cursor: 'pointer',
+                "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A7CAFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e\")",
+              backgroundSize: '12px 12px',
+              backgroundPosition: 'calc(100% - 8px) center',
             }}
             value={timeRange}
             onChange={onChangeTimeRange}
-            aria-label={`${title} time range`}
-            onKeyDown={(e) => {
-              if (e.key === ' ' || e.key === 'Enter') {
-                e.preventDefault();
-                e.currentTarget.click();
-              }
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.border = '3px solid #FFFFFF';
-              e.currentTarget.style.boxShadow = '0 0 0 2px #006BD6';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.border = '2px solid transparent';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
           >
             <option value="week">Last 7 days</option>
             <option value="month">Last 30 days</option>
@@ -313,44 +220,11 @@ const ChartCard: React.FC<{
           </select>
         )}
       </div>
-      <div
-        ref={chartRef}
-        className="h-[260px] focus:outline-none relative"
-        tabIndex={0}
-        role="group"
-        aria-label={`${title} chart. Use left and right arrow keys to explore data points.`}
-        onKeyDown={handleKeyDown}
-        onFocus={() => {
-          setActiveIndex(Math.max((data?.length ?? 1) - 1, 0));
-          setShowTooltip(true);
-        }}
-        onFocusCapture={() => setIsChartFocused(true)}
-        onBlurCapture={() => setIsChartFocused(false)}
-        onMouseEnter={() => setShowTooltip(true)}
-        style={{
-          borderRadius: 12,
-          outline: 'none',
-          boxShadow: isChartFocused
-            ? '0 0 0 3px rgba(0,107,214,0.45)'
-            : 'none',
-        }}
-      >
+      <div className="h-[260px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
             margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-            onMouseMove={(state: any) => {
-              if (
-                state?.activeTooltipIndex !== undefined &&
-                state?.activeTooltipIndex !== null
-              ) {
-                setActiveIndex(state.activeTooltipIndex);
-                setShowTooltip(true);
-              }
-            }}
-            onMouseLeave={() =>
-              setShowTooltip(false)
-            }
           >
             <defs>
               <linearGradient id="primaryGradient" x1="0" y1="0" x2="0" y2="1">
@@ -391,15 +265,7 @@ const ChartCard: React.FC<{
             />
             <Tooltip
               cursor={{ stroke: '#94a3b8', strokeDasharray: '4 4' }}
-              active={!!activePoint && showTooltip}
-              payload={
-                activePoint
-                  ? [{ name: dataKey, value: activePoint[dataKey] }]
-                  : []
-              }
-              label={activePoint?.date}
               content={<CustomTooltip />}
-              wrapperStyle={{ display: 'none' }}
             />
             <Area
               type="monotone"
@@ -420,64 +286,6 @@ const ChartCard: React.FC<{
             />
           </AreaChart>
         </ResponsiveContainer>
-        {activePoint && showTooltip && (
-          <>
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute"
-              style={{
-                left: `${indicatorLeftPercent + 2}%`,
-                bottom: 40,
-                transform: 'translateX(-50%)',
-                background: baseColors.blueTooltip,
-                color: 'white',
-                padding: '6px 10px',
-                borderRadius: 10,
-                boxShadow: '0 12px 28px rgba(11,75,102,0.25)',
-                whiteSpace: 'nowrap',
-                fontSize: 12,
-              }}
-            >
-              <div className="font-semibold text-sm leading-tight">
-                {formattedValue}
-              </div>
-               <div className={`${isUp ? 'text-emerald-200' : 'text-red-200'}`}>
-                {isUp ? '▲' : '▼'} {Math.abs(percentChange).toFixed(0)}%{' '}
-                {compareLabel}
-              </div>
-            </div>
-          </>
-        )}
-        <div className="sr-only" aria-live="polite">
-          {activePoint
-            ? `${new Date(activePoint.date).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-              })}: ${Number(activePoint[dataKey] ?? 0).toLocaleString()} (${Math.abs(
-                percentChange,
-              ).toFixed(0)}% ${percentChange >= 0 ? 'up' : 'down'} ${compareLabel})`
-            : 'No data available'}
-        </div>
-      </div>
-      <div
-        className="mt-2 text-sm flex items-center gap-2"
-        style={{ color: baseColors.grayText }}
-      >
-        {activePoint ? (
-          <>
-            <span className="font-semibold">{formattedDate}</span>
-            <span>{formattedValue}</span>
-            <span className={isUp ? 'text-green-600' : 'text-red-600'}>
-              {isUp ? '▲' : '▼'} {Math.abs(percentChange).toFixed(0)}%{' '}
-              {compareLabel}
-            </span>
-          </>
-        ) : (
-          <span>No data available</span>
-        )}
-        <span className="ml-auto text-xs opacity-70">
-          Keyboard: ← → Home End
-        </span>
       </div>
     </div>
   );
@@ -680,13 +488,12 @@ export default function AnalyticsDashboard({
         ) : (
           Object.keys(profileCounts).length ? (
             <button
-              className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
+              className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none"
               style={{
                 backgroundColor: baseColors.brandPrimary,
                 color: baseColors.white,
               }}
               onClick={() => setShowMoreMetrics(!showMoreMetrics)}
-              tabIndex={0}
             >
               {showMoreMetrics ? 'Show Less' : 'Show More'}
             </button>

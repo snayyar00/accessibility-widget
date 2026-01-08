@@ -68,7 +68,7 @@ export default function Installation({ domain }: any) {
     textColor,
   }: StatCardProps) {
     const baseClasses =
-      'relative overflow-hidden rounded-2xl border backdrop-blur-lg transition-all duration-300';
+      'relative overflow-hidden rounded-2xl border backdrop-blur-md transition-all duration-300';
     const sizeClasses =
       size === 'large' ? 'p-6 sm:p-8 md:p-10 lg:p-12' : 'p-4 sm:p-6 md:p-8';
     const cardClassName = `${baseClasses} ${sizeClasses} ${className || ''}`;
@@ -77,13 +77,12 @@ export default function Installation({ domain }: any) {
       <div
         className={cardClassName}
         style={{
-          borderColor: 'rgba(255, 255, 255, 0.2)',
-          background: 'rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)',
+          borderColor: baseColors.blueAccent,
+          background: baseColors.statsCardGradient,
         }}
       >
-        {/* Frosted glass overlay for enhanced glassmorphism */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl"></div>
+        {/* Light overlay for better visibility */}
+        <div className="absolute inset-0 bg-white/5 rounded-2xl"></div>
         <div className="relative z-10 h-full flex flex-col">
           <div>
             <h3
@@ -130,12 +129,12 @@ export default function Installation({ domain }: any) {
         {hasGlow && (
           <>
             <div
-              className="absolute top-1/2 right-0 w-16 sm:w-24 md:w-32 h-16 sm:h-24 md:h-32 rounded-full blur-2xl opacity-60"
-              style={{ backgroundColor: 'rgba(153, 220, 251, 0.3)' }}
+              className="absolute top-1/2 right-0 w-16 sm:w-24 md:w-32 h-16 sm:h-24 md:h-32 rounded-full blur-2xl opacity-80"
+              style={{ backgroundColor: '#28667d' }}
             />
             <div
-              className="absolute top-1/2 right-2 sm:right-4 w-8 sm:w-12 md:w-16 h-8 sm:h-12 md:h-16 rounded-full blur-xl opacity-40"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+              className="absolute top-1/2 right-2 sm:right-4 w-8 sm:w-12 md:w-16 h-8 sm:h-12 md:h-16 rounded-full blur-xl opacity-60"
+              style={{ backgroundColor: '#183c4c' }}
             />
           </>
         )}
@@ -202,10 +201,18 @@ export default function Installation({ domain }: any) {
                       href="https://www.webability.io/installation"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full md:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg installation-guide-link"
+                      className="w-full md:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-colors installation-guide-link"
                       style={{
                         backgroundColor: baseColors.brandPrimary,
                         color: baseColors.white,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          baseColors.brandPrimaryHover;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          baseColors.brandPrimary;
                       }}
                     >
                       <span>View all guides</span>
@@ -221,7 +228,6 @@ export default function Installation({ domain }: any) {
                   href="https://www.webability.io/installation/how-to-install-webability-wordpress"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Step by step guides to install the widget on a WordPress website. Contains a list with 5 items."
                   className="border rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-md transition-shadow cursor-pointer group block no-underline"
                   style={{
                     backgroundColor: baseColors.white,
@@ -230,14 +236,12 @@ export default function Installation({ domain }: any) {
                     color: 'inherit',
                   }}
                 >
-                  <span className="sr-only">List with 5 items</span>
                   <div className="flex items-center justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaWordpressSimple
                           className="w-10 h-10"
                           style={{ color: '#3343AD' }}
-                          aria-hidden="true"
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -269,7 +273,6 @@ export default function Installation({ domain }: any) {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
-                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -299,7 +302,6 @@ export default function Installation({ domain }: any) {
                         <FaWebflow
                           className="w-10 h-10"
                           style={{ color: '#3343AD' }}
-                          aria-hidden="true"
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -325,7 +327,6 @@ export default function Installation({ domain }: any) {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
-                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -355,7 +356,6 @@ export default function Installation({ domain }: any) {
                         <FaWix
                           className="w-10 h-10"
                           style={{ color: '#3343AD' }}
-                          aria-hidden="true"
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -381,7 +381,6 @@ export default function Installation({ domain }: any) {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
-                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -411,7 +410,6 @@ export default function Installation({ domain }: any) {
                         <FaShopify
                           className="w-10 h-10"
                           style={{ color: '#3343AD' }}
-                          aria-hidden="true"
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -443,7 +441,6 @@ export default function Installation({ domain }: any) {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
-                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -473,7 +470,6 @@ export default function Installation({ domain }: any) {
                         <SiGoogletagmanager
                           className="w-10 h-10"
                           style={{ color: '#3343AD' }}
-                          aria-hidden="true"
                         />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -505,7 +501,6 @@ export default function Installation({ domain }: any) {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
-                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -520,103 +515,41 @@ export default function Installation({ domain }: any) {
             </div>
           </div>
 
-
           {/* Stats Section with Dark Blue Background */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#235a75] to-[#224452]">
+          <div
+            className="relative overflow-hidden rounded-2xl"
+            style={{
+              background: `linear-gradient(to bottom, #11163A, #445AE7)`,
+            }}
+          >
             {/* Background horizontal streaks */}
             <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#26627a] to-transparent"></div>
-              <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#234858] to-transparent"></div>
-              <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#26627a] to-transparent"></div>
+              <div
+                className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent to-transparent"
+                style={{
+                  background: `linear-gradient(to right, transparent, ${baseColors.blueAccent}, transparent)`,
+                }}
+              ></div>
+              <div
+                className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent to-transparent"
+                style={{
+                  background: `linear-gradient(to right, transparent, ${baseColors.blueAccent}, transparent)`,
+                }}
+              ></div>
+              <div
+                className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent to-transparent"
+                style={{
+                  background: `linear-gradient(to right, transparent, ${baseColors.blueAccent}, transparent)`,
+                }}
+              ></div>
             </div>
 
-            <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-12 xl:p-16">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12 h-full">
-                {/* Main feature card - left side, spans 2 rows */}
-                <div className="lg:col-span-1 flex items-center mb-6 lg:mb-0">
-                  <StatCard
-                    title="Built for Scale, Chosen by the Best."
-                    subtitle="Reasons why Leading Brands Choose AI Accessibility"
-                    size="large"
-                    className="h-full w-full"
-                    titleColor="#ffffff"
-                    subtitleColor="#99DCFB"
-                    textColor="#99DCFB"
-                  />
-                </div>
-
-                {/* Right side - responsive grid layout */}
-                <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 auto-rows-fr">
-                  {/* Top row */}
-                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="48 Hours"
-                      subtitle="Time to compliance"
-                      description="AI remediation delivers immediate result"
-                      size="medium"
-                      hasGlow={true}
-                      className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
-                    />
-                  </div>
-                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="99.7%"
-                      subtitle="Legal risk reduction"
-                      description="Automatic WCAG 2.1 AA compliance protection"
-                      size="medium"
-                      className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
-                    />
-                  </div>
-
-                  {/* Middle row */}
-                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="2.3X"
-                      subtitle="Revenue increase potential"
-                      description="Accessible sites convert better to all users"
-                      size="medium"
-                      hasGlow={true}
-                      className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
-                    />
-                  </div>
-                  <div className="h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="98%"
-                      subtitle="Websites fail accessibility tests"
-                      description="Gain competitive advantage with compliance"
-                      size="medium"
-                      className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
-                    />
-                  </div>
-
-                  {/* Bottom row - spans 2 columns on md+ screens */}
-                  <div className="md:col-span-2 h-48 sm:h-52 md:h-56 lg:h-60">
-                    <StatCard
-                      title="$13 Trillion"
-                      subtitle="Global disability market value"
-                      description="World's largest underserved consumer segment"
-                      size="medium"
-                      hasGlow={true}
-                      className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
-                    />
-                  </div>
-                </div>
-              </div>
+            <div>
+              <img
+                src="/images/Installation_page_image.png"
+                alt="Installation guide"
+                className="w-full h-auto rounded-lg"
+              />
             </div>
           </div>
         </div>

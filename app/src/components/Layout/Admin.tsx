@@ -275,15 +275,14 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
       {/* Main content area with sidebar and content */}
       <div className="flex flex-grow">
         <Sidebar />
-        <main role="main" className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
+        <div className="flex-grow bg-body overflow-y-auto px-[15px] py-[32px] sm:min-h-[calc(100vh_-_64px)]">
           <Switch>
             {routes
               .filter((route) => {
-                // Hide service-requests route if organization ID doesn't match allowed org
+                // Hide service-requests route if organization ID is not 1 or 87
                 if (route.path === '/service-requests') {
                   const currentOrganizationId = userData?.current_organization_id;
-                  const allowedOrgId = Number(process.env.REACT_APP_CURRENT_ORG || '1');
-                  return currentOrganizationId === allowedOrgId;
+                  return currentOrganizationId === 1 || currentOrganizationId === 87;
                 }
                 return true;
               })
@@ -379,7 +378,7 @@ const AdminLayout: React.FC<Props> = ({ signout, options }) => {
             />
             <Redirect from="*" to="/dashboard" />
           </Switch>
-        </main>
+        </div>
       </div>
     </div>
   );

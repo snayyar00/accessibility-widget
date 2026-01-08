@@ -72,12 +72,6 @@ const StatementGenerator: React.FC = () => {
   const [selectedEnhancements, setSelectedEnhancements] = useState<string[]>(
     [],
   );
-  const [formErrors, setFormErrors] = useState<{
-    companyName?: string;
-    websiteUrl?: string;
-    contactEmail?: string;
-    industry?: string;
-  }>({});
 
   const [translateStatement, { loading: isTranslating }] = useMutation(
     translateStatementMutation,
@@ -546,19 +540,10 @@ Return ONLY a valid JSON object with the same structure, with all values profess
   const handleInputChange =
     (field: keyof StatementFormData) =>
     (event: React.ChangeEvent<HTMLInputElement> | any) => {
-      const value = event.target.value as string;
       setFormData((prev) => ({
         ...prev,
-        [field]: value,
+        [field]: event.target.value as string,
       }));
-
-      // Clear error when user starts typing
-      if (formErrors[field as keyof typeof formErrors]) {
-        setFormErrors((prev) => ({
-          ...prev,
-          [field]: undefined,
-        }));
-      }
 
       // Clear translation cache when key settings change
       if (
@@ -601,32 +586,6 @@ Return ONLY a valid JSON object with the same structure, with all values profess
     };
   }, []);
 
-  // Validation function
-  const validateForm = (): boolean => {
-    const errors: {
-      companyName?: string;
-      websiteUrl?: string;
-      contactEmail?: string;
-      industry?: string;
-    } = {};
-
-    if (!formData.companyName.trim()) {
-      errors.companyName = 'Company Name is required';
-    }
-    if (!formData.websiteUrl.trim()) {
-      errors.websiteUrl = 'Website URL is required';
-    }
-    if (!formData.contactEmail.trim()) {
-      errors.contactEmail = 'Contact Email is required';
-    }
-    if (!formData.industry) {
-      errors.industry = 'Industry is required';
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   // Debounced statement generation to prevent rapid API calls
   const generateStatementDebounced = useCallback(() => {
     // Clear existing timeout
@@ -637,7 +596,13 @@ Return ONLY a valid JSON object with the same structure, with all values profess
     // Set new timeout for debouncing
     translationTimeoutRef.current = setTimeout(async () => {
       // Inline handleGenerateStatement to avoid stale closure
-      if (!validateForm()) {
+      if (
+        !formData.companyName ||
+        !formData.websiteUrl ||
+        !formData.contactEmail ||
+        !formData.industry
+      ) {
+        toast.error('Please fill in all required fields');
         return;
       }
 
@@ -879,7 +844,7 @@ Return ONLY a valid JSON object with the same structure, with all values profess
 
     const t = await getTranslations(data.language);
 
-    return `## ${t.title} ${data.companyName}
+    return `# ${t.title} ${data.companyName}
 
 *Last updated: ${currentDate}*
 
@@ -1582,16 +1547,8 @@ ${
                 <div>
                   {/* Format Selection */}
                   <div className="mb-6">
-                    <div
-                      role="tablist"
-                      aria-label="Format selection"
-                      className="flex flex-row sm:flex-col bg-gray-50 border border-[#A2ADF3] rounded-lg p-1"
-                    >
+                    <div className="flex flex-row sm:flex-col bg-gray-50 border border-[#A2ADF3] rounded-lg p-1">
                       <button
-                        role="tab"
-                        aria-selected={selectedFormat === 'markdown'}
-                        aria-controls="format-panel-markdown"
-                        id="format-tab-markdown"
                         onClick={() => setSelectedFormat('markdown')}
                         className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'markdown'
@@ -1603,10 +1560,6 @@ ${
                         Markdown
                       </button>
                       <button
-                        role="tab"
-                        aria-selected={selectedFormat === 'html'}
-                        aria-controls="format-panel-html"
-                        id="format-tab-html"
                         onClick={() => setSelectedFormat('html')}
                         className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'html'
@@ -1618,10 +1571,6 @@ ${
                         HTML
                       </button>
                       <button
-                        role="tab"
-                        aria-selected={selectedFormat === 'text'}
-                        aria-controls="format-panel-text"
-                        id="format-tab-text"
                         onClick={() => setSelectedFormat('text')}
                         className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'text'
@@ -1674,89 +1623,61 @@ ${
                     )}
                   </div>
 
-                  <ul
-                    role="list"
-                    className="flex flex-col md:flex-row gap-4 mb-4 justify-end list-none p-0 m-0"
-                  >
-                    <li>
-                      <Button
-                        variant="outlined"
-                        onClick={copyToClipboard}
-                        startIcon={<HiClipboardCopy />}
-                        sx={{
-                          py: 1.5,
-                          borderRadius: '12px',
-                          textTransform: 'none',
-                          fontSize: '1rem',
-                          fontWeight: '600',
-                          borderColor: '#0033ed',
-                          color: '#0033ed',
-                          '&:focus-visible': {
-                            outline: 'none !important',
-                            boxShadow:
-                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
-                          },
-                          '&:focus': {
-                            outline: 'none !important',
-                            boxShadow:
-                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
-                          },
-                          '&:hover': {
-                            backgroundColor: '#f8faff',
-                            borderColor: '#0029c7',
-                          },
-                        }}
-                      >
-                        Copy {selectedFormat.toUpperCase()}
-                      </Button>
-                    </li>
-                    <li>
-                      <Button
-                        variant="contained"
-                        onClick={downloadStatement}
-                        startIcon={<HiDownload />}
-                        sx={{
-                          py: 1.5,
-                          borderRadius: '12px',
-                          textTransform: 'none',
-                          fontSize: '1rem',
-                          fontWeight: '600',
-                          backgroundColor: '#0033ed',
-                          '&:focus-visible': {
-                            outline: 'none !important',
-                            boxShadow:
-                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
-                          },
-                          '&:focus': {
-                            outline: 'none !important',
-                            boxShadow:
-                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
-                          },
-                          '&:hover': {
-                            backgroundColor: '#0029c7',
-                          },
-                        }}
-                      >
-                        Download {selectedFormat.toUpperCase()}
-                      </Button>
-                    </li>
-                  </ul>
+                  <div className="flex flex-col md:flex-row gap-4 mb-4 justify-end">
+                    <Button
+                      variant="outlined"
+                      onClick={copyToClipboard}
+                      startIcon={<HiClipboardCopy />}
+                      sx={{
+                        py: 1.5,
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        borderColor: '#0033ed',
+                        color: '#0033ed',
+                        '&:hover': {
+                          backgroundColor: '#f8faff',
+                          borderColor: '#0029c7',
+                        },
+                      }}
+                    >
+                      Copy {selectedFormat.toUpperCase()}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={downloadStatement}
+                      startIcon={<HiDownload />}
+                      sx={{
+                        py: 1.5,
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        backgroundColor: '#0033ed',
+                        '&:hover': {
+                          backgroundColor: '#0029c7',
+                        },
+                      }}
+                    >
+                      Download {selectedFormat.toUpperCase()}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center min-h-[600px] bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-50 rounded-2xl border border-[#A2ADF3] p-8">
                   <div className="relative mb-6">
                     <img
                       src={noReportFoundImage}
-                      alt=""
-                      role="presentation"
+                      alt="No statement generated"
                       className="w-24 h-30 mx-auto drop-shadow-sm"
                     />
                   </div>
                   <div className="text-center max-w-md">
-                    <h2 className="text-lg font-medium text-gray-700 mb-2 leading-relaxed">
+                    <h3 className="text-lg font-medium text-gray-700 mb-2 leading-relaxed">
                       Your statement will be shown here after generated
-                    </h2>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    </h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">
                       Fill in the form and click "Generate AI Statement" to
                       create your accessibility statement
                     </p>
@@ -1781,7 +1702,6 @@ ${
                   <div className="flex items-center mb-6">
                     <button
                       onClick={() => setShowEnhancePage(false)}
-                      aria-label="Back"
                       className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                       <svg
@@ -1789,7 +1709,6 @@ ${
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
-                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
@@ -1822,11 +1741,7 @@ ${
                       <div className="font-medium mb-1">
                         Add testing details
                       </div>
-                      <div className={`text-sm ${
-                        selectedEnhancements.includes('add-testing')
-                          ? 'text-white'
-                          : 'opacity-80'
-                      }`}>
+                      <div className="text-sm opacity-80">
                         Include automated testing tools and procedures
                       </div>
                     </button>
@@ -1840,11 +1755,7 @@ ${
                       }`}
                     >
                       <div className="font-medium mb-1">Add Response Time</div>
-                      <div className={`text-sm ${
-                        selectedEnhancements.includes('add-timeline')
-                          ? 'text-white'
-                          : 'opacity-80'
-                      }`}>
+                      <div className="text-sm opacity-80">
                         Include specific response times for feedback
                       </div>
                     </button>
@@ -1858,11 +1769,7 @@ ${
                       }`}
                     >
                       <div className="font-medium mb-1">Add Staff Training</div>
-                      <div className={`text-sm ${
-                        selectedEnhancements.includes('add-training')
-                          ? 'text-white'
-                          : 'opacity-80'
-                      }`}>
+                      <div className="text-sm opacity-80">
                         Include information about accessibility training
                       </div>
                     </button>
@@ -1876,11 +1783,7 @@ ${
                       }`}
                     >
                       <div className="font-medium mb-1">Add More Standards</div>
-                      <div className={`text-sm ${
-                        selectedEnhancements.includes('add-standards')
-                          ? 'text-white'
-                          : 'opacity-80'
-                      }`}>
+                      <div className="text-sm opacity-80">
                         Include EN 301 549 and Section 508 compliance
                       </div>
                     </button>
@@ -1897,23 +1800,16 @@ ${
                       Fill in your details to generate a customized
                       accessibility statement
                     </p>
-                    <p className="text-sm text-gray-600 mt-2" role="note" aria-label="Required fields instruction">
-                      Fields marked with an asterisk (*) are required.
-                    </p>
                   </div>
 
                   <div className="space-y-4">
                     <TextField
                       fullWidth
-                      label="Company Name"
-                      name="companyName"
+                      label="Company Name *"
                       value={formData.companyName}
                       onChange={handleInputChange('companyName')}
                       placeholder="Enter your company name"
                       variant="outlined"
-                      required
-                      error={!!formErrors.companyName}
-                      helperText={formErrors.companyName}
                       inputProps={{
                         'aria-required': true,
                         'aria-label': 'Company Name',
@@ -1927,111 +1823,44 @@ ${
                           e.stopPropagation();
                         },
                       }}
-                      FormHelperTextProps={{
-                        id: 'company-name-error',
-                        role: 'alert',
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-input::placeholder': {
-                          color: '#6B7280',
-                          opacity: 1,
-                        },
-                      }}
                     />
 
                     <TextField
                       fullWidth
-                      label="Website URL"
-                      name="websiteUrl"
+                      label="Website URL *"
                       value={formData.websiteUrl}
                       onChange={handleInputChange('websiteUrl')}
                       placeholder="https://example.com"
                       variant="outlined"
-                      required
-                      error={!!formErrors.websiteUrl}
-                      helperText={formErrors.websiteUrl}
                       inputProps={{
-                        'aria-required': true,
-                        'aria-label': 'Website URL',
-                        'aria-invalid': formErrors.websiteUrl ? true : false,
-                        'aria-describedby': formErrors.websiteUrl
-                          ? 'website-url-error'
-                          : undefined,
-                        autoComplete: 'url',
                         onPaste: (e) => {
                           // Explicitly allow paste
                           e.stopPropagation();
-                        },
-                      }}
-                      FormHelperTextProps={{
-                        id: 'website-url-error',
-                        role: 'alert',
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-input::placeholder': {
-                          color: '#6B7280',
-                          opacity: 1,
                         },
                       }}
                     />
 
                     <TextField
                       fullWidth
-                      label="Contact Email"
-                      name="contactEmail"
+                      label="Contact Email *"
                       value={formData.contactEmail}
                       onChange={handleInputChange('contactEmail')}
                       placeholder="accessibility@example.com"
                       variant="outlined"
-                      required
-                      error={!!formErrors.contactEmail}
-                      helperText={formErrors.contactEmail}
                       inputProps={{
-                        'aria-required': true,
-                        'aria-label': 'Contact Email',
-                        'aria-invalid': formErrors.contactEmail ? true : false,
-                        'aria-describedby': formErrors.contactEmail
-                          ? 'contact-email-error'
-                          : undefined,
-                        autoComplete: 'email',
                         onPaste: (e) => {
                           // Explicitly allow paste
                           e.stopPropagation();
                         },
                       }}
-                      FormHelperTextProps={{
-                        id: 'contact-email-error',
-                        role: 'alert',
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-input::placeholder': {
-                          color: '#6B7280',
-                          opacity: 1,
-                        },
-                      }}
                     />
 
-                    <FormControl
-                      fullWidth
-                      required
-                      error={!!formErrors.industry}
-                    >
-                      <InputLabel id="industry-label">Industry</InputLabel>
+                    <FormControl fullWidth>
+                      <InputLabel>Industry *</InputLabel>
                       <Select
                         value={formData.industry}
                         onChange={handleInputChange('industry')}
-                        label="Industry"
-                        labelId="industry-label"
-                        name="industry"
-                        inputProps={{
-                          'aria-required': 'true',
-                          'aria-label': 'Industry, required',
-                          'aria-invalid': !!formErrors.industry,
-                          'aria-describedby': formErrors.industry
-                            ? 'industry-error'
-                            : undefined,
-                          'aria-labelledby': 'industry-label',
-                        }}
+                        label="Industry *"
                       >
                         {industries.map((industry) => (
                           <MenuItem key={industry} value={industry}>
@@ -2039,20 +1868,6 @@ ${
                           </MenuItem>
                         ))}
                       </Select>
-                      {formErrors.industry && (
-                        <p
-                          id="industry-error"
-                          role="alert"
-                          className="MuiFormHelperText-root MuiFormHelperText-contained Mui-error"
-                          style={{
-                            margin: '3px 14px 0',
-                            fontSize: '0.75rem',
-                            color: '#d32f2f',
-                          }}
-                        >
-                          {formErrors.industry}
-                        </p>
-                      )}
                     </FormControl>
 
                     {/* Custom Language Selector */}
@@ -2066,9 +1881,6 @@ ${
                           onClick={() =>
                             setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
                           }
-                          aria-label="Language selector"
-                          aria-expanded={isLanguageDropdownOpen}
-                          aria-haspopup="listbox"
                           className="w-full px-3 py-3 text-left bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                         >
                           <span className="block truncate">
@@ -2076,8 +1888,7 @@ ${
                           </span>
                           <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                             <svg
-                              className="h-5 w-5"
-                              style={{ color: '#767676' }}
+                              className="h-5 w-5 text-gray-400"
                               viewBox="0 0 20 20"
                               fill="currentColor"
                             >
@@ -2100,8 +1911,7 @@ ${
                                 onChange={(e) =>
                                   setLanguageSearch(e.target.value)
                                 }
-                                aria-label="Search languages"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm placeholder:text-gray-600"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                               />
                             </div>
                             <div
@@ -2171,13 +1981,8 @@ ${
                             setShowOptionalFields(!showOptionalFields)
                           }
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                            showOptionalFields ? 'bg-blue-600' : ''
+                            showOptionalFields ? 'bg-blue-600' : 'bg-gray-300'
                           }`}
-                          style={{
-                            backgroundColor: showOptionalFields
-                              ? '#2563eb'
-                              : '#878993',
-                          }}
                           aria-label="Toggle optional fields"
                         >
                           <span
@@ -2225,15 +2030,6 @@ ${
                                 placeholder="https://webability.io"
                                 variant="outlined"
                                 size="small"
-                                inputProps={{
-                                  autoComplete: 'url',
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-input::placeholder': {
-                                    color: '#6B7280',
-                                    opacity: 1,
-                                  },
-                                }}
                               />
                             </div>
                           </div>
@@ -2253,15 +2049,6 @@ ${
                                 placeholder="+1 (555) 123-4567"
                                 variant="outlined"
                                 size="small"
-                                inputProps={{
-                                  autoComplete: 'tel',
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-input::placeholder': {
-                                    color: '#6B7280',
-                                    opacity: 1,
-                                  },
-                                }}
                               />
                               <TextField
                                 fullWidth
@@ -2271,15 +2058,6 @@ ${
                                 placeholder="https://example.com/accessibility-feedback"
                                 variant="outlined"
                                 size="small"
-                                inputProps={{
-                                  autoComplete: 'url',
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-input::placeholder': {
-                                    color: '#6B7280',
-                                    opacity: 1,
-                                  },
-                                }}
                               />
                               <TextField
                                 fullWidth
@@ -2289,15 +2067,6 @@ ${
                                 placeholder="123 Main St, Suite 100, City, State 12345"
                                 variant="outlined"
                                 size="small"
-                                inputProps={{
-                                  autoComplete: 'street-address',
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-input::placeholder': {
-                                    color: '#6B7280',
-                                    opacity: 1,
-                                  },
-                                }}
                               />
                               <TextField
                                 fullWidth
@@ -2307,15 +2076,6 @@ ${
                                 placeholder="P.O. Box 123, City, State 12345"
                                 variant="outlined"
                                 size="small"
-                                inputProps={{
-                                  autoComplete: 'address-line2',
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-input::placeholder': {
-                                    color: '#6B7280',
-                                    opacity: 1,
-                                  },
-                                }}
                               />
                             </div>
                           </div>
@@ -2360,17 +2120,6 @@ ${
                           height: '1px',
                           background:
                             'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
-                        },
-                        '&:focus-visible': {
-                          outline: 'none !important',
-                          boxShadow:
-                            // 3px white ring against the blue button + 5px dark ring against the light background
-                            '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
-                        },
-                        '&:focus': {
-                          outline: 'none !important',
-                          boxShadow:
-                            '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
                         },
                         '&:hover': {
                           background: '#2c3a99',
