@@ -49,41 +49,63 @@ const SignInForm: React.FC<Props> = ({
 
       <form onSubmit={onSubmit} className="mb-[24px]">
         <div>
+          <p className="text-xs text-gray-600 mb-4">
+            Fields marked with an asterisk (*) are required.
+          </p>
           <div className="mb-4 w-full block">
             <FormControl>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email <span className="text-red-600" aria-label="required">*</span>
+              </label>
               <Input
                 type="email"
-                placeholder="Email or Username"
+                id="email"
+                placeholder="Email"
                 name="email"
                 ref={register}
+                autoComplete="username"
+                aria-required="true"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                aria-invalid={formErrors?.email ? 'true' : 'false'}
+                aria-describedby={formErrors?.email ? 'email-error' : undefined}
               />
               {formErrors?.email?.message && (
-                <ErrorText message={String(t(formErrors.email.message))} />
+                <ErrorText id="email-error" message={String(t(formErrors.email.message))} />
               )}
             </FormControl>
           </div>
           <div className="mb-4 w-full block">
             <FormControl>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password <span className="text-red-600" aria-label="required">*</span>
+              </label>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
+                  id="password"
                   placeholder="Password"
                   name="password"
                   ref={register}
+                  autoComplete="current-password"
+                  aria-required="true"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                  aria-invalid={formErrors?.password ? 'true' : 'false'}
+                  aria-describedby={formErrors?.password ? 'password-error' : undefined}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  style={{ color: '#6C7586' }}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
                     <svg
-                      className="h-5 w-5 text-gray-400"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      style={{ color: '#6C7586' }}
                     >
                       <path
                         strokeLinecap="round"
@@ -100,10 +122,11 @@ const SignInForm: React.FC<Props> = ({
                     </svg>
                   ) : (
                     <svg
-                      className="h-5 w-5 text-gray-400"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      style={{ color: '#6C7586' }}
                     >
                       <path
                         strokeLinecap="round"
@@ -116,7 +139,7 @@ const SignInForm: React.FC<Props> = ({
                 </button>
               </div>
               {formErrors?.password?.message && (
-                <ErrorText message={String(t(formErrors.password.message))} />
+                <ErrorText id="password-error" message={String(t(formErrors.password.message))} />
               )}
             </FormControl>
           </div>
@@ -132,7 +155,7 @@ const SignInForm: React.FC<Props> = ({
             </div>
             <Link
               to="/auth/forgot-password"
-              className="text-[14px] text-blue-600 hover:text-blue-800"
+              className="text-[14px] text-blue-600 hover:text-blue-800 underline"
             >
               Forgot password?
             </Link>
@@ -173,7 +196,7 @@ const SignInForm: React.FC<Props> = ({
         New to {organizationName}?{' '}
         <Link
           to="/auth/signup"
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="text-blue-600 hover:text-blue-800 font-medium underline"
         >
           Sign up
         </Link>

@@ -271,12 +271,12 @@ const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({
   return (
     <div 
       className="text-white w-full md:w-auto shrink-0 md:max-w-md relative shadow-md rounded-lg"
-      style={{ backgroundColor: '#3b82f6' }} // Using blue-500 for better visibility
+      style={{ backgroundColor: '#2563eb' }} // Using blue-600 for WCAG 2 AA contrast compliance (4.5:1)
     >
         {/* Right-aligned dismiss button - positioned absolutely */}
         <button
           onClick={handleDismiss}
-          className="absolute top-4 right-2 md:top-4 md:right-4 text-white hover:text-blue-100 transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-500 rounded z-10"
+          className="absolute top-4 right-2 md:top-4 md:right-4 text-white hover:text-blue-100 transition-colors p-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 rounded z-10"
           aria-label="Dismiss"
         >
           <FaTimes className="h-4 w-4 md:h-5 md:w-5" />
@@ -306,7 +306,7 @@ const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({
               onActivateSubscription={handleActivateSubscription}
               onOpenActivateModal={handleActivateModal}
               onBuyLicense={handleBuyLicense}
-              className="px-3 py-1.5 bg-transparent hover:bg-blue-600 text-white border border-white rounded-md text-xs font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 bg-transparent hover:bg-blue-700 text-white border border-white rounded-md text-xs font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -331,7 +331,7 @@ const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({
               onActivateSubscription={handleActivateSubscription}
               onOpenActivateModal={handleActivateModal}
               onBuyLicense={handleBuyLicense}
-              className="px-4 py-1.5 bg-transparent hover:bg-blue-600 text-white border border-white rounded-md text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-500 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-1.5 bg-transparent hover:bg-blue-700 text-white border border-white rounded-md text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-600 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
         </div>
