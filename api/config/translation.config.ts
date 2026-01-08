@@ -4,8 +4,8 @@ import { IS_DEV, IS_LOCAL, IS_PROD } from './env'
 export const TRANSLATION_CONFIG = {
   // AI Model Configuration - Optimized for speed and unlimited generation
   model: {
-    name: 'google/gemini-flash-1.5', // Fastest model with excellent quality
-    fallback: 'google/gemini-pro-1.5', // High-quality fallback
+    name: 'google/gemini-2.0-flash-lite-001', // Fastest model with excellent quality
+    fallback: 'google/gemini-2.5-flash-lite', // High-quality fallback
     temperature: 0.1, // Slight randomness for natural translations
     maxTokens: 8192, // Increased for comprehensive statements with no limits
     timeout: 45000, // 45 second timeout for larger responses and complex languages

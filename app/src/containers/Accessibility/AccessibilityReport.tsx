@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import './Accessibility.css'; // Ensure your CSS file includes styles for the accordion
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
-import { FaUniversalAccess, FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { FaUniversalAccess, FaCheckCircle, FaCircle, FaTimes, FaClock } from 'react-icons/fa';
 import { Zap, RefreshCw, BarChart3, ChevronDown } from 'lucide-react';
 import { TbZoomScanFilled } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
@@ -173,6 +173,8 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   // Modal state for success message with report link
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [reportUrl, setReportUrl] = useState<string>('');
+  // Modal state for full site scan notification
+  const [isFullSiteScanModalOpen, setIsFullSiteScanModalOpen] = useState(false);
   const screenReaderAnnouncementRef = useRef<HTMLDivElement>(null);
 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
@@ -355,6 +357,37 @@ const AccessibilityReport = ({ currentDomain }: any) => {
     if (isMounted.current) {
       setcorrectDomain(validDomain);
     }
+
+    // For full site scans, don't show loading and show email notification instead
+    if (isFullSiteScan) {
+      dispatch(setSelectedDomain(validDomain));
+      try {
+        const { data } = await startJobQuery({
+          variables: {
+            url: encodeURIComponent(validDomain),
+            use_cache: scanType === 'cached' && !isFullSiteScan,
+            full_site_scan: isFullSiteScan,
+          },
+        });
+        if (
+          data &&
+          data.startAccessibilityReportJob &&
+          data.startAccessibilityReportJob.jobId
+        ) {
+          // Show modal instead of toast
+          setIsFullSiteScanModalOpen(true);
+          // Don't set jobId or isGenerating - let it run in background
+          // The backend will email the user when the report is ready
+        } else {
+          toast.error('Failed to start report job.');
+        }
+      } catch (error) {
+        toast.error('Failed to start report job.');
+      }
+      return;
+    }
+
+    // Normal scan flow (non-full site scan)
     dispatch(setIsGenerating(true));
     dispatch(setSelectedDomain(validDomain));
     try {
@@ -2009,6 +2042,134 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                 </div>
               )}
           </div>
+
+          {/* Full Site Scan Modal */}
+          {isFullSiteScanModalOpen && (
+            <div
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+              style={{
+                animation: 'fadeIn 0.2s ease-out',
+              }}
+            >
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                style={{
+                  animation: 'fadeIn 0.2s ease-out',
+                }}
+                onClick={() => setIsFullSiteScanModalOpen(false)}
+              />
+
+              {/* Modal */}
+              <div
+                className="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden"
+                style={{
+                  animation: 'slideUp 0.3s ease-out',
+                  boxShadow:
+                    '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                }}
+              >
+                {/* Modal Header */}
+                <div
+                  className="p-8 md:p-10 text-white relative overflow-hidden"
+                  style={{
+                    backgroundColor: '#0052CC',
+                  }}
+                >
+                  {/* Decorative background pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
+                  </div>
+
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
+                        <FaClock className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold mb-2 leading-tight">
+                          Full Site Scan Started
+                        </h3>
+                        <p className="text-white/90 text-base font-medium">
+                          Your comprehensive scan is in progress
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsFullSiteScanModalOpen(false)}
+                      className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    >
+                      <FaTimes className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-8 md:p-10">
+                  <div
+                    className="rounded-2xl p-7 mb-8 border-2"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, #F8FBFF 0%, #E8F4FD 100%)',
+                      borderColor: '#E1F0F7',
+                    }}
+                  >
+                    <ul className="text-base text-gray-700 space-y-4 font-medium">
+                      <li className="flex items-center gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: '#0052CC' }}
+                        ></div>
+                        Full site scan takes time as it scans multiple pages across your website to provide a comprehensive accessibility analysis.
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <div
+                          className="w-2 h-2 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: '#0052CC' }}
+                        ></div>
+                        We will inform you once the scan is complete through email. You'll receive a detailed report with all the findings.
+                      </li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={() => setIsFullSiteScanModalOpen(false)}
+                    className="w-full py-4 px-6 text-white rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
+                    style={{
+                      backgroundColor: '#0052CC',
+                      boxShadow:
+                        '0 10px 25px -5px rgba(0, 82, 204, 0.4), 0 4px 6px -2px rgba(0, 82, 204, 0.1)',
+                    }}
+                  >
+                    Got it
+                  </button>
+                </div>
+              </div>
+
+              <style>{`
+                @keyframes fadeIn {
+                  from {
+                    opacity: 0;
+                  }
+                  to {
+                    opacity: 1;
+                  }
+                }
+                
+                @keyframes slideUp {
+                  from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateY(0);
+                  }
+                }
+              `}</style>
+            </div>
+          )}
 
           {/* Success Modal with link to open report */}
           <Modal 
