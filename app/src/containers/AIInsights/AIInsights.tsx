@@ -14,6 +14,7 @@ import { Site } from '@/generated/graphql';
 import { CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
 import Select from 'react-select/creatable';
+import { components } from 'react-select';
 
 import { Search, Monitor, Loader2, Brain } from 'lucide-react';
 import {
@@ -220,6 +221,50 @@ const AIInsights: React.FC = () => {
                   }
                   classNamePrefix="react-select"
                   className="w-full min-w-0"
+                  components={{
+                    ClearIndicator: (props: any) => {
+                      const {
+                        innerProps,
+                        isDisabled,
+                        clearValue,
+                      } = props;
+                      
+                      // Enhance innerProps to make it focusable and keyboard accessible
+                      const enhancedInnerProps = {
+                        ...innerProps,
+                        tabIndex: isDisabled ? -1 : 0,
+                        role: 'button',
+                        'aria-label': 'Clear selection',
+                        onClick: (e: React.MouseEvent) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isDisabled && clearValue) {
+                            clearValue();
+                          }
+                          // Also call original onClick if it exists
+                          if (innerProps.onClick) {
+                            innerProps.onClick(e);
+                          }
+                        },
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isDisabled && clearValue) {
+                              clearValue();
+                            }
+                          } else if (innerProps.onKeyDown) {
+                            innerProps.onKeyDown(e);
+                          }
+                        },
+                      };
+
+                      return components.ClearIndicator({
+                        ...props,
+                        innerProps: enhancedInnerProps,
+                      });
+                    },
+                  }}
                   styles={{
                     control: (provided: any, state: any) => ({
                       ...provided,
