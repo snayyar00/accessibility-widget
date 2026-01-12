@@ -506,7 +506,10 @@ const PlanSetting: React.FC<{
                   disabled={couponClicked}
                   type="button"
                   onClick={handleCouponValidation}
-                  className=" bg-primary flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
+                  className="flex justify-center py-[10.9px] px-3 text-white rounded-lg w-40 mx-3"
+                  style={{ backgroundColor: '#0052CC' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0040A0'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                 >
                   {couponClicked ? (
                     <CircularProgress sx={{ color: 'white' }} size={20} />

@@ -81,7 +81,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
                       ${isActive ? "active" : ""}
                       ${isUpcoming && animDirection === 'forward' ? "opacity-50" : "translate-y-0 opacity-100"}
                     `}
-                    style={isActive ? { color: '#0074E8' } : isCompleted ? { color: '#0074E8' } : { color: '#475569' }}
+                    style={isActive ? { color: '#0052CC' } : isCompleted ? { color: '#0052CC' } : { color: '#475569' }}
                   >
                     {t(step.description)}
                   </p>
@@ -111,7 +111,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path 
                         d="M9 6L15 12L9 18" 
-                        stroke={isCompleted ? "#007bff" : "#333"} 
+                        stroke={isCompleted ? "#0052CC" : "#333"} 
                         strokeWidth="2" 
                         strokeLinecap="round" 
                         strokeLinejoin="round" 
@@ -160,7 +160,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
                   </p>
                   <p 
                     className={`text-xs`}
-                    style={isActive || isCompleted ? { color: '#0074E8' } : { color: '#475569' }}
+                    style={isActive || isCompleted ? { color: '#0052CC' } : { color: '#475569' }}
                   >
                     {t(step.description)}
                   </p>

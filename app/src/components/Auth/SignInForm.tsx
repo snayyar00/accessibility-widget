@@ -65,7 +65,15 @@ const SignInForm: React.FC<Props> = ({
                 ref={register}
                 autoComplete="username"
                 aria-required="true"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border border-gray-300 rounded-lg"
+                onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                  e.currentTarget.style.borderColor = '#0052CC';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 82, 204, 0.2)';
+                }}
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                  e.currentTarget.style.borderColor = '#d1d5db';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
                 aria-invalid={formErrors?.email ? 'true' : 'false'}
                 aria-describedby={formErrors?.email ? 'email-error' : undefined}
               />
@@ -155,7 +163,8 @@ const SignInForm: React.FC<Props> = ({
             </div>
             <Link
               to="/auth/forgot-password"
-              className="text-[14px] text-blue-600 hover:text-blue-800 underline"
+              className="text-[14px] underline"
+              style={{ color: '#0052CC' }}
             >
               Forgot password?
             </Link>
@@ -165,7 +174,7 @@ const SignInForm: React.FC<Props> = ({
             type="submit"
             disabled={isSubmitting}
             className="w-full text-white font-medium py-3 px-4 rounded-lg transition-colors"
-            style={{ backgroundColor: '#3343ad' }}
+            style={{ backgroundColor: '#0052CC' }}
           >
             {isSubmitting ? t('Common.text.please_wait') : 'Login'}
           </Button>
@@ -196,7 +205,8 @@ const SignInForm: React.FC<Props> = ({
         New to {organizationName}?{' '}
         <Link
           to="/auth/signup"
-          className="text-blue-600 hover:text-blue-800 font-medium underline"
+          className="font-medium underline"
+          style={{ color: '#0052CC' }}
         >
           Sign up
         </Link>
