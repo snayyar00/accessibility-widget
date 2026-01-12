@@ -27,29 +27,29 @@
 }
 
 .progress-indicator .step-circle.active {
-  background-color: var(--primary-color, #007bff);
+  background-color: var(--primary-color, #0052CC);
   color: white;
   transform: scale(1.05);
 }
 
 .progress-indicator .step-circle.active::after {
-  box-shadow: 0 0 0 12px rgba(0, 123, 255, 0.1), 0 0 20px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 12px rgba(0, 82, 204, 0.1), 0 0 20px rgba(0, 82, 204, 0.2);
   animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 12px rgba(0, 123, 255, 0.1), 0 0 20px rgba(0, 123, 255, 0.2); }
-  50% { box-shadow: 0 0 0 14px rgba(0, 123, 255, 0.1), 0 0 25px rgba(0, 123, 255, 0.3); }
-  100% { box-shadow: 0 0 0 12px rgba(0, 123, 255, 0.1), 0 0 20px rgba(0, 123, 255, 0.2); }
+  0% { box-shadow: 0 0 0 12px rgba(0, 82, 204, 0.1), 0 0 20px rgba(0, 82, 204, 0.2); }
+  50% { box-shadow: 0 0 0 14px rgba(0, 82, 204, 0.1), 0 0 25px rgba(0, 82, 204, 0.3); }
+  100% { box-shadow: 0 0 0 12px rgba(0, 82, 204, 0.1), 0 0 20px rgba(0, 82, 204, 0.2); }
 }
 
 .progress-indicator .step-circle.completed {
-  background-color: var(--primary-color, #007bff);
+  background-color: var(--primary-color, #0052CC);
   color: white;
 }
 
 .progress-indicator .step-circle.completed::after {
-  box-shadow: 0 0 0 8px rgba(0, 123, 255, 0.1);
+  box-shadow: 0 0 0 8px rgba(0, 82, 204, 0.1);
 }
 
 .progress-indicator .step-text {
@@ -57,7 +57,7 @@
 }
 
 .progress-indicator .step-text.active {
-  color: #0074E8;
+  color: #0052CC;
   font-weight: 500;
   transform: scale(1.1);
 }

@@ -253,7 +253,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
         <div
           className="p-4 sm:p-8 text-white relative overflow-hidden flex-shrink-0"
           style={{
-            background: 'linear-gradient(135deg, #3A4FD1 0%, #3D7A9E 100%)',
+            backgroundColor: '#0052CC',
           }}
         >
           {/* Decorative background pattern */}
@@ -334,8 +334,20 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                     className={`w-full px-5 py-4 border-2 rounded-xl focus:outline-none transition-all duration-200 text-gray-800 font-medium email-input ${
                       emailError
                         ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100'
-                        : 'border-gray-200 focus:border-[#445AE7] focus:ring-4 focus:ring-[#445AE7]/20'
+                        : 'border-gray-200'
                     }`}
+                    onFocus={(e) => {
+                      if (!emailError) {
+                        e.currentTarget.style.borderColor = '#0052CC';
+                        e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 82, 204, 0.2)';
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (!emailError) {
+                        e.currentTarget.style.borderColor = '#e5e7eb';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }
+                    }}
                     disabled={isLoading}
                     required
                     aria-describedby={emailError ? 'email-error' : 'email-help'}
@@ -382,7 +394,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                   <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-3 text-base">
                     <div
                       className="w-8 h-8 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: '#445AE7' }}
+                      style={{ backgroundColor: '#0052CC' }}
                     >
                       <FaMagic className="w-4 h-4 text-white" aria-hidden="true" />
                     </div>
@@ -393,7 +405,7 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                       <li key={index} className="flex items-center gap-3">
                         <div
                           className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: '#445AE7' }}
+                          style={{ backgroundColor: '#0052CC' }}
                         ></div>
                         {point.text}
                       </li>
@@ -410,14 +422,24 @@ const InstallationEmailModal: React.FC<InstallationEmailModalProps> = ({
                 aria-describedby={isLoading ? 'loading-announcement' : undefined}
                 className="w-full py-3 sm:py-4 px-4 sm:px-6 text-white rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-2 sm:gap-3 disabled:cursor-not-allowed disabled:opacity-50 hover:scale-[1.02] active:scale-[0.98] text-sm sm:text-base"
                 style={{
-                  background:
+                  backgroundColor:
                     isLoading || !email.trim()
                       ? '#94A3B8'
-                      : 'linear-gradient(135deg, #445AE7 0%, #4A8BB5 100%)',
+                      : '#0052CC',
                   boxShadow:
                     isLoading || !email.trim()
                       ? 'none'
-                      : '0 10px 25px -5px rgba(85, 158, 193, 0.4), 0 4px 6px -2px rgba(85, 158, 193, 0.1)',
+                      : '0 10px 25px -5px rgba(0, 82, 204, 0.4), 0 4px 6px -2px rgba(0, 82, 204, 0.1)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading && email.trim()) {
+                    e.currentTarget.style.backgroundColor = '#003EB8';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLoading && email.trim()) {
+                    e.currentTarget.style.backgroundColor = '#0052CC';
+                  }
                 }}
               >
                 {isLoading ? (

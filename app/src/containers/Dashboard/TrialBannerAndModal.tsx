@@ -869,7 +869,8 @@ const TrialBannerAndModal: React.FC<any> = ({
                     <div className="pt-2">
                       <button
                         type="button"
-                        className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none skip-trial-button"
+                        style={{ backgroundColor: '#0052CC' }}
                         onClick={() => {
                           if (
                             !formData.domainName ||
@@ -1085,8 +1086,8 @@ const TrialBannerAndModal: React.FC<any> = ({
                       <CardHeader
                         title={
                           <div className="flex justify-between items-center">
-                            <div className="text-2xl font-semibold text-primary flex items-center gap-2">
-                              <MdBarChart className="text-primary h-6 w-6" />
+                            <div className="text-2xl font-semibold flex items-center gap-2" style={{ color: '#0052CC' }}>
+                              <MdBarChart className="h-6 w-6" style={{ color: '#0052CC' }} />
                               {appSumoCount == Infinity
                                 ? 'Agency Unlimited Plan'
                                 : appSumoCount >= 50
@@ -1106,7 +1107,8 @@ const TrialBannerAndModal: React.FC<any> = ({
                                     userData?.email,
                                   );
                                 }}
-                                className="my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary bg-primary text-white"
+                                className="my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary text-white"
+                                style={{ backgroundColor: '#0052CC' }}
                               >
                                 {portalClick ? (
                                   <CircularProgress
@@ -1129,14 +1131,14 @@ const TrialBannerAndModal: React.FC<any> = ({
                           <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-3 w-full text-left px-5">
                             {/* card 1 */}
                             <div className="w-full md:w-auto text-center md:text-left">
-                              <div className="bg-blue-50 p-3 rounded-full flex justify-center">
-                                <FaUsers className="h-6 w-6 text-sapphire-blue" />
+                              <div className="p-3 rounded-full flex justify-center" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
+                                <FaUsers className="h-6 w-6" style={{ color: '#0052CC' }} />
                               </div>
                               <div>
-                                <p className="text-sm text-sapphire-blue">
+                                <p className="text-sm" style={{ color: '#0052CC' }}>
                                   Total Active Sites
                                 </p>
-                                <p className="text-2xl font-bold text-sapphire-blue text-center">
+                                <p className="text-2xl font-bold text-center" style={{ color: '#0052CC' }}>
                                   {totalActive}
                                 </p>
                               </div>
@@ -1186,7 +1188,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                                 backgroundColor: 'white',
                                 borderRadius: '0.375rem',
                                 boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                                color: '#242f57',
+                                color: '#0052CC',
                               },
                               '& .MuiTab-root': {
                                 textTransform: 'none',
@@ -1226,25 +1228,27 @@ const TrialBannerAndModal: React.FC<any> = ({
                               <Card className="bg-white rounded-lg h-[120px] flex flex-col">
                                 <CardContent className="p-4 flex-grow flex flex-col justify-between">
                                   <div className="flex justify-between items-center">
-                                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
-                                      <FaCreditCard className="h-4 w-4 text-sapphire-blue" />
+                                    <h3 className="font-medium flex items-center gap-1" style={{ color: '#0052CC' }}>
+                                      <FaCreditCard className="h-4 w-4" style={{ color: '#0052CC' }} />
                                       Active Sites
                                     </h3>
                                     <Chip
                                       label={subscriptionData.monthly.active}
                                       size="small"
-                                      className="bg-blue-100 text-blue-800 min-w-[32px] h-[24px]"
+                                      className="min-w-[32px] h-[24px]"
+                                      style={{ backgroundColor: 'rgba(0, 82, 204, 0.2)', color: '#0052CC' }}
                                     />
                                   </div>
                                   <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
                                     <div
-                                      className="bg-primary h-2 rounded-full"
+                                      className="h-2 rounded-full"
                                       style={{
                                         width: `${
                                           (subscriptionData.monthly.active /
                                             totalActive) *
                                           100
                                         }%`,
+                                        backgroundColor: '#0052CC',
                                       }}
                                     ></div>
                                   </div>
@@ -1254,7 +1258,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               <Card className="bg-white rounded-lg h-[120px] flex flex-col">
                                 <CardContent className="p-4 flex-grow flex flex-col justify-between">
                                   <div className="flex justify-between items-center">
-                                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
+                                    <h3 className="font-medium flex items-center gap-1" style={{ color: '#0052CC' }}>
                                       <FaClock className="h-4 w-4 text-amber-500" />
                                       Trial Sites
                                     </h3>
@@ -1262,18 +1266,19 @@ const TrialBannerAndModal: React.FC<any> = ({
                                       label={subscriptionData.monthly.trial}
                                       size="small"
                                       variant="outlined"
-                                      className="bg-light-primary text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
+                                      className="text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
                                     />
                                   </div>
                                   <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
                                     <div
-                                      className="bg-primary h-2 rounded-full"
+                                      className="h-2 rounded-full"
                                       style={{
                                         width: `${
                                           (subscriptionData.monthly.trial /
                                             totalActive) *
                                           100
                                         }%`,
+                                        backgroundColor: '#0052CC',
                                       }}
                                     ></div>
                                   </div>
@@ -1292,25 +1297,27 @@ const TrialBannerAndModal: React.FC<any> = ({
                               <Card className="bg-white rounded-lg h-[120px] flex flex-col">
                                 <CardContent className="p-4 flex-grow flex flex-col justify-between">
                                   <div className="flex justify-between items-center">
-                                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
-                                      <FaCreditCard className="h-4 w-4 text-sapphire-blue" />
+                                    <h3 className="font-medium flex items-center gap-1" style={{ color: '#0052CC' }}>
+                                      <FaCreditCard className="h-4 w-4" style={{ color: '#0052CC' }} />
                                       Active Sites
                                     </h3>
                                     <Chip
                                       label={subscriptionData.yearly.active}
                                       size="small"
-                                      className="bg-blue-100 text-blue-800 min-w-[32px] h-[24px]"
+                                      className="min-w-[32px] h-[24px]"
+                                      style={{ backgroundColor: 'rgba(0, 82, 204, 0.2)', color: '#0052CC' }}
                                     />
                                   </div>
                                   <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
                                     <div
-                                      className="bg-primary h-2 rounded-full"
+                                      className="h-2 rounded-full"
                                       style={{
                                         width: `${
                                           (subscriptionData.yearly.active /
                                             totalActive) *
                                           100
                                         }%`,
+                                        backgroundColor: '#0052CC',
                                       }}
                                     ></div>
                                   </div>
@@ -1320,7 +1327,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               <Card className="bg-white rounded-lg h-[120px] flex flex-col">
                                 <CardContent className="p-4 flex-grow flex flex-col justify-between">
                                   <div className="flex justify-between items-center">
-                                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
+                                    <h3 className="font-medium flex items-center gap-1" style={{ color: '#0052CC' }}>
                                       <FaClock className="h-4 w-4 text-amber-500" />
                                       Trial Sites
                                     </h3>
@@ -1328,18 +1335,19 @@ const TrialBannerAndModal: React.FC<any> = ({
                                       label={subscriptionData.yearly.trial}
                                       size="small"
                                       variant="outlined"
-                                      className="bg-light-primary text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
+                                      className="text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
                                     />
                                   </div>
                                   <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
                                     <div
-                                      className="bg-primary h-2 rounded-full"
+                                      className="h-2 rounded-full"
                                       style={{
                                         width: `${
                                           (subscriptionData.yearly.trial /
                                             totalActive) *
                                           100
                                         }%`,
+                                        backgroundColor: '#0052CC',
                                       }}
                                     ></div>
                                   </div>

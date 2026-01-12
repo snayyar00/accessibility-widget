@@ -2341,7 +2341,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={onSave}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#2E3A9E] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-transparent rounded-md text-white focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#2E3A9E] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      style={{ backgroundColor: '#0052CC' }}
                     >
                       Save
                     </button>
@@ -2757,7 +2758,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             toast.error('Please provide a valid Image or URL.');
                           }
                         }}
-                        className="px-6 py-2.5 bg-[#445AE7] text-white rounded-lg text-sm font-medium hover:bg-[#3A4BC7] transition-all duration-200 focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 focus:outline-none shadow-sm hover:shadow-md"
+                        className="px-6 py-2.5 text-white rounded-lg text-sm font-medium transition-all duration-200 focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 focus:outline-none shadow-sm hover:shadow-md"
+                        style={{ backgroundColor: '#0052CC' }}
                       >
                         Set Logo
                       </button>
@@ -3069,7 +3071,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={onSave}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#2E3A9E] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-transparent rounded-md text-white focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#2E3A9E] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      style={{ backgroundColor: '#0052CC' }}
                     >
                       Save
                     </button>

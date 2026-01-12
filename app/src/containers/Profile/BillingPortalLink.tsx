@@ -65,7 +65,10 @@ function BillingPortalLink() {
           aria-busy={clicked}
           aria-label={clicked ? 'Loading, opening billing portal' : 'Open billing portal'}
           aria-describedby="billing-loading-announcement"
-          className="w-auto md:w-auto flex-shrink-0 px-4 md:px-6 py-2 md:py-2.5 bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-blue-700 transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+          className="w-auto md:w-auto flex-shrink-0 px-4 md:px-6 py-2 md:py-2.5 text-white rounded-lg text-xs md:text-sm font-medium transition-all duration-200 focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          style={{
+            backgroundColor: '#0052CC',
+          }}
         >
           {clicked ? (
             <span className="flex items-center space-x-2">

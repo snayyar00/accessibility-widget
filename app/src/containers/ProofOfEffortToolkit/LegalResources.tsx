@@ -281,11 +281,11 @@ const LegalResources: React.FC = () => {
               onClick={() => setActiveLegalTab('response-documents')}
               className={`pb-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
                 activeLegalTab === 'response-documents'
-                  ? 'text-[#445AE7] font-semibold'
+                  ? 'text-[#0052CC] font-semibold'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
               style={{
-                borderBottomColor: activeLegalTab === 'response-documents' ? baseColors.brandPrimary : 'transparent',
+                borderBottomColor: activeLegalTab === 'response-documents' ? '#0052CC' : 'transparent',
               }}
             >
               Response documents
@@ -294,11 +294,11 @@ const LegalResources: React.FC = () => {
               onClick={() => setActiveLegalTab('request-support')}
               className={`pb-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${
                 activeLegalTab === 'request-support'
-                  ? 'text-[#445AE7] font-semibold'
+                  ? 'text-[#0052CC] font-semibold'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
               style={{
-                borderBottomColor: activeLegalTab === 'request-support' ? baseColors.brandPrimary : 'transparent',
+                borderBottomColor: activeLegalTab === 'request-support' ? '#0052CC' : 'transparent',
               }}
             >
               Request legal support
@@ -313,7 +313,7 @@ const LegalResources: React.FC = () => {
             <div className="lg:w-1/3">
               <div className="mb-4">
                 <div className="mb-4 p-3 rounded-lg inline-flex items-center justify-center" style={{ backgroundColor: baseColors.white }}>
-                  <MdLock className="w-6 h-6" style={{ color: baseColors.brandPrimary }} />
+                  <MdLock className="w-6 h-6" style={{ color: '#0052CC' }} />
                 </div>
                 <h2 className="text-2xl font-bold mb-3" style={{ color: baseColors.grayDark2 }}>
                   Response documents
@@ -341,8 +341,8 @@ const LegalResources: React.FC = () => {
                   <button
                     className="px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium border-2 hover:shadow-sm w-full md:w-auto disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
-                      borderColor: baseColors.brandPrimary,
-                      color: baseColors.brandPrimary,
+                      borderColor: '#0052CC',
+                      color: '#0052CC',
                       backgroundColor: 'transparent',
                     }}
                     onMouseEnter={(e) => {
@@ -358,7 +358,7 @@ const LegalResources: React.FC = () => {
                   >
                     {isLoadingPreview ? (
                       <>
-                        <CircularProgress size={14} style={{ color: baseColors.brandPrimary }} />
+                        <CircularProgress size={14} style={{ color: '#0052CC' }} />
                         <span>Loading...</span>
                       </>
                     ) : (
@@ -413,8 +413,8 @@ const LegalResources: React.FC = () => {
                   <button
                     className="px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium border-2 hover:shadow-sm w-full md:w-auto disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
-                      borderColor: baseColors.brandPrimary,
-                      color: baseColors.brandPrimary,
+                      borderColor: '#0052CC',
+                      color: '#0052CC',
                       backgroundColor: 'transparent',
                     }}
                     onMouseEnter={(e) => {
@@ -430,7 +430,7 @@ const LegalResources: React.FC = () => {
                   >
                     {isLoadingPreview ? (
                       <>
-                        <CircularProgress size={14} style={{ color: baseColors.brandPrimary }} />
+                        <CircularProgress size={14} style={{ color: '#0052CC' }} />
                         <span>Loading...</span>
                       </>
                     ) : (
@@ -479,7 +479,7 @@ const LegalResources: React.FC = () => {
             <div className="lg:w-1/3">
               <div className="mb-4">
                 <div className="mb-4 p-3 rounded-lg inline-flex items-center justify-center" style={{ backgroundColor: baseColors.white }}>
-                  <MdLock className="w-6 h-6" style={{ color: baseColors.brandPrimary }} />
+                  <MdLock className="w-6 h-6" style={{ color: '#0052CC' }} />
                 </div>
                 <h2 className="text-2xl font-bold mb-3" style={{ color: baseColors.grayDark2 }}>
                   Request legal support
@@ -520,8 +520,8 @@ const LegalResources: React.FC = () => {
                           borderWidth: '1px',
                         }}
                         onFocus={(e) => {
-                          e.currentTarget.style.borderColor = baseColors.brandPrimary;
-                          e.currentTarget.style.boxShadow = `0 0 0 2px ${baseColors.blueLight}`;
+                          e.currentTarget.style.borderColor = '#0052CC';
+                          e.currentTarget.style.boxShadow = `0 0 0 2px rgba(0, 82, 204, 0.2)`;
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor = baseColors.grayInput;
@@ -586,8 +586,8 @@ const LegalResources: React.FC = () => {
                           borderWidth: '1px',
                         }}
                         onFocus={(e) => {
-                          e.currentTarget.style.borderColor = baseColors.brandPrimary;
-                          e.currentTarget.style.boxShadow = `0 0 0 2px ${baseColors.blueLight}`;
+                          e.currentTarget.style.borderColor = '#0052CC';
+                          e.currentTarget.style.boxShadow = `0 0 0 2px rgba(0, 82, 204, 0.2)`;
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor = baseColors.grayInput;
@@ -615,8 +615,8 @@ const LegalResources: React.FC = () => {
                           borderWidth: '1px',
                         }}
                         onFocus={(e) => {
-                          e.currentTarget.style.borderColor = baseColors.brandPrimary;
-                          e.currentTarget.style.boxShadow = `0 0 0 2px ${baseColors.blueLight}`;
+                          e.currentTarget.style.borderColor = '#0052CC';
+                          e.currentTarget.style.boxShadow = `0 0 0 2px rgba(0, 82, 204, 0.2)`;
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor = baseColors.grayInput;
@@ -633,18 +633,18 @@ const LegalResources: React.FC = () => {
                         style={{
                           minHeight: '40px',
                           color: baseColors.white,
-                          backgroundColor: isSubmittingLegalSupport ? baseColors.grayMuted : baseColors.brandPrimary,
+                          backgroundColor: isSubmittingLegalSupport ? baseColors.grayMuted : '#0052CC',
                           border: 'none',
                           cursor: isSubmittingLegalSupport ? 'not-allowed' : 'pointer',
                         }}
                         onMouseEnter={(e) => {
                           if (!isSubmittingLegalSupport) {
-                            e.currentTarget.style.backgroundColor = baseColors.brandPrimaryHover;
+                            e.currentTarget.style.backgroundColor = '#003EB8';
                           }
                         }}
                         onMouseLeave={(e) => {
                           if (!isSubmittingLegalSupport) {
-                            e.currentTarget.style.backgroundColor = baseColors.brandPrimary;
+                            e.currentTarget.style.backgroundColor = '#0052CC';
                           }
                         }}
                       >

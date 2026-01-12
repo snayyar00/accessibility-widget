@@ -1036,15 +1036,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   type="button"
                   className="search-button px-8 py-3 rounded-lg font-medium text-lg whitespace-nowrap transition-all duration-200 hover:shadow-md w-full"
                   style={{
-                    backgroundColor: '#3343AD',
+                    backgroundColor: '#0052CC',
                     color: baseColors.white,
                     minHeight: '50px',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#2A3690';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#3343AD';
                   }}
                   onClick={() => {
                     if (!currentLanguage || !currentLanguage.trim()) {
@@ -1076,8 +1070,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               <Card
                 className="w-full"
                 style={{
-                  background:
-                    'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+                  backgroundColor: '#13206B',
 
                   borderRadius: '12px',
                   padding: '16px',
@@ -1143,8 +1136,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               <Card
                 className="w-full"
                 style={{
-                  background:
-                    'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+                  backgroundColor: '#13206B',
 
                   borderRadius: '12px',
                   padding: '16px',
@@ -1219,8 +1211,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
               <Card
                 className="w-full"
                 style={{
-                  background:
-                    'linear-gradient(135deg, #222D73 0%, #3A4A8F 100%)',
+                  backgroundColor: '#13206B',
 
                   borderRadius: '12px',
                   padding: '16px',

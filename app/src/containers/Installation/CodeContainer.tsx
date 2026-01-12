@@ -486,7 +486,7 @@ export default function CodeContainer({
         <div className="p-4 border-b border-gray-100 bg-gray-50 widget-customization-options">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h- rounded-lg flex items-center justify-center">
-              <FaMagic className="w-4 h-4" style={{ color: '#205A76' }} />
+              <FaMagic className="w-4 h-4" style={{ color: '#0052CC' }} />
             </div>
             <div>
               <h3 className="text-base font-semibold text-gray-900">
@@ -534,7 +534,7 @@ export default function CodeContainer({
                   <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                     <FaChevronDown
                       className="w-3 h-3"
-                      style={{ color: '#7E8EEE' }}
+                      style={{ color: '#0052CC' }}
                       aria-hidden="true"
                     />
                   </div>
@@ -581,7 +581,7 @@ export default function CodeContainer({
                       className={`w-3 h-3 transition-transform ${
                         isLanguageDropdownOpen ? 'rotate-180' : ''
                       }`}
-                      style={{ color: '#7E8EEE' }}
+                      style={{ color: '#0052CC' }}
                       aria-hidden="true"
                     />
                   </button>
@@ -660,7 +660,7 @@ export default function CodeContainer({
                                 </span>
                               </div>
                               {language === lang.code && (
-                                <FaCheck className="w-4 h-4 text-blue-500" aria-hidden="true" />
+                                <FaCheck className="w-4 h-4" style={{ color: '#0052CC' }} aria-hidden="true" />
                               )}
                             </button>
                           ))
@@ -722,7 +722,7 @@ export default function CodeContainer({
                         className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 transition-transform ${
                           isIconTypeDropdownOpen ? 'rotate-180' : ''
                         }`}
-                        style={{ color: '#7E8EEE' }}
+                        style={{ color: '#0052CC' }}
                         aria-hidden="true"
                       />
                     </button>
@@ -754,7 +754,7 @@ export default function CodeContainer({
                               </div>
                               <div className="flex-shrink-0 ml-4">
                                 {iconType === type.value && (
-                                  <FaCheck className="w-4 h-4 text-blue-500" />
+                                  <FaCheck className="w-4 h-4" style={{ color: '#0052CC' }} />
                                 )}
                               </div>
                             </button>
@@ -805,7 +805,7 @@ export default function CodeContainer({
                           className={`w-3 h-3 transition-transform ${
                             isWidgetSizeDropdownOpen ? 'rotate-180' : ''
                           }`}
-                          style={{ color: '#7E8EEE' }}
+                          style={{ color: '#0052CC' }}
                           aria-hidden="true"
                         />
                       </button>
@@ -833,7 +833,7 @@ export default function CodeContainer({
                                   {size.label}
                                 </span>
                                 {widgetSize === size.value && (
-                                  <FaCheck className="w-4 h-4 text-blue-500" />
+                                  <FaCheck className="w-4 h-4" style={{ color: '#0052CC' }} />
                                 )}
                               </button>
                             ))}
@@ -899,7 +899,8 @@ export default function CodeContainer({
             >
               <button
                 type="button"
-                className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center cursor-help focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="w-4 h-4 rounded-full flex items-center justify-center cursor-help focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                style={{ backgroundColor: '#0052CC' }}
                 aria-label="Help: Adjust the widget position from the corner (in pixels)"
                 aria-describedby="offset-tooltip"
                 aria-expanded={isOffsetTooltipVisible}
@@ -950,7 +951,8 @@ export default function CodeContainer({
               <span className="text-sm font-bold text-gray-800">Desktop</span>
               <div className="w-4 h-4 bg-blue-100 rounded flex items-center justify-center">
                 <svg
-                  className="w-3 h-3 text-blue-500"
+                  className="w-3 h-3"
+                  style={{ color: '#0052CC' }}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -968,7 +970,7 @@ export default function CodeContainer({
             <div className="grid grid-cols-2 gap-4">
               {/* Horizontal Offset */}
               <div>
-                <label htmlFor="horizontal-offset-input" id="horizontal-offset-label" className="block text-xs font-medium text-blue-600 mb-2">
+                <label htmlFor="horizontal-offset-input" id="horizontal-offset-label" className="block text-xs font-medium mb-2" style={{ color: '#0052CC' }}>
                   Horizontal
                 </label>
                 <div className="relative">
@@ -986,7 +988,8 @@ export default function CodeContainer({
                   />
                   <div className="absolute left-2 top-1/2 transform -translate-y-1/2" aria-hidden="true">
                     <svg
-                      className="w-4 h-4 text-blue-500"
+                      className="w-4 h-4"
+                      style={{ color: '#0052CC' }}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       aria-hidden="true"
@@ -1000,7 +1003,7 @@ export default function CodeContainer({
 
               {/* Vertical Offset */}
               <div>
-                <label htmlFor="vertical-offset-input" id="vertical-offset-label" className="block text-xs font-medium text-blue-600 mb-2">
+                <label htmlFor="vertical-offset-input" id="vertical-offset-label" className="block text-xs font-medium mb-2" style={{ color: '#0052CC' }}>
                   Vertical
                 </label>
                 <div className="relative">
@@ -1018,7 +1021,8 @@ export default function CodeContainer({
                   />
                   <div className="absolute left-2 top-1/2 transform -translate-y-1/2" aria-hidden="true">
                     <svg
-                      className="w-4 h-4 text-blue-500"
+                      className="w-4 h-4"
+                      style={{ color: '#0052CC' }}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       aria-hidden="true"
@@ -1066,7 +1070,7 @@ export default function CodeContainer({
             }}
             className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
               selectedScript === 'new'
-                ? 'bg-[#445AE7] text-white shadow-md'
+                ? 'bg-[#0052CC] text-white shadow-md'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -1091,8 +1095,8 @@ export default function CodeContainer({
             }}
             className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
               selectedScript === 'old'
-                ? 'bg-[#445AE7] text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#0052CC] text-white shadow-md'
+                : 'bg-gray-100 text-black hover:bg-gray-200'
             }`}
           >
             Old Widget Script
@@ -1101,8 +1105,8 @@ export default function CodeContainer({
             onClick={() => setSelectedScript('gtm')}
             className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
               selectedScript === 'gtm'
-                ? 'bg-[#445AE7] text-white shadow-md'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-[#0052CC] text-white shadow-md'
+                : 'bg-gray-100 text-black hover:bg-gray-200'
             }`}
           >
             GTM Script
@@ -1116,7 +1120,7 @@ export default function CodeContainer({
         >
           <code
             className="text-sm lg:text-base font-mono break-all pb-16 block whitespace-pre-wrap md:whitespace-pre"
-            style={{ color: '#3343AD' }}
+            style={{ color: '#0052CC' }}
           >
             {selectedScript === 'new'
               ? newFormattedCodeString
@@ -1152,14 +1156,14 @@ export default function CodeContainer({
                 selectedScript === 'new'
                   ? copySuccessNew
                     ? '#107736' // 4.53:1 contrast ratio with #E6E6E6 (WCAG AA compliant)
-                    : '#3343AD'
+                    : '#0052CC'
                   : selectedScript === 'gtm'
                   ? copySuccessGtm
                     ? '#107736' // 4.53:1 contrast ratio with #E6E6E6 (WCAG AA compliant)
-                    : '#3343AD'
+                    : '#0052CC'
                   : copySuccess
                   ? '#107736' // 4.53:1 contrast ratio with #E6E6E6 (WCAG AA compliant)
-                  : '#3343AD',
+                  : '#0052CC',
               color:
                 selectedScript === 'new'
                   ? copySuccessNew
@@ -1219,9 +1223,10 @@ export default function CodeContainer({
             <>
               <button
                 onClick={() => setShowEmailModal(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#445AE7] hover:bg-[#e6f3fa] text-[#445AE7] rounded-lg font-medium transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-white border hover:bg-[#e6f3fa] rounded-lg font-medium transition-colors"
+                style={{ borderColor: '#0052CC', color: '#0052CC' }}
               >
-                <FaEnvelope className="w-4 h-4" />
+                <FaEnvelope className="w-4 h-4" style={{ color: '#0052CC' }} />
                 Send Instructions
               </button>
             </>
@@ -1230,9 +1235,10 @@ export default function CodeContainer({
           {/* Customize Button */}
           <button
             onClick={() => setShowCustomization(!showCustomization)}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#445AE7] hover:bg-[#e6f3fa] text-[#445AE7] rounded-lg font-medium transition-colors customize-widget-button"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border hover:bg-[#e6f3fa] rounded-lg font-medium transition-colors customize-widget-button"
+            style={{ borderColor: '#0052CC', color: '#0052CC' }}
           >
-            <FaMagic className="w-4 h-4" />
+            <FaMagic className="w-4 h-4" style={{ color: '#0052CC' }} />
             {showCustomization ? 'Hide Options' : 'Customize Script'}
           </button>
         </div>
@@ -1249,11 +1255,11 @@ export default function CodeContainer({
             aria-label="Contact Support"
             className="text-sm font-medium hover:underline transition-all cursor-pointer"
             style={{
-              color: '#445AE7',
+              color: '#0052CC',
               textDecoration: 'none',
             }}
             onMouseOver={(e) => (e.currentTarget.style.color = '#3a4bc7')}
-            onMouseOut={(e) => (e.currentTarget.style.color = '#445AE7')}
+            onMouseOut={(e) => (e.currentTarget.style.color = '#0052CC')}
           >
             Contact Support
           </a>

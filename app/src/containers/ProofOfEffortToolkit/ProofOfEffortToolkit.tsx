@@ -2177,10 +2177,11 @@ const ProofOfEffortToolkit: React.FC = () => {
               <div className="flex-1 flex items-center justify-center py-12">
                 <div className="text-center max-w-md mx-auto px-6">
                   <div className="pb-8">
-                    <FiFile
-                      className="w-16 h-16 text-blue-600 mx-auto"
-                      aria-hidden="true"
-                    />
+                      <FiFile
+                        className="w-16 h-16 mx-auto"
+                        style={{ color: '#0052CC' }}
+                        aria-hidden="true"
+                      />
                   </div>
                   <h2 className="text-2xl font-medium text-gray-900 mb-6">
                     Legal Docs for Your Team
@@ -2193,11 +2194,15 @@ const ProofOfEffortToolkit: React.FC = () => {
                   </p>
                   <div className="flex gap-3 justify-center">
                     <button
-                      className={`poe-send-email-button inline-flex items-center gap-2 px-4 py-2 border border-[#445AE7] rounded-md transition-colors ${
+                      className={`poe-send-email-button inline-flex items-center gap-2 px-4 py-2 border rounded-md transition-colors ${
                         isDownloadingZip || isEmailSending
                           ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                          : 'text-white bg-[#445AE7] hover:bg-[#3a4fd1]'
+                          : 'text-white hover:bg-[#003EB8]'
                       }`}
+                      style={{
+                        borderColor: isDownloadingZip || isEmailSending ? '#9ca3af' : '#0052CC',
+                        backgroundColor: isDownloadingZip || isEmailSending ? '#f3f4f6' : '#0052CC',
+                      }}
                       onClick={handleSendViaEmail}
                       disabled={isDownloadingZip || isEmailSending}
                     >
@@ -2208,7 +2213,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <MdEmail className="w-4 h-4" aria-hidden="true" />
+                          <MdEmail className="w-4 h-4" style={{ color: '#ffffff' }} aria-hidden="true" />
                           Send via email
                         </>
                       )}
@@ -2240,7 +2245,8 @@ const ProofOfEffortToolkit: React.FC = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
                       <FiFile
-                        className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
+                        className="w-5 h-5 mt-0.5 flex-shrink-0"
+                        style={{ color: '#0052CC' }}
                         aria-hidden="true"
                       />
                       <div className="flex-1 min-w-0">
@@ -2251,7 +2257,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                           {document.creationDate}
                           {document.type === 'monthly-report' &&
                             isProcessingReport && (
-                              <span className="text-blue-600 italic ml-2">
+                              <span className="italic ml-2" style={{ color: '#0052CC' }}>
                                 Processing...
                               </span>
                             )}
@@ -2278,7 +2284,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                       >
                         <MdMoreVert
                           className="w-4 h-4"
-                          style={{ color: '#445AE7' }}
+                          style={{ color: '#0052CC' }}
                           aria-hidden="true"
                         />
                       </button>
@@ -2338,11 +2344,24 @@ const ProofOfEffortToolkit: React.FC = () => {
             {/* Download All Button */}
             <div className="mt-6 pt-12 border-t border-gray-200">
               <button
-                className={`poe-download-zip-button w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-md transition-colors ${
+                className={`poe-download-zip-button w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-white rounded-md transition-colors ${
                   isDownloadingZip || isEmailSending
-                    ? 'bg-blue-400 cursor-not-allowed'
-                    : 'hover:bg-blue-700'
+                    ? 'cursor-not-allowed'
+                    : ''
                 }`}
+                style={{
+                  backgroundColor: isDownloadingZip || isEmailSending ? '#9ca3af' : '#0052CC',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDownloadingZip && !isEmailSending) {
+                    e.currentTarget.style.backgroundColor = '#003EB8';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isDownloadingZip && !isEmailSending) {
+                    e.currentTarget.style.backgroundColor = '#0052CC';
+                  }
+                }}
                 onClick={handleDownloadZip}
                 disabled={isDownloadingZip || isEmailSending}
               >
@@ -2353,7 +2372,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <MdFileDownload className="w-4 h-4" aria-hidden="true" />
+                    <MdFileDownload className="w-4 h-4" style={{ color: '#ffffff' }} aria-hidden="true" />
                     Download
                   </>
                 )}

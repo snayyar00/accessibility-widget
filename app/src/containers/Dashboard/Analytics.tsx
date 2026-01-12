@@ -88,7 +88,7 @@ const InlineMetric: React.FC<{
       </span>
       <span
         className="text-4xl md:text-5xl leading-none tracking-tight"
-        style={{ color: baseColors.brandNumbers }}
+        style={{ color: '#0052CC' }}
       >
         {formatCompactNumber(value)}
       </span>
@@ -203,9 +203,9 @@ const ChartCard: React.FC<{
           <div
             className="rounded-xl px-4 py-3"
             style={{
-              background: baseColors.blueTooltip,
+              background: '#0052CC',
               color: 'white',
-              boxShadow: '0 12px 28px rgba(11,75,102,0.25)',          
+              boxShadow: '0 12px 28px rgba(0,82,204,0.25)',          
               minWidth: 160,
             }}
           >
@@ -213,7 +213,7 @@ const ChartCard: React.FC<{
               <span
                 className="inline-flex h-6 w-6 items-center justify-center rounded-full"
                 style={{
-                  backgroundColor: baseColors.blueTooltipUser,
+                  backgroundColor: '#0052CC',
                 }}
               >
                 <FaUser className="h-3.5 w-3.5" />
@@ -239,7 +239,7 @@ const ChartCard: React.FC<{
               height: 0,
               borderLeft: '8px solid transparent',
               borderRight: '8px solid transparent',
-              borderTop: `8px solid ${baseColors.blueTooltip}`,
+              borderTop: '8px solid #0052CC',
               margin: '0 auto',
             }}
           />
@@ -276,10 +276,10 @@ const ChartCard: React.FC<{
           <select
             className="py-1.5 px-3 rounded-lg text-sm appearance-none bg-no-repeat pr-6"
             style={{
-              backgroundColor: '#006BD6',
-              color: '#E4F2FF',
+              backgroundColor: '#0052CC',
+              color: '#FFFFFF',
               backgroundImage:
-                "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%23E4F2FF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m7 10 5 5 5-5'/%3e%3c/svg%3e\")",
+                "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3e%3cpath stroke='%23FFFFFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m7 10 5 5 5-5'/%3e%3c/svg%3e\")",
               backgroundSize: '18px 18px',
               backgroundPosition: 'calc(100% - 12px) center',
               paddingRight: '2.8rem',
@@ -300,7 +300,7 @@ const ChartCard: React.FC<{
             }}
             onFocus={(e) => {
               e.currentTarget.style.border = '3px solid #FFFFFF';
-              e.currentTarget.style.boxShadow = '0 0 0 2px #006BD6';
+              e.currentTarget.style.boxShadow = '0 0 0 2px #0052CC';
             }}
             onBlur={(e) => {
               e.currentTarget.style.border = '2px solid transparent';
@@ -331,7 +331,7 @@ const ChartCard: React.FC<{
           borderRadius: 12,
           outline: 'none',
           boxShadow: isChartFocused
-            ? '0 0 0 3px rgba(0,107,214,0.45)'
+            ? '0 0 0 3px rgba(0,82,204,0.45)'
             : 'none',
         }}
       >
@@ -356,12 +356,12 @@ const ChartCard: React.FC<{
               <linearGradient id="primaryGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor={baseColors.brandNumbers}
+                  stopColor="#0052CC"
                   stopOpacity={0.25}
                 />
                 <stop
                   offset="95%"
-                  stopColor={baseColors.brandNumbers}
+                  stopColor="#0052CC"
                   stopOpacity={0}
                 />
               </linearGradient>
@@ -404,18 +404,18 @@ const ChartCard: React.FC<{
             <Area
               type="monotone"
               dataKey={dataKey}
-              stroke={baseColors.brandNumbers}
+              stroke="#0052CC"
               strokeWidth={3}
               fillOpacity={1}
               fill="url(#primaryGradient)"
               activeDot={{
                 r: 6,
-                fill: baseColors.brandNumbers,
+                fill: '#0052CC',
                 strokeWidth: 0,
               }}
               dot={false}
               style={{
-                filter: 'drop-shadow(0px 6px 12px rgba(68, 90, 231, 0.3))',
+                filter: 'drop-shadow(0px 6px 12px rgba(0,82,204,0.3))',
               }}
             />
           </AreaChart>
@@ -429,11 +429,11 @@ const ChartCard: React.FC<{
                 left: `${indicatorLeftPercent + 2}%`,
                 bottom: 40,
                 transform: 'translateX(-50%)',
-                background: baseColors.blueTooltip,
+                background: '#0052CC',
                 color: 'white',
                 padding: '6px 10px',
                 borderRadius: 10,
-                boxShadow: '0 12px 28px rgba(11,75,102,0.25)',
+                boxShadow: '0 12px 28px rgba(0,82,204,0.25)',
                 whiteSpace: 'nowrap',
                 fontSize: 12,
               }}
@@ -682,7 +682,7 @@ export default function AnalyticsDashboard({
             <button
               className="show-more-metrics-button hover:brightness-110 py-2 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
               style={{
-                backgroundColor: baseColors.brandPrimary,
+                backgroundColor: '#0052CC',
                 color: baseColors.white,
               }}
               onClick={() => setShowMoreMetrics(!showMoreMetrics)}

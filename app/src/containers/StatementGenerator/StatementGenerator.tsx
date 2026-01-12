@@ -1595,7 +1595,7 @@ ${
                         onClick={() => setSelectedFormat('markdown')}
                         className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'markdown'
-                            ? 'bg-[#445AE7] text-white shadow-sm'
+                            ? 'bg-[#0052CC] text-white shadow-sm'
                             : 'text-gray-600 hover:text-gray-800'
                         }`}
                       >
@@ -1610,7 +1610,7 @@ ${
                         onClick={() => setSelectedFormat('html')}
                         className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'html'
-                            ? 'bg-[#445AE7] text-white shadow-sm'
+                            ? 'bg-[#0052CC] text-white shadow-sm'
                             : 'text-gray-600 hover:text-gray-800'
                         }`}
                       >
@@ -1625,7 +1625,7 @@ ${
                         onClick={() => setSelectedFormat('text')}
                         className={`flex-1 px-4 py-3 rounded-md font-medium text-sm transition-all ${
                           selectedFormat === 'text'
-                            ? 'bg-[#445AE7] text-white shadow-sm'
+                            ? 'bg-[#0052CC] text-white shadow-sm'
                             : 'text-gray-600 hover:text-gray-800'
                         }`}
                       >
@@ -1689,21 +1689,21 @@ ${
                           textTransform: 'none',
                           fontSize: '1rem',
                           fontWeight: '600',
-                          borderColor: '#0033ed',
-                          color: '#0033ed',
+                          borderColor: '#0052CC',
+                          color: '#0052CC',
                           '&:focus-visible': {
                             outline: 'none !important',
                             boxShadow:
-                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(0, 82, 204, 0.25) !important',
                           },
                           '&:focus': {
                             outline: 'none !important',
                             boxShadow:
-                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(0, 82, 204, 0.25) !important',
                           },
                           '&:hover': {
                             backgroundColor: '#f8faff',
-                            borderColor: '#0029c7',
+                            borderColor: '#003EB8',
                           },
                         }}
                       >
@@ -1721,19 +1721,19 @@ ${
                           textTransform: 'none',
                           fontSize: '1rem',
                           fontWeight: '600',
-                          backgroundColor: '#0033ed',
+                          backgroundColor: '#0052CC',
                           '&:focus-visible': {
                             outline: 'none !important',
                             boxShadow:
-                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(0, 82, 204, 0.25) !important',
                           },
                           '&:focus': {
                             outline: 'none !important',
                             boxShadow:
-                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                              '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(0, 82, 204, 0.25) !important',
                           },
                           '&:hover': {
-                            backgroundColor: '#0029c7',
+                            backgroundColor: '#003EB8',
                           },
                         }}
                       >
@@ -1815,7 +1815,7 @@ ${
                       onClick={() => toggleEnhancement('add-testing')}
                       className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
                         selectedEnhancements.includes('add-testing')
-                          ? 'border-[#445AE7] bg-[#445AE7] text-white'
+                          ? 'border-[#0052CC] bg-[#0052CC] text-white'
                           : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
                       }`}
                     >
@@ -1835,7 +1835,7 @@ ${
                       onClick={() => toggleEnhancement('add-timeline')}
                       className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
                         selectedEnhancements.includes('add-timeline')
-                          ? 'border-[#445AE7] bg-[#445AE7] text-white'
+                          ? 'border-[#0052CC] bg-[#0052CC] text-white'
                           : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
                       }`}
                     >
@@ -1853,7 +1853,7 @@ ${
                       onClick={() => toggleEnhancement('add-training')}
                       className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
                         selectedEnhancements.includes('add-training')
-                          ? 'border-[#445AE7] bg-[#445AE7] text-white'
+                          ? 'border-[#0052CC] bg-[#0052CC] text-white'
                           : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
                       }`}
                     >
@@ -1871,7 +1871,7 @@ ${
                       onClick={() => toggleEnhancement('add-standards')}
                       className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
                         selectedEnhancements.includes('add-standards')
-                          ? 'border-[#445AE7] bg-[#445AE7] text-white'
+                          ? 'border-[#0052CC] bg-[#0052CC] text-white'
                           : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
                       }`}
                     >
@@ -2345,9 +2345,9 @@ ${
                         textTransform: 'none',
                         fontSize: '1.1rem',
                         fontWeight: '600',
-                        background: '#3343ad',
+                        background: '#0052CC',
                         color: 'white',
-                        boxShadow: '0 4px 12px rgba(68, 90, 231, 0.25)',
+                        boxShadow: '0 4px 12px rgba(0, 82, 204, 0.25)',
                         border: 'none',
                         position: 'relative',
                         overflow: 'hidden',
@@ -2365,21 +2365,21 @@ ${
                           outline: 'none !important',
                           boxShadow:
                             // 3px white ring against the blue button + 5px dark ring against the light background
-                            '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                            '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(0, 82, 204, 0.25) !important',
                         },
                         '&:focus': {
                           outline: 'none !important',
                           boxShadow:
-                            '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(68, 90, 231, 0.25) !important',
+                            '0 0 0 3px #ffffff, 0 0 0 5px #111827, 0 4px 12px rgba(0, 82, 204, 0.25) !important',
                         },
                         '&:hover': {
-                          background: '#2c3a99',
-                          boxShadow: '0 6px 16px rgba(68, 90, 231, 0.3)',
+                          background: '#003EB8',
+                          boxShadow: '0 6px 16px rgba(0, 82, 204, 0.3)',
                           transform: 'translateY(-1px)',
                         },
                         '&:active': {
                           transform: 'translateY(0)',
-                          boxShadow: '0 2px 8px rgba(68, 90, 231, 0.2)',
+                          boxShadow: '0 2px 8px rgba(0, 82, 204, 0.2)',
                         },
                         '&:disabled': {
                           background: '#9ca3af',

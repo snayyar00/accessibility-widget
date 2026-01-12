@@ -414,14 +414,17 @@ const SignUpForm: React.FC<CustomProps> = ({
         <div className="space-y-6">
           {/* Name Field */}
           <div className="group">
-            <label htmlFor="signup-name" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+            <label htmlFor="signup-name" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide transition-colors">
               {t('Common.label.your_name')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <FormControl>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg
-                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    className="h-5 w-5 text-gray-400 transition-colors"
+                    style={{ '--focus-color': '#0052CC' } as React.CSSProperties}
+                    onFocus={(e) => { e.currentTarget.style.color = '#0052CC'; }}
+                    onBlur={(e) => { e.currentTarget.style.color = '#9CA3AF'; }}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -447,7 +450,15 @@ const SignUpForm: React.FC<CustomProps> = ({
                   aria-required="true"
                   aria-invalid={formErrors?.name ? 'true' : 'false'}
                   aria-describedby={formErrors?.name ? 'signup-name-error' : undefined}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
+                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#0052CC';
+                    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 82, 204, 0.1)';
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
               </div>
               {formErrors?.name?.message && (
@@ -458,14 +469,17 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           {/* Email Field */}
           <div className="group">
-            <label htmlFor="signup-email" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+            <label htmlFor="signup-email" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide transition-colors">
               {t('Common.label.email')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <FormControl>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg
-                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    className="h-5 w-5 text-gray-400 transition-colors"
+                    style={{ '--focus-color': '#0052CC' } as React.CSSProperties}
+                    onFocus={(e) => { e.currentTarget.style.color = '#0052CC'; }}
+                    onBlur={(e) => { e.currentTarget.style.color = '#9CA3AF'; }}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -492,7 +506,15 @@ const SignUpForm: React.FC<CustomProps> = ({
                   aria-required="true"
                   aria-invalid={formErrors?.email ? 'true' : 'false'}
                   aria-describedby={formErrors?.email ? 'signup-email-error' : undefined}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4A5568]"
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4A5568]"
+                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#0052CC';
+                    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 82, 204, 0.1)';
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
               </div>
               {formErrors?.email?.message && (
@@ -503,7 +525,7 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           {/* Website URL Field */}
           <div className="group">
-            <label htmlFor="signup-website-url" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+            <label htmlFor="signup-website-url" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide transition-colors">
               {t('Common.label.website_url')}{' '}
               <span className="text-gray-500 font-normal">(Optional)</span>
             </label>
@@ -511,7 +533,10 @@ const SignUpForm: React.FC<CustomProps> = ({
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg
-                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    className="h-5 w-5 text-gray-400 transition-colors"
+                    style={{ '--focus-color': '#0052CC' } as React.CSSProperties}
+                    onFocus={(e) => { e.currentTarget.style.color = '#0052CC'; }}
+                    onBlur={(e) => { e.currentTarget.style.color = '#9CA3AF'; }}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -536,7 +561,15 @@ const SignUpForm: React.FC<CustomProps> = ({
                   aria-label="Website URL"
                   aria-invalid={formErrors?.websiteUrl ? 'true' : 'false'}
                   aria-describedby={formErrors?.websiteUrl ? 'signup-website-url-error' : undefined}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
+                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
+                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#0052CC';
+                    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 82, 204, 0.1)';
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
               </div>
               {formErrors?.websiteUrl?.message && (
@@ -547,14 +580,17 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           {/* Password Field */}
           <div className="group">
-            <label htmlFor="signup-password" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+            <label htmlFor="signup-password" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide transition-colors">
               {t('Common.label.password')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <FormControl>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg
-                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    className="h-5 w-5 text-gray-400 transition-colors"
+                    style={{ '--focus-color': '#0052CC' } as React.CSSProperties}
+                    onFocus={(e) => { e.currentTarget.style.color = '#0052CC'; }}
+                    onBlur={(e) => { e.currentTarget.style.color = '#9CA3AF'; }}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -581,7 +617,15 @@ const SignUpForm: React.FC<CustomProps> = ({
                   aria-required="true"
                   aria-invalid={formErrors?.password ? 'true' : 'false'}
                   aria-describedby={formErrors?.password ? 'signup-password-error' : undefined}
-                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
+                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
+                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#0052CC';
+                    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 82, 204, 0.1)';
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
                 <button
                   type="button"
@@ -637,14 +681,17 @@ const SignUpForm: React.FC<CustomProps> = ({
 
           {/* Confirm Password Field */}
           <div className="group">
-            <label htmlFor="signup-confirm-password" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide group-focus-within:text-blue-600 transition-colors">
+            <label htmlFor="signup-confirm-password" className="block text-left text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide transition-colors">
               {t('Common.label.confirm_password')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <FormControl>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg
-                    className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                    className="h-5 w-5 text-gray-400 transition-colors"
+                    style={{ '--focus-color': '#0052CC' } as React.CSSProperties}
+                    onFocus={(e) => { e.currentTarget.style.color = '#0052CC'; }}
+                    onBlur={(e) => { e.currentTarget.style.color = '#9CA3AF'; }}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -671,7 +718,15 @@ const SignUpForm: React.FC<CustomProps> = ({
                   aria-required="true"
                   aria-invalid={formErrors?.passwordConfirmation ? 'true' : 'false'}
                   aria-describedby={formErrors?.passwordConfirmation ? 'signup-confirm-password-error' : undefined}
-                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
+                  className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl transition-all duration-200 bg-gray-50 focus:bg-white text-gray-900 placeholder:text-[#4B5563]"
+                  onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#0052CC';
+                    e.currentTarget.style.boxShadow = '0 0 0 4px rgba(0, 82, 204, 0.1)';
+                  }}
+                  onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
                 <button
                   type="button"
@@ -741,7 +796,8 @@ const SignUpForm: React.FC<CustomProps> = ({
           <Button
             color="primary"
             type="button"
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:scale-[1.02] focus:ring-4 focus:ring-blue-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            style={{ backgroundColor: '#0052CC' }}
             onClick={handleNextStep}
             disabled={checkingDomain || checkingEmail}
           >
@@ -821,12 +877,12 @@ const SignUpForm: React.FC<CustomProps> = ({
             </div>
 
             <div className="flex flex-col items-center gap-2 mb-8">
-              <p className="text-blue-600 text-left font-medium flex items-center">
+              <p className="text-left font-medium flex items-center" style={{ color: '#0052CC' }}>
                 Scanning for accessibility issues
               </p>
 
               <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
-                <div className="h-full bg-blue-600 rounded-full animate-progress"></div>
+                <div className="h-full rounded-full animate-progress" style={{ backgroundColor: '#0052CC' }}></div>
               </div>
             </div>
           </div>
@@ -841,12 +897,12 @@ const SignUpForm: React.FC<CustomProps> = ({
             </div>
 
             <div className="flex flex-col items-center gap-2 mb-8">
-              <p className="text-blue-600 text-left font-medium flex items-center">
+              <p className="text-left font-medium flex items-center" style={{ color: '#0052CC' }}>
                 Scanning for accessibility issues
               </p>
 
               <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
-                <div className="h-full bg-blue-600 rounded-full animate-progress"></div>
+                <div className="h-full rounded-full animate-progress" style={{ backgroundColor: '#0052CC' }}></div>
               </div>
             </div>
 
@@ -993,16 +1049,16 @@ const SignUpForm: React.FC<CustomProps> = ({
           <div className="sm:px-6 mt-4 md:px-0 text-[14px] leading-6 text-sapphire-blue">
             <Trans
               components={[
-                <Link to="##" key="terms" className="underline"></Link>,
-                <Link to="##" key="privacy" className="underline"></Link>,
-                <Link to="##" key="security" className="underline"></Link>,
+                <a href="https://www.webability.io/terms-of-use" key="terms" className="underline" style={{ color: '#0052CC' }} target="_blank" rel="noopener noreferrer"></a>,
+                <a href="https://www.webability.io/privacy-policy" key="privacy" className="underline" style={{ color: '#0052CC' }} target="_blank" rel="noopener noreferrer"></a>,
+                <Link to="##" key="security" className="underline" style={{ color: '#0052CC' }}></Link>,
               ]}
             >
               {t('Sign_up.text.footer_desc')}
             </Trans>
           </div>
           <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
-            <Trans components={[<Link to="/auth/signin" className="underline"></Link>]}>
+            <Trans components={[<Link to="/auth/signin" className="underline" style={{ color: '#0052CC' }}></Link>]}>
               {t('Sign_up.text.have_account')}
             </Trans>
           </div>
@@ -1011,7 +1067,7 @@ const SignUpForm: React.FC<CustomProps> = ({
 
       {currentStep === 3 && (
         <div className="text-[14px] leading-6 text-sapphire-blue mt-[30px] text-center pb-8">
-          <Trans components={[<Link to="/auth/signin" className="underline"></Link>]}>
+          <Trans components={[<Link to="/auth/signin" className="underline" style={{ color: '#0052CC' }}></Link>]}>
             {t('Sign_up.text.have_account')}
           </Trans>
         </div>

@@ -217,7 +217,10 @@ const LicenseOwnerInfo: React.FC = () => {
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-controls="license-info-form"
-          className="w-auto md:w-auto flex-shrink-0 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2 shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
+          className="w-auto md:w-auto flex-shrink-0 px-3 md:px-4 py-2 text-white rounded-lg text-xs md:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-2 shadow-sm focus:outline-none focus:ring-4 focus:ring-offset-2"
+          style={{
+            backgroundColor: '#0052CC',
+          }}
         >
           <Settings className="w-3 h-3 md:w-4 md:h-4 text-white" />
           <span className="text-white">
@@ -261,7 +264,7 @@ const LicenseOwnerInfo: React.FC = () => {
                 htmlFor="owner-name"
                 className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
               >
-                <HiOutlineUser className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                <HiOutlineUser className="w-6 h-6 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: '#0052CC' }} />
                 <span>
                   {t('Common.license_owner.owner_name') || 'Website owner name'}{' '}
                   <span className="text-red-600" aria-label="required">*</span>
@@ -307,7 +310,7 @@ const LicenseOwnerInfo: React.FC = () => {
                 htmlFor="owner-email"
                 className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
               >
-                <HiOutlineMail className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                <HiOutlineMail className="w-6 h-6 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: '#0052CC' }} />
                 <span>
                   {t('Common.license_owner.owner_email') ||
                     "Website owner's email"}{' '}
@@ -355,7 +358,7 @@ const LicenseOwnerInfo: React.FC = () => {
                 htmlFor="phone-number"
                 className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
               >
-                <HiOutlinePhone className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                <HiOutlinePhone className="w-6 h-6 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: '#0052CC' }} />
                 <span>
                   {t('Common.license_owner.phone_number') || 'Phone number'}{' '}
                   <span className="text-red-600" aria-label="required">*</span>

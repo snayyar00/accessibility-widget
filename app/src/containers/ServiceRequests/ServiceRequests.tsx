@@ -170,7 +170,7 @@ const ServiceRequests: React.FC = () => {
         <div 
           className="relative rounded-2xl shadow-sm overflow-hidden border"
           style={{
-            backgroundColor: '#344288',
+            backgroundColor: '#13206B',
             borderColor: '#A2ADF3',
           }}
         >
@@ -405,13 +405,13 @@ const ServiceRequests: React.FC = () => {
                 onClick={handleGetQuote}
                 className="flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 text-white rounded-lg font-medium text-sm sm:text-base transition-colors"
                 style={{
-                  backgroundColor: baseColors.brandPrimary,
+                  backgroundColor: '#0052CC',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#2E3A7D';
+                  e.currentTarget.style.backgroundColor = '#003EB8';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = baseColors.brandPrimary;
+                  e.currentTarget.style.backgroundColor = '#0052CC';
                 }}
               >
                 <FiPlus className="w-5 h-5" />
@@ -545,13 +545,13 @@ const ServiceRequests: React.FC = () => {
                         onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white rounded-lg transition-colors text-xs font-medium"
                         style={{
-                          backgroundColor: baseColors.brandPrimary,
+                          backgroundColor: '#0052CC',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = baseColors.buttonBlue;
+                          e.currentTarget.style.backgroundColor = '#003EB8';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = baseColors.brandPrimary;
+                          e.currentTarget.style.backgroundColor = '#0052CC';
                         }}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -637,7 +637,7 @@ const ServiceRequests: React.FC = () => {
               key={service.id}
               className="w-full transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
               style={{
-                background: 'linear-gradient(135deg, #2E3A7D 0%, #4A5AA0 100%)',
+                backgroundColor: '#13206B',
                 borderRadius: '16px',
                 padding: '28px',
                 position: 'relative',

@@ -666,7 +666,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                       openModal();
                     }}
                     aria-label="Add new domain"
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-4 transition-all duration-200 shadow-sm"
+                    className="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-4 transition-all duration-200 shadow-sm"
+                    style={{ backgroundColor: '#0052CC' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0040A0'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                   >
                     Add new domain
                   </button>
@@ -1264,7 +1267,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     setIsCancel(false);
                   }}
                   aria-label="Add new domain"
-                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-4 transition-all duration-200 shadow-sm"
+                  className="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-4 transition-all duration-200 shadow-sm"
+                  style={{ backgroundColor: '#0052CC' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0040A0'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                 >
                   Add new domain
                 </button>

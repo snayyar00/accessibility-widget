@@ -173,7 +173,7 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
           {/* Header */}
           <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-100">
             <div>
-              <h2 id="quote-modal-title" className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#445AE7] to-[#667eea] bg-clip-text text-transparent">
+              <h2 id="quote-modal-title" className="text-2xl md:text-3xl font-bold" style={{ color: '#0052CC' }}>
                 Tell us about your project
               </h2>
               <p id="quote-modal-description" className="text-gray-500 text-sm mt-0.5">We'll get back to you with a custom quote</p>
@@ -208,7 +208,19 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                   placeholder="i.e., Company Name, Project Name"
-                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 placeholder:text-[#374151]"
+                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 placeholder:text-[#374151]"
+                  style={{
+                    '--focus-ring-color': 'rgba(0, 82, 204, 0.5)',
+                    '--focus-border-color': '#0052CC',
+                  } as React.CSSProperties}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#0052CC';
+                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 82, 204, 0.5)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#6b7280';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                   required
                   aria-required="true"
                 />
@@ -223,7 +235,19 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                     id="project-type"
                     value={projectType}
                     onChange={(e) => setProjectType(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 text-gray-700 font-medium bg-white"
+                    className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg appearance-none focus:outline-none focus:ring-2 transition-all duration-200 text-gray-700 font-medium bg-white"
+                    style={{
+                      '--focus-ring-color': 'rgba(0, 82, 204, 0.5)',
+                      '--focus-border-color': '#0052CC',
+                    } as React.CSSProperties}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = '#0052CC';
+                      e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 82, 204, 0.5)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '#6b7280';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                     required
                     aria-required="true"
                   >
@@ -233,7 +257,7 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                     <option value="vpat">VPAT</option>
                     <option value="user-testing">User Testing</option>
                   </select>
-                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#445AE7] pointer-events-none w-4 h-4" />
+                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none w-4 h-4" style={{ color: '#0052CC' }} />
                 </div>
               </div>
             </div>
@@ -249,7 +273,19 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                 onChange={(e) => setProjectDetails(e.target.value)}
                 placeholder="Include relevant details like deadlines, instructions, questions..."
                 rows={3}
-                className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 resize-none placeholder:text-[#374151]"
+                className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 resize-none placeholder:text-[#374151]"
+                style={{
+                  '--focus-ring-color': 'rgba(0, 82, 204, 0.5)',
+                  '--focus-border-color': '#0052CC',
+                } as React.CSSProperties}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = '#0052CC';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 82, 204, 0.5)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = '#6b7280';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
                 required
                 aria-required="true"
               />
@@ -265,7 +301,19 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                   id="frequency"
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 text-gray-700 font-medium bg-white"
+                  className="w-full px-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg appearance-none focus:outline-none focus:ring-2 transition-all duration-200 text-gray-700 font-medium bg-white"
+                  style={{
+                    '--focus-ring-color': 'rgba(0, 82, 204, 0.5)',
+                    '--focus-border-color': '#0052CC',
+                  } as React.CSSProperties}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#0052CC';
+                    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 82, 204, 0.5)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#6b7280';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 >
                   <option value="">Select frequency</option>
                   <option value="one-time">One-time</option>
@@ -273,7 +321,7 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
                   <option value="quarterly">Quarterly</option>
                   <option value="yearly">Yearly</option>
                 </select>
-                <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#445AE7] pointer-events-none w-4 h-4" />
+                  <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none w-4 h-4" style={{ color: '#0052CC' }} />
               </div>
             </div>
 
@@ -285,14 +333,26 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
               {links.map((link, index) => (
                 <div key={index} className="mb-2">
                   <div className="relative">
-                    <FiLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#445AE7] w-4 h-4" aria-hidden="true" />
+                    <FiLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" style={{ color: '#0052CC' }} aria-hidden="true" />
                     <input
                       id={index === 0 ? "project-link-0" : `project-link-${index}`}
                       type="url"
                       value={link}
                       onChange={(e) => handleLinkChange(index, e.target.value)}
                       placeholder="https://"
-                      className="w-full pl-10 pr-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#445AE7]/50 focus:border-[#445AE7] transition-all duration-200 placeholder:text-[#374151]"
+                      className="w-full pl-10 pr-3 py-2.5 text-sm border-2 border-gray-500 rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 placeholder:text-[#374151]"
+                      style={{
+                        '--focus-ring-color': 'rgba(0, 82, 204, 0.5)',
+                        '--focus-border-color': '#0052CC',
+                      } as React.CSSProperties}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = '#0052CC';
+                        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 82, 204, 0.5)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = '#6b7280';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
                       required={index === 0}
                       aria-required={index === 0}
                       aria-label={index === 0 ? "Add your project's links" : `Project link ${index + 1}`}
@@ -306,9 +366,16 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={handleAddLink}
-                className="flex items-center gap-1.5 text-[#445AE7] hover:text-[#667eea] font-semibold transition-colors duration-200 text-sm"
+                className="flex items-center gap-1.5 font-semibold transition-colors duration-200 text-sm"
+                style={{ color: '#0052CC' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#003EB8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#0052CC';
+                }}
               >
-                <div className="w-5 h-5 rounded-full bg-[#445AE7]/10 flex items-center justify-center">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
                   <FiPlus className="w-3.5 h-3.5" />
                 </div>
                 Add another link
@@ -319,7 +386,20 @@ const GetQuoteModal: React.FC<GetQuoteModalProps> = ({ isOpen, onClose }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#445AE7] to-[#667eea] text-white rounded-lg hover:from-[#3347d1] hover:to-[#5468ea] transition-all duration-300 font-bold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 text-white rounded-lg transition-all duration-300 font-bold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+              style={{
+                backgroundColor: loading ? '#9ca3af' : '#0052CC',
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#003EB8';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#0052CC';
+                }
+              }}
             >
               {loading ? (
                 <>
