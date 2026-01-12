@@ -1,6 +1,6 @@
 export const defaultTourStyles = {
   options: {
-    primaryColor: '#006BD6', // Matches buttonNext backgroundColor for consistency
+    primaryColor: '#0052CC', // Matches buttonNext backgroundColor for consistency
     textColor: '#333',
     backgroundColor: '#fff',
     overlayColor: 'rgba(0, 0, 0, 0.4)',
@@ -23,7 +23,7 @@ export const defaultTourStyles = {
     overflowWrap: 'anywhere' as const,
   },
   buttonNext: {
-    backgroundColor: '#006BD6', // Contrast-compliant primary
+    backgroundColor: '#0052CC', // Contrast-compliant primary
     color: '#E4F2FF', // 4.53:1 contrast ratio on #006BD6 (WCAG AA compliant)
     fontSize: '14px',
     padding: '8px 16px',
