@@ -282,7 +282,8 @@ const ProblemReport: React.FC = () => {
                     </label>
                     <select
                       id="issue-filter-select"
-                      className="w-full md:w-auto text-xs sm:text-sm md:text-base inline-flex items-center justify-center pl-3 pr-8 py-2 sm:pl-4 sm:pr-10 sm:py-2 md:pl-5 md:pr-12 md:py-3 border border-transparent font-medium rounded-md text-white bg-[#3343AD] hover:bg-[#2a3699] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3343AD] transition-colors duration-200 appearance-none cursor-pointer"
+                      className="w-full md:w-auto text-xs sm:text-sm md:text-base inline-flex items-center justify-center pl-3 pr-8 py-2 sm:pl-4 sm:pr-10 sm:py-2 md:pl-5 md:pr-12 md:py-3 border border-transparent font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 appearance-none cursor-pointer"
+                      style={{ backgroundColor: '#0052CC' }}
                       value={filter}
                       onChange={(e) =>
                         setFilter(e.target.value as typeof filter)
