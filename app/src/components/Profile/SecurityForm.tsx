@@ -126,7 +126,10 @@ const SecurityForm: React.FC<Props> = ({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full md:w-auto px-4 md:px-6 py-2 md:py-2.5 bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-blue-700 transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+          className="w-full md:w-auto px-4 md:px-6 py-2 md:py-2.5 text-white rounded-lg text-xs md:text-sm font-medium transition-all duration-200 focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          style={{
+            backgroundColor: '#0052CC',
+          }}
         >
           {isSubmitting ? (
             <span className="flex items-center space-x-2">

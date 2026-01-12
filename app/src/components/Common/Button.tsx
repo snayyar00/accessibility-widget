@@ -27,13 +27,20 @@ const Button: React.FC<Props> = ({
       {
         'bg-white text-light-primary hover:bg-gray-50 hover:border-blue-600':
           color === 'default',
-        'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-600 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg transform hover:-translate-y-0.5':
+        'text-white border-blue-600 hover:shadow-lg transform hover:-translate-y-0.5':
           color === 'primary',
         '!bg-light-primary !text-white':
           color === 'primary' && !className.includes('bg-gradient'),
       },
       className,
     )}
+    style={
+      color === 'primary'
+        ? {
+            backgroundColor: '#0052CC',
+          }
+        : undefined
+    }
     {...props}
   >
     {children}
