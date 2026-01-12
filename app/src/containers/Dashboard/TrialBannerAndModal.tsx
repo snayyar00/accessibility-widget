@@ -869,7 +869,8 @@ const TrialBannerAndModal: React.FC<any> = ({
                     <div className="pt-2">
                       <button
                         type="button"
-                        className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none skip-trial-button"
+                        style={{ backgroundColor: '#0052CC' }}
                         onClick={() => {
                           if (
                             !formData.domainName ||
