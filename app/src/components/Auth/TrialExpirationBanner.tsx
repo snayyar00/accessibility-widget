@@ -271,7 +271,7 @@ const TrialExpirationBanner: React.FC<TrialExpirationBannerProps> = ({
   return (
     <div 
       className="text-white w-full md:w-auto shrink-0 md:max-w-md relative shadow-md rounded-lg"
-      style={{ backgroundColor: '#2563eb' }} // Using blue-600 for WCAG 2 AA contrast compliance (4.5:1)
+      style={{ backgroundColor: '#0052CC' }}
     >
         {/* Right-aligned dismiss button - positioned absolutely */}
         <button
