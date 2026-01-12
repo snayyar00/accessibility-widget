@@ -318,7 +318,10 @@ const AIInsights: React.FC = () => {
 
               <button
                 type="button"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base"
+                className="text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base"
+                style={{
+                  backgroundColor: isAnalyzing ? '#9ca3af' : '#0052CC',
+                }}
                 onClick={handleDomainAnalysis}
                 disabled={isAnalyzing}
                 aria-label={isAnalyzing ? "Analyzing website, please wait" : "Analyze website"}

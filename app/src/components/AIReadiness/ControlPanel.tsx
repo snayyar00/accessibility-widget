@@ -412,7 +412,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           <div className="relative">
             {/* Icon with enhanced styling */}
             <motion.div
-              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl mb-6 shadow-2xl"
+              className="inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6 shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, #0052CC 0%, #003EB8 50%, #0052CC 100%)',
+              }}
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ type: 'spring', stiffness: 300 }}
             >
@@ -421,7 +424,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
             {/* Title with enhanced typography */}
             <motion.h2
-              className="text-4xl font-extrabold text-blue-700 mb-4"
+              className="text-4xl font-extrabold mb-4"
+              style={{ color: '#0052CC' }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -439,11 +443,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="px-3 sm:px-6 py-3 max-w-full overflow-hidden">
                 <p className="text-sm sm:text-lg text-gray-700 font-medium">
                   Single-page snapshot of {/* Mobile: Show truncated URL */}
-                  <span className="inline sm:hidden bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold break-all">
+                  <span className="inline sm:hidden font-bold break-all" style={{ color: '#0052CC' }}>
                     {getTruncatedUrl(url, 5)}
                   </span>
                   {/* Desktop: Show full URL */}
-                  <span className="hidden sm:inline bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold break-all">
+                  <span className="hidden sm:inline font-bold break-all" style={{ color: '#0052CC' }}>
                     {url}
                   </span>
                 </p>
@@ -465,9 +469,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 onClick={() => setViewMode('grid')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   viewMode === 'grid'
-                    ? 'bg-blue-600 text-white shadow-md'
+                    ? 'text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
+                style={viewMode === 'grid' ? { backgroundColor: '#0052CC' } : {}}
               >
                 Grid View
               </button>
@@ -475,9 +480,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 onClick={() => setViewMode('chart')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   viewMode === 'chart'
-                    ? 'bg-blue-600 text-white shadow-md'
+                    ? 'text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
+                style={viewMode === 'chart' ? { backgroundColor: '#0052CC' } : {}}
               >
                 Radar Chart
               </button>
@@ -486,9 +492,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   onClick={() => setViewMode('heatmap')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     viewMode === 'heatmap'
-                      ? 'bg-blue-600 text-white shadow-md'
+                      ? 'text-white shadow-md'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
+                  style={viewMode === 'heatmap' ? { backgroundColor: '#0052CC' } : {}}
                 >
                   Heatmap
                 </button>
@@ -775,9 +782,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   onClick={() => setSelectedHeatmapCategory(category.id)}
                   className={`sm:w-full px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium transition-all duration-200 text-xs sm:text-base ${
                     selectedHeatmapCategory === category.id
-                      ? 'bg-blue-500 text-white shadow-lg transform scale-105'
+                      ? 'text-white shadow-lg transform scale-105'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
                   }`}
+                  style={selectedHeatmapCategory === category.id ? { backgroundColor: '#0052CC' } : {}}
                 >
                   {category.name}
                 </button>
