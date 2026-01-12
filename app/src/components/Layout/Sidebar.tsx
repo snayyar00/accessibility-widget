@@ -290,8 +290,8 @@ const Sidebar = () => {
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/dashboard')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -328,8 +328,8 @@ const Sidebar = () => {
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/installation')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -368,8 +368,8 @@ const Sidebar = () => {
                     isActiveRoute('/customize-widget') ||
                     isActiveRoute('/old-widget')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -410,8 +410,8 @@ const Sidebar = () => {
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/add-domain')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -448,8 +448,8 @@ const Sidebar = () => {
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/scanner')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -486,8 +486,8 @@ const Sidebar = () => {
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/problem-reports')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -524,8 +524,8 @@ const Sidebar = () => {
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/statement-generator')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -562,8 +562,8 @@ const Sidebar = () => {
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/proof-of-effort-toolkit')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -601,8 +601,8 @@ const Sidebar = () => {
                     className={`flex items-center rounded-lg transition-all duration-200 ${
                       isActiveRoute('/service-requests')
                         ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                         : isCollapsed
                         ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                         : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -640,8 +640,8 @@ const Sidebar = () => {
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/ai-insights')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -681,8 +681,8 @@ const Sidebar = () => {
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/users')
                           ? isCollapsed
-                          ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                          ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : isCollapsed
                           ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                           : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -719,8 +719,8 @@ const Sidebar = () => {
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/workspaces')
                           ? isCollapsed
-                          ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                          ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : isCollapsed
                           ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                           : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -757,8 +757,8 @@ const Sidebar = () => {
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/organization')
                           ? isCollapsed
-                          ? 'w-12 h-12 bg-[#006BD6] text-[#E4F2FF] font-medium justify-center mx-auto'
-                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#006BD6] text-[#E4F2FF] font-medium'
+                          ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : isCollapsed
                           ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                           : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -839,7 +839,7 @@ const Sidebar = () => {
                   aria-label={buildAriaLabel('dashboard')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/dashboard')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -862,7 +862,7 @@ const Sidebar = () => {
                   aria-label={buildAriaLabel('installation')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/installation')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -887,7 +887,7 @@ const Sidebar = () => {
                     isActiveRoute('/widget-selection') ||
                     isActiveRoute('/customize-widget') ||
                     isActiveRoute('/old-widget')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -912,7 +912,7 @@ const Sidebar = () => {
                   aria-label={buildAriaLabel('my-sites')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/add-domain')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -935,7 +935,7 @@ const Sidebar = () => {
                   aria-label={buildAriaLabel('scanner')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/scanner')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -958,7 +958,7 @@ const Sidebar = () => {
                   aria-label={buildAriaLabel('issues')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/problem-reports')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -981,7 +981,7 @@ const Sidebar = () => {
                   aria-label={buildAriaLabel('ai-statement')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/statement-generator')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -1004,7 +1004,7 @@ const Sidebar = () => {
                   aria-label={buildAriaLabel('proof-of-effort')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/proof-of-effort-toolkit')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -1028,7 +1028,7 @@ const Sidebar = () => {
                     aria-label={buildAriaLabel('service-requests')}
                     className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                       isActiveRoute('/service-requests')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                         : 'text-black hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
@@ -1052,7 +1052,7 @@ const Sidebar = () => {
                   aria-label={buildAriaLabel('ai-insights')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/ai-insights')
-                      ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -1100,7 +1100,7 @@ const Sidebar = () => {
                       aria-label={buildAriaLabel('users')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/users')
-                        ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : 'text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
@@ -1123,7 +1123,7 @@ const Sidebar = () => {
                       aria-label={buildAriaLabel('workspaces')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/workspaces')
-                        ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : 'text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
@@ -1146,7 +1146,7 @@ const Sidebar = () => {
                       aria-label={buildAriaLabel('organization')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/organization')
-                        ? 'bg-[#006BD6] text-[#E4F2FF] font-medium'
+                        ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : 'text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >

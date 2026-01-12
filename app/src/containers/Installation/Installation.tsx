@@ -204,7 +204,7 @@ export default function Installation({ domain }: any) {
                       rel="noopener noreferrer"
                       className="w-full md:w-auto px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg installation-guide-link"
                       style={{
-                        backgroundColor: baseColors.brandPrimary,
+                        backgroundColor: '#0052CC',
                         color: baseColors.white,
                       }}
                     >
@@ -236,7 +236,7 @@ export default function Installation({ domain }: any) {
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaWordpressSimple
                           className="w-10 h-10"
-                          style={{ color: '#3343AD' }}
+                          style={{ color: '#0052CC' }}
                           aria-hidden="true"
                         />
                       </div>
@@ -259,12 +259,12 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors flex-shrink-0"
-                      style={{ color: '#3343AD' }}
+                      style={{ color: '#0052CC' }}
                       onMouseEnter={(e) =>
                         ((e.target as HTMLElement).style.color = '#2a3a9a')
                       }
                       onMouseLeave={(e) =>
-                        ((e.target as HTMLElement).style.color = '#3343AD')
+                        ((e.target as HTMLElement).style.color = '#0052CC')
                       }
                       fill="none"
                       stroke="currentColor"
@@ -298,7 +298,7 @@ export default function Installation({ domain }: any) {
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaWebflow
                           className="w-10 h-10"
-                          style={{ color: '#3343AD' }}
+                          style={{ color: '#0052CC' }}
                           aria-hidden="true"
                         />
                       </div>
@@ -321,7 +321,7 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5"
-                      style={{ color: '#3343AD' }}
+                      style={{ color: '#0052CC' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -354,7 +354,7 @@ export default function Installation({ domain }: any) {
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaWix
                           className="w-10 h-10"
-                          style={{ color: '#3343AD' }}
+                          style={{ color: '#0052CC' }}
                           aria-hidden="true"
                         />
                       </div>
@@ -377,7 +377,7 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5"
-                      style={{ color: '#3343AD' }}
+                      style={{ color: '#0052CC' }}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -410,7 +410,7 @@ export default function Installation({ domain }: any) {
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <FaShopify
                           className="w-10 h-10"
-                          style={{ color: '#3343AD' }}
+                          style={{ color: '#0052CC' }}
                           aria-hidden="true"
                         />
                       </div>
@@ -433,12 +433,12 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors flex-shrink-0"
-                      style={{ color: '#3343AD' }}
+                      style={{ color: '#0052CC' }}
                       onMouseEnter={(e) =>
                         ((e.target as HTMLElement).style.color = '#2a3a9a')
                       }
                       onMouseLeave={(e) =>
-                        ((e.target as HTMLElement).style.color = '#3343AD')
+                        ((e.target as HTMLElement).style.color = '#0052CC')
                       }
                       fill="none"
                       stroke="currentColor"
@@ -472,7 +472,7 @@ export default function Installation({ domain }: any) {
                       <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center flex-shrink-0">
                         <SiGoogletagmanager
                           className="w-10 h-10"
-                          style={{ color: '#3343AD' }}
+                          style={{ color: '#0052CC' }}
                           aria-hidden="true"
                         />
                       </div>
@@ -495,12 +495,12 @@ export default function Installation({ domain }: any) {
                     </div>
                     <svg
                       className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 transition-colors flex-shrink-0"
-                      style={{ color: '#3343AD' }}
+                      style={{ color: '#0052CC' }}
                       onMouseEnter={(e) =>
                         ((e.target as HTMLElement).style.color = '#2a3a9a')
                       }
                       onMouseLeave={(e) =>
-                        ((e.target as HTMLElement).style.color = '#3343AD')
+                        ((e.target as HTMLElement).style.color = '#0052CC')
                       }
                       fill="none"
                       stroke="currentColor"
@@ -522,12 +522,12 @@ export default function Installation({ domain }: any) {
 
 
           {/* Stats Section with Dark Blue Background */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#235a75] to-[#224452]">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-[#13206B] to-[#0052CC]">
             {/* Background horizontal streaks */}
             <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#26627a] to-transparent"></div>
-              <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#234858] to-transparent"></div>
-              <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#26627a] to-transparent"></div>
+              <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#0052CC] to-transparent"></div>
+              <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#13206B] to-transparent"></div>
+              <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#0052CC] to-transparent"></div>
             </div>
 
             <div className="relative z-10 p-4 sm:p-6 md:p-8 lg:p-12 xl:p-16">
@@ -540,8 +540,8 @@ export default function Installation({ domain }: any) {
                     size="large"
                     className="h-full w-full"
                     titleColor="#ffffff"
-                    subtitleColor="#99DCFB"
-                    textColor="#99DCFB"
+                    subtitleColor="#ffffff"
+                    textColor="#ffffff"
                   />
                 </div>
 
@@ -556,9 +556,9 @@ export default function Installation({ domain }: any) {
                       size="medium"
                       hasGlow={true}
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
                   <div className="h-48 sm:h-52 md:h-56 lg:h-60">
@@ -568,9 +568,9 @@ export default function Installation({ domain }: any) {
                       description="Automatic WCAG 2.1 AA compliance protection"
                       size="medium"
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
 
@@ -583,9 +583,9 @@ export default function Installation({ domain }: any) {
                       size="medium"
                       hasGlow={true}
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
                   <div className="h-48 sm:h-52 md:h-56 lg:h-60">
@@ -595,9 +595,9 @@ export default function Installation({ domain }: any) {
                       description="Gain competitive advantage with compliance"
                       size="medium"
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
 
@@ -610,9 +610,9 @@ export default function Installation({ domain }: any) {
                       size="medium"
                       hasGlow={true}
                       className="h-full"
-                      titleColor="#99DCFB"
-                      subtitleColor="#99DCFB"
-                      textColor="#99DCFB"
+                      titleColor="#ffffff"
+                      subtitleColor="#ffffff"
+                      textColor="#ffffff"
                     />
                   </div>
                 </div>
