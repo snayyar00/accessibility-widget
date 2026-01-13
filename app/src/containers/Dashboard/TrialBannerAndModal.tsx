@@ -67,15 +67,60 @@ const Modal: React.FC<ModalProps> = ({
   domainCount,
   closeModal,
 }) => {
-  if (!isOpen) return null;
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const organization = useSelector(
     (state: RootState) => state.organization.data,
   );
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const getFocusableElements = () => {
+      if (!modalRef.current) return [];
+      return Array.from(
+        modalRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute('disabled') && el.offsetParent !== null);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    setTimeout(() => {
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length > 0) {
+        focusableElements[0].focus();
+      }
+    }, 0);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50">
-      <div className="modal-perfect-center w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar modal-container p-4">
+      <div
+        ref={modalRef}
+        className="modal-perfect-center w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar modal-container p-4"
+      >
         {/* Content */}
         <div className="w-full">{children}</div>
       </div>
@@ -600,6 +645,7 @@ const TrialBannerAndModal: React.FC<any> = ({
               <button
                 className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-2xl hover:bg-gray-100 transition-colors duration-200 p-1 rounded-full z-10"
                 onClick={closeModal}
+                aria-label="Close"
               >
                 ×
               </button>
@@ -614,7 +660,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                       style={{ maxWidth: '100%', maxHeight: '48px' }}
                     />
                   ) : (
-                    <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" />
+                    <LogoIcon className="w-26 h-7 sm:w-26 sm:h-7 md:w-40 md:h-10 lg:w-48 lg:h-12" aria-label="Webability logo" role="img" />
                   )}
                 </div>
 
@@ -641,8 +687,11 @@ const TrialBannerAndModal: React.FC<any> = ({
                       placeholder="example.com"
                       value={formData.domainName}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-3 text-base border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder-gray-400 bg-gray-50 hover:bg-white focus:bg-white"
+                      className="w-full px-3 py-3 text-base border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 placeholder:text-[#4A5568] bg-white"
+                      style={{ backgroundColor: '#FFFFFF' }}
                       form="bannerForm"
+                      aria-label="Your Domain"
+                      aria-required="true"
                     />
                   </div>
                   <p className="text-xs text-gray-600 mt-2">
@@ -702,7 +751,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-900">
+                              <h4 className="text-sm font-semibold text-gray-900" role="presentation">
                                 30 Day Trial
                               </h4>
                               <p className="text-xs text-gray-600">
@@ -777,7 +826,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               </div>
                             </div>
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-900">
+                              <h4 className="text-sm font-semibold text-gray-900" role="presentation">
                                 15 Day Trial
                               </h4>
                               <p className="text-xs text-gray-600">
@@ -820,7 +869,8 @@ const TrialBannerAndModal: React.FC<any> = ({
                     <div className="pt-2">
                       <button
                         type="button"
-                        className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        className="w-full py-2 md:py-3 px-3 md:px-4 text-white text-sm md:text-base font-semibold text-center rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none skip-trial-button"
+                        style={{ backgroundColor: '#0052CC' }}
                         onClick={() => {
                           if (
                             !formData.domainName ||
@@ -1036,8 +1086,8 @@ const TrialBannerAndModal: React.FC<any> = ({
                       <CardHeader
                         title={
                           <div className="flex justify-between items-center">
-                            <div className="text-2xl font-semibold text-primary flex items-center gap-2">
-                              <MdBarChart className="text-primary h-6 w-6" />
+                            <div className="text-2xl font-semibold flex items-center gap-2" style={{ color: '#0052CC' }}>
+                              <MdBarChart className="h-6 w-6" style={{ color: '#0052CC' }} />
                               {appSumoCount == Infinity
                                 ? 'Agency Unlimited Plan'
                                 : appSumoCount >= 50
@@ -1057,7 +1107,8 @@ const TrialBannerAndModal: React.FC<any> = ({
                                     userData?.email,
                                   );
                                 }}
-                                className="my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary bg-primary text-white"
+                                className="my-2 rounded-lg px-5 py-[10.5px] outline-none font-medium text-[16px] leading-[19px] text-center border border-solid cursor-pointer border-light-primary text-white"
+                                style={{ backgroundColor: '#0052CC' }}
                               >
                                 {portalClick ? (
                                   <CircularProgress
@@ -1080,14 +1131,14 @@ const TrialBannerAndModal: React.FC<any> = ({
                           <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-3 w-full text-left px-5">
                             {/* card 1 */}
                             <div className="w-full md:w-auto text-center md:text-left">
-                              <div className="bg-blue-50 p-3 rounded-full flex justify-center">
-                                <FaUsers className="h-6 w-6 text-sapphire-blue" />
+                              <div className="p-3 rounded-full flex justify-center" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
+                                <FaUsers className="h-6 w-6" style={{ color: '#0052CC' }} />
                               </div>
                               <div>
-                                <p className="text-sm text-sapphire-blue">
+                                <p className="text-sm" style={{ color: '#0052CC' }}>
                                   Total Active Sites
                                 </p>
-                                <p className="text-2xl font-bold text-sapphire-blue text-center">
+                                <p className="text-2xl font-bold text-center" style={{ color: '#0052CC' }}>
                                   {totalActive}
                                 </p>
                               </div>
@@ -1137,7 +1188,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                                 backgroundColor: 'white',
                                 borderRadius: '0.375rem',
                                 boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                                color: '#242f57',
+                                color: '#0052CC',
                               },
                               '& .MuiTab-root': {
                                 textTransform: 'none',
@@ -1177,25 +1228,27 @@ const TrialBannerAndModal: React.FC<any> = ({
                               <Card className="bg-white rounded-lg h-[120px] flex flex-col">
                                 <CardContent className="p-4 flex-grow flex flex-col justify-between">
                                   <div className="flex justify-between items-center">
-                                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
-                                      <FaCreditCard className="h-4 w-4 text-sapphire-blue" />
+                                    <h3 className="font-medium flex items-center gap-1" style={{ color: '#0052CC' }}>
+                                      <FaCreditCard className="h-4 w-4" style={{ color: '#0052CC' }} />
                                       Active Sites
                                     </h3>
                                     <Chip
                                       label={subscriptionData.monthly.active}
                                       size="small"
-                                      className="bg-blue-100 text-blue-800 min-w-[32px] h-[24px]"
+                                      className="min-w-[32px] h-[24px]"
+                                      style={{ backgroundColor: 'rgba(0, 82, 204, 0.2)', color: '#0052CC' }}
                                     />
                                   </div>
                                   <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
                                     <div
-                                      className="bg-primary h-2 rounded-full"
+                                      className="h-2 rounded-full"
                                       style={{
                                         width: `${
                                           (subscriptionData.monthly.active /
                                             totalActive) *
                                           100
                                         }%`,
+                                        backgroundColor: '#0052CC',
                                       }}
                                     ></div>
                                   </div>
@@ -1205,7 +1258,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               <Card className="bg-white rounded-lg h-[120px] flex flex-col">
                                 <CardContent className="p-4 flex-grow flex flex-col justify-between">
                                   <div className="flex justify-between items-center">
-                                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
+                                    <h3 className="font-medium flex items-center gap-1" style={{ color: '#0052CC' }}>
                                       <FaClock className="h-4 w-4 text-amber-500" />
                                       Trial Sites
                                     </h3>
@@ -1213,18 +1266,19 @@ const TrialBannerAndModal: React.FC<any> = ({
                                       label={subscriptionData.monthly.trial}
                                       size="small"
                                       variant="outlined"
-                                      className="bg-light-primary text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
+                                      className="text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
                                     />
                                   </div>
                                   <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
                                     <div
-                                      className="bg-primary h-2 rounded-full"
+                                      className="h-2 rounded-full"
                                       style={{
                                         width: `${
                                           (subscriptionData.monthly.trial /
                                             totalActive) *
                                           100
                                         }%`,
+                                        backgroundColor: '#0052CC',
                                       }}
                                     ></div>
                                   </div>
@@ -1243,25 +1297,27 @@ const TrialBannerAndModal: React.FC<any> = ({
                               <Card className="bg-white rounded-lg h-[120px] flex flex-col">
                                 <CardContent className="p-4 flex-grow flex flex-col justify-between">
                                   <div className="flex justify-between items-center">
-                                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
-                                      <FaCreditCard className="h-4 w-4 text-sapphire-blue" />
+                                    <h3 className="font-medium flex items-center gap-1" style={{ color: '#0052CC' }}>
+                                      <FaCreditCard className="h-4 w-4" style={{ color: '#0052CC' }} />
                                       Active Sites
                                     </h3>
                                     <Chip
                                       label={subscriptionData.yearly.active}
                                       size="small"
-                                      className="bg-blue-100 text-blue-800 min-w-[32px] h-[24px]"
+                                      className="min-w-[32px] h-[24px]"
+                                      style={{ backgroundColor: 'rgba(0, 82, 204, 0.2)', color: '#0052CC' }}
                                     />
                                   </div>
                                   <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
                                     <div
-                                      className="bg-primary h-2 rounded-full"
+                                      className="h-2 rounded-full"
                                       style={{
                                         width: `${
                                           (subscriptionData.yearly.active /
                                             totalActive) *
                                           100
                                         }%`,
+                                        backgroundColor: '#0052CC',
                                       }}
                                     ></div>
                                   </div>
@@ -1271,7 +1327,7 @@ const TrialBannerAndModal: React.FC<any> = ({
                               <Card className="bg-white rounded-lg h-[120px] flex flex-col">
                                 <CardContent className="p-4 flex-grow flex flex-col justify-between">
                                   <div className="flex justify-between items-center">
-                                    <h3 className="font-medium flex items-center gap-1 text-sapphire-blue">
+                                    <h3 className="font-medium flex items-center gap-1" style={{ color: '#0052CC' }}>
                                       <FaClock className="h-4 w-4 text-amber-500" />
                                       Trial Sites
                                     </h3>
@@ -1279,18 +1335,19 @@ const TrialBannerAndModal: React.FC<any> = ({
                                       label={subscriptionData.yearly.trial}
                                       size="small"
                                       variant="outlined"
-                                      className="bg-light-primary text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
+                                      className="text-amber-700 border-amber-200 min-w-[32px] h-[24px]"
                                     />
                                   </div>
                                   <div className="w-full bg-gray-100 rounded-full h-2 mt-auto mb-2">
                                     <div
-                                      className="bg-primary h-2 rounded-full"
+                                      className="h-2 rounded-full"
                                       style={{
                                         width: `${
                                           (subscriptionData.yearly.trial /
                                             totalActive) *
                                           100
                                         }%`,
+                                        backgroundColor: '#0052CC',
                                       }}
                                     ></div>
                                   </div>

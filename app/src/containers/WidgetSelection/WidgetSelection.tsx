@@ -75,10 +75,10 @@ const WidgetSelection: React.FC = () => {
           >
             <div className="absolute top-4 right-4 z-10">
               <button
-                className="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg"
+                className="text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg"
                 type="button"
                 tabIndex={-1}
-                style={{ pointerEvents: 'none' }}
+                style={{ pointerEvents: 'none', backgroundColor: '#0052CC' }}
               >
                 RECOMMENDED
               </button>

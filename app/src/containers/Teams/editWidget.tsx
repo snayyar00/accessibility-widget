@@ -852,7 +852,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
               <button
                 onClick={() => setIsCopyModalOpen(true)}
                 disabled={buttonDisable}
-                className="px-4 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] flex items-center gap-2 w-full sm:w-auto md:w-auto copy-customization-button"
+                className="px-4 py-2 border border-transparent rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] flex items-center gap-2 w-full sm:w-auto md:w-auto copy-customization-button"
+                style={{ backgroundColor: '#0052CC' }}
               >
                 <Settings size={16} />
                 Copy Customization
