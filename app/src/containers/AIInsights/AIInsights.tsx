@@ -14,6 +14,7 @@ import { Site } from '@/generated/graphql';
 import { CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
 import Select from 'react-select/creatable';
+import { components } from 'react-select';
 
 import { Search, Monitor, Loader2, Brain } from 'lucide-react';
 import {
@@ -193,7 +194,12 @@ const AIInsights: React.FC = () => {
             {/* Input Section */}
             <div className="flex flex-col md:flex-row gap-3 sm:gap-4 mb-6">
               <div className="flex-1">
+                <label htmlFor="analyze-website-select" className="sr-only">
+                  Analyze Your Website
+                </label>
                 <Select
+                  inputId="analyze-website-select"
+                  aria-label="Analyze Your Website"
                   options={siteOptions}
                   value={selectedOption}
                   onChange={(selected: OptionType | null) => {
@@ -215,6 +221,50 @@ const AIInsights: React.FC = () => {
                   }
                   classNamePrefix="react-select"
                   className="w-full min-w-0"
+                  components={{
+                    ClearIndicator: (props: any) => {
+                      const {
+                        innerProps,
+                        isDisabled,
+                        clearValue,
+                      } = props;
+                      
+                      // Enhance innerProps to make it focusable and keyboard accessible
+                      const enhancedInnerProps = {
+                        ...innerProps,
+                        tabIndex: isDisabled ? -1 : 0,
+                        role: 'button',
+                        'aria-label': 'Clear selection',
+                        onClick: (e: React.MouseEvent) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isDisabled && clearValue) {
+                            clearValue();
+                          }
+                          // Also call original onClick if it exists
+                          if (innerProps.onClick) {
+                            innerProps.onClick(e);
+                          }
+                        },
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isDisabled && clearValue) {
+                              clearValue();
+                            }
+                          } else if (innerProps.onKeyDown) {
+                            innerProps.onKeyDown(e);
+                          }
+                        },
+                      };
+
+                      return components.ClearIndicator({
+                        ...props,
+                        innerProps: enhancedInnerProps,
+                      });
+                    },
+                  }}
                   styles={{
                     control: (provided: any, state: any) => ({
                       ...provided,
@@ -239,10 +289,27 @@ const AIInsights: React.FC = () => {
                     }),
                     placeholder: (provided: any) => ({
                       ...provided,
-                      color: '#9ca3af',
+                      color: '#4b5563',
                       fontSize: '14px',
                       '@media (min-width: 640px)': {
                         fontSize: '16px',
+                      },
+                    }),
+                    indicatorSeparator: () => ({
+                      display: 'none',
+                    }),
+                    dropdownIndicator: (provided: any) => ({
+                      ...provided,
+                      color: '#767676',
+                      '&:hover': {
+                        color: '#767676',
+                      },
+                    }),
+                    clearIndicator: (provided: any) => ({
+                      ...provided,
+                      color: '#767676',
+                      '&:hover': {
+                        color: '#767676',
                       },
                     }),
                   }}
@@ -251,18 +318,31 @@ const AIInsights: React.FC = () => {
 
               <button
                 type="button"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base"
+                className="text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                style={{
+                  backgroundColor: isAnalyzing ? '#9ca3af' : '#0052CC',
+                }}
                 onClick={handleDomainAnalysis}
                 disabled={isAnalyzing}
+                aria-label={isAnalyzing ? "Analyzing website, please wait" : "Analyze website"}
               >
                 {isAnalyzing ? (
-                  <CircularProgress size={18} sx={{ color: 'white' }} />
+                  <CircularProgress size={18} sx={{ color: 'white' }} aria-hidden="true" />
                 ) : (
-                  <Search className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Search className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 )}
                 <span className="hidden sm:inline">Analyze now</span>
                 <span className="sm:hidden">Analyze</span>
               </button>
+            </div>
+            
+            {/* Screen reader announcement for loading state */}
+            <div 
+              className="sr-only" 
+              aria-live="polite" 
+              aria-atomic="true"
+            >
+              {isAnalyzing && 'Analyzing website, please wait'}
             </div>
           </div>
 

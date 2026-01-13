@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MdFileDownload,
   MdEmail,
@@ -36,6 +36,7 @@ import threeIssuesIconImage from '@/assets/images/3_issues_icon.png';
 import getWidgetSettings from '@/utils/getWidgetSettings';
 import InstallationEmailModal from '@/components/Common/InstallationEmailModal';
 import { CircularProgress } from '@mui/material';
+import LegalResources from './LegalResources';
 import TourGuide from '@/components/Common/TourGuide';
 import { defaultTourStyles } from '@/config/tourStyles';
 import { proofOfEffortTourSteps, tourKeys } from '@/constants/toursteps';
@@ -545,6 +546,12 @@ const ProofOfEffortToolkit: React.FC = () => {
   );
   const history = useHistory();
 
+  // Refs for focus management
+  const documentViewerRef = useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement | null>(null);
+  const dropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
+
   // Redux state
   const currentDomain = useSelector(
     (state: RootState) => state.report.selectedDomain,
@@ -623,19 +630,210 @@ const ProofOfEffortToolkit: React.FC = () => {
     };
   }, [pdfViewerUrl]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside + focus trap within dropdown
   useEffect(() => {
-    const handleClickOutside = () => {
+    if (openDropdownIndex === null) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+      if (
+        (dropdownMenuRef.current &&
+          dropdownMenuRef.current.contains(target as Node)) ||
+        (dropdownTriggerRef.current &&
+          dropdownTriggerRef.current.contains(target as Node))
+      ) {
+        return;
+      }
       setOpenDropdownIndex(null);
     };
 
-    if (openDropdownIndex !== null) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const menu = dropdownMenuRef.current;
+      if (!menu) return;
+
+      const focusableItems = Array.from(
+        menu.querySelectorAll<HTMLButtonElement>('button:not([disabled])'),
+      );
+      if (focusableItems.length === 0) return;
+
+      const firstItem = focusableItems[0];
+      const lastItem = focusableItems[focusableItems.length - 1];
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpenDropdownIndex(null);
+        // Restore focus to the trigger
+        if (dropdownTriggerRef.current) {
+          setTimeout(() => dropdownTriggerRef.current?.focus(), 0);
+        }
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        const activeElement = document.activeElement as HTMLElement | null;
+        const isInMenu = !!activeElement && menu.contains(activeElement);
+
+        // If focus has escaped the menu while it's open, bring it back in
+        if (!isInMenu) {
+          event.preventDefault();
+          if (event.shiftKey) {
+            lastItem.focus();
+          } else {
+            firstItem.focus();
+          }
+          return;
+        }
+
+        if (event.shiftKey) {
+          if (activeElement === firstItem) {
+            event.preventDefault();
+            lastItem.focus();
+          }
+        } else {
+          if (activeElement === lastItem) {
+            event.preventDefault();
+            firstItem.focus();
+          }
+        }
+      }
+    };
+
+    // When menu opens, move focus to first item
+    if (dropdownMenuRef.current) {
+      const firstItem = dropdownMenuRef.current.querySelector<
+        HTMLButtonElement
+      >('button:not([disabled])');
+      if (firstItem) {
+        setTimeout(() => firstItem.focus(), 0);
+      }
     }
 
-    return undefined;
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [openDropdownIndex]);
+
+  // Focus trap for document viewer modal
+  useEffect(() => {
+    if (!selectedDocument || !documentViewerRef.current) {
+      return;
+    }
+
+    const modal = documentViewerRef.current;
+
+    // Store the previously active element
+    previousActiveElementRef.current =
+      (document.activeElement as HTMLElement) || null;
+
+    // Get all focusable elements within the modal
+    const getFocusableElements = (): HTMLElement[] => {
+      const focusableSelectors = [
+        'button:not([disabled])',
+        'a[href]',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])',
+      ];
+      const elements = Array.from(
+        modal.querySelectorAll(focusableSelectors.join(', ')),
+      ) as HTMLElement[];
+      // Filter out elements that are not visible or have display: none
+      return elements.filter(
+        (el) =>
+          el.offsetParent !== null &&
+          !el.hasAttribute('aria-hidden') &&
+          window.getComputedStyle(el).visibility !== 'hidden',
+      );
+    };
+
+    // Focus the first focusable element
+    const focusableElements = getFocusableElements();
+    if (focusableElements.length > 0) {
+      // Try to focus the close button first, otherwise focus the first element
+      const closeButton = modal.querySelector(
+        'button[aria-label*="Close document viewer"]',
+      ) as HTMLElement;
+      if (closeButton && focusableElements.includes(closeButton)) {
+        setTimeout(() => closeButton.focus(), 100);
+      } else {
+        setTimeout(() => focusableElements[0].focus(), 100);
+      }
+    }
+
+    // Handle Tab key to trap focus
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      // If focus has somehow moved outside the dialog while it's open,
+      // immediately bring it back inside to preserve the focus trap.
+      const activeElement = document.activeElement as HTMLElement | null;
+      const isInModal = !!activeElement && modal.contains(activeElement);
+
+      if (!isInModal) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          lastElement.focus();
+        } else {
+          firstElement.focus();
+        }
+        return;
+      }
+
+      if (e.shiftKey) {
+        // Shift + Tab
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        // Tab
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    };
+
+    // Handle Escape key to close
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedDocument(null);
+        setPdfViewerUrl((prevUrl) => {
+          if (prevUrl) {
+            URL.revokeObjectURL(prevUrl);
+          }
+          return null;
+        });
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+    document.addEventListener('keydown', handleEscapeKey);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleTabKey);
+      document.removeEventListener('keydown', handleEscapeKey);
+
+      // Restore focus to the previously active element
+      if (previousActiveElementRef.current) {
+        previousActiveElementRef.current.focus();
+      }
+    };
+  }, [selectedDocument]);
 
   const handleSendViaEmail = () => {
     if (!currentDomain) {
@@ -1613,10 +1811,13 @@ const ProofOfEffortToolkit: React.FC = () => {
 
   const handleCloseDocument = () => {
     setSelectedDocument(null);
-    setPdfViewerUrl(null);
-    if (pdfViewerUrl) {
-      URL.revokeObjectURL(pdfViewerUrl);
-    }
+    setPdfViewerUrl((prevUrl) => {
+      if (prevUrl) {
+        URL.revokeObjectURL(prevUrl);
+      }
+      return null;
+    });
+    // Focus will be restored by the focus trap cleanup effect
   };
 
   const handleDropdownToggle = (index: number) => {
@@ -1804,18 +2005,32 @@ const ProofOfEffortToolkit: React.FC = () => {
         {/* Page Header */}
         <div className="mb-6 poe-page-header">
           <h1 className="text-3xl font-bold text-gray-900 poe-title">
-            Proof of effort toolkit
+            Legal resources
           </h1>
         </div>
 
-        <div className="flex lg:h-[calc(100vh-8rem)] h-auto lg:flex-row flex-col gap-6 overflow-hidden">
+        {/* Legal Resources Section */}
+        <LegalResources />
+
+        {/* Proof of Effort Toolkit Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Proof of effort toolkit
+          </h2>
+          <div className="flex lg:h-[calc(100vh-8rem)] h-auto lg:flex-row flex-col gap-6 overflow-hidden">
           {/* Left Panel - Document Content */}
           <div
             className="poe-left-panel flex-1 bg-white flex flex-col lg:min-h-0 min-h-[50vh] sm:min-h-[60vh] border-2 rounded-xl overflow-hidden"
             style={{ borderColor: '#A2ADF3', minHeight: 0 }}
           >
             {selectedDocument ? (
-              <>
+              <div
+                ref={documentViewerRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="document-viewer-title"
+                className="flex flex-col h-full"
+              >
                 {/* Document Header */}
                 <div className="p-4 border-b border-gray-200">
                   {/* Desktop Layout */}
@@ -1825,11 +2040,15 @@ const ProofOfEffortToolkit: React.FC = () => {
                         onClick={handlePreviousDocument}
                         disabled={currentDocumentIndex === 0}
                         className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Previous document"
                       >
-                        <MdArrowBack className="w-4 h-4" />
+                        <MdArrowBack className="w-4 h-4" aria-hidden="true" />
                       </button>
                       <div className="bg-blue-50 px-3 py-1.5 rounded-lg">
-                        <h1 className="text-base font-medium text-gray-900">
+                        <h1
+                          id="document-viewer-title"
+                          className="text-base font-medium text-gray-900"
+                        >
                           {selectedDocument.name}
                         </h1>
                         <p className="text-xs text-gray-600 mt-1">
@@ -1840,8 +2059,9 @@ const ProofOfEffortToolkit: React.FC = () => {
                         onClick={handleNextDocument}
                         disabled={currentDocumentIndex === documents.length - 1}
                         className="p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Next document"
                       >
-                        <MdArrowForward className="w-4 h-4" />
+                        <MdArrowForward className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                     <div className="flex items-center gap-3">
@@ -1851,8 +2071,9 @@ const ProofOfEffortToolkit: React.FC = () => {
                       <button
                         onClick={handleCloseDocument}
                         className="p-1.5 rounded-full hover:bg-gray-100"
+                        aria-label="Close document viewer"
                       >
-                        <MdClose className="w-4 h-4" />
+                        <MdClose className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -1862,7 +2083,10 @@ const ProofOfEffortToolkit: React.FC = () => {
                     <div className="flex flex-col items-center gap-4 px-2">
                       {/* Report name with close button */}
                       <div className="bg-blue-50 px-4 py-3 rounded-lg w-full max-w-xs relative">
-                        <h1 className="text-sm font-medium text-gray-900 text-center leading-tight pr-8">
+                        <h1
+                          id="document-viewer-title-mobile"
+                          className="text-sm font-medium text-gray-900 text-center leading-tight pr-8"
+                        >
                           {selectedDocument.name}
                         </h1>
                         <p className="text-xs text-gray-600 text-center mt-1 pr-8">
@@ -1872,8 +2096,12 @@ const ProofOfEffortToolkit: React.FC = () => {
                         <button
                           onClick={handleCloseDocument}
                           className="absolute top-2 right-2 p-1 rounded-full bg-white hover:bg-gray-100 transition-colors shadow-sm"
+                          aria-label="Close document viewer"
                         >
-                          <MdClose className="w-4 h-4 text-gray-600" />
+                          <MdClose
+                            className="w-4 h-4 text-gray-600"
+                            aria-hidden="true"
+                          />
                         </button>
                       </div>
 
@@ -1883,8 +2111,12 @@ const ProofOfEffortToolkit: React.FC = () => {
                           onClick={handlePreviousDocument}
                           disabled={currentDocumentIndex === 0}
                           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Previous document"
                         >
-                          <MdArrowBack className="w-5 h-5 text-gray-600" />
+                          <MdArrowBack
+                            className="w-5 h-5 text-gray-600"
+                            aria-hidden="true"
+                          />
                         </button>
                         <button
                           onClick={handleNextDocument}
@@ -1892,8 +2124,12 @@ const ProofOfEffortToolkit: React.FC = () => {
                             currentDocumentIndex === documents.length - 1
                           }
                           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          aria-label="Next document"
                         >
-                          <MdArrowForward className="w-5 h-5 text-gray-600" />
+                          <MdArrowForward
+                            className="w-5 h-5 text-gray-600"
+                            aria-hidden="true"
+                          />
                         </button>
                       </div>
 
@@ -1935,13 +2171,17 @@ const ProofOfEffortToolkit: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </>
+              </div>
             ) : (
               /* Default Content when no document is selected */
               <div className="flex-1 flex items-center justify-center py-12">
                 <div className="text-center max-w-md mx-auto px-6">
                   <div className="pb-8">
-                    <FiFile className="w-16 h-16 text-blue-600 mx-auto" />
+                      <FiFile
+                        className="w-16 h-16 mx-auto"
+                        style={{ color: '#0052CC' }}
+                        aria-hidden="true"
+                      />
                   </div>
                   <h2 className="text-2xl font-medium text-gray-900 mb-6">
                     Legal Docs for Your Team
@@ -1954,11 +2194,15 @@ const ProofOfEffortToolkit: React.FC = () => {
                   </p>
                   <div className="flex gap-3 justify-center">
                     <button
-                      className={`poe-send-email-button inline-flex items-center gap-2 px-4 py-2 border border-[#445AE7] rounded-md transition-colors ${
+                      className={`poe-send-email-button inline-flex items-center gap-2 px-4 py-2 border rounded-md transition-colors ${
                         isDownloadingZip || isEmailSending
                           ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                          : 'text-white bg-[#445AE7] hover:bg-[#3a4fd1]'
+                          : 'text-white hover:bg-[#003EB8]'
                       }`}
+                      style={{
+                        borderColor: isDownloadingZip || isEmailSending ? '#9ca3af' : '#0052CC',
+                        backgroundColor: isDownloadingZip || isEmailSending ? '#f3f4f6' : '#0052CC',
+                      }}
                       onClick={handleSendViaEmail}
                       disabled={isDownloadingZip || isEmailSending}
                     >
@@ -1969,13 +2213,13 @@ const ProofOfEffortToolkit: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <MdEmail className="w-4 h-4" />
+                          <MdEmail className="w-4 h-4" style={{ color: '#ffffff' }} aria-hidden="true" />
                           Send via email
                         </>
                       )}
                     </button>
                   </div>
-                  <div className="poe-documents-count text-sm text-gray-500 mt-3">
+                  <div className="poe-documents-count text-sm text-gray-700 mt-3">
                     {documents.length} Documents
                   </div>
                 </div>
@@ -2000,16 +2244,20 @@ const ProofOfEffortToolkit: React.FC = () => {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3 flex-1">
-                      <FiFile className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <FiFile
+                        className="w-5 h-5 mt-0.5 flex-shrink-0"
+                        style={{ color: '#0052CC' }}
+                        aria-hidden="true"
+                      />
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-gray-900">
+                        <h3 className="text-sm font-semibold text-gray-900">
                           {document.name}
-                        </h4>
+                        </h3>
                         <p className="text-xs text-gray-500 mt-1">
                           {document.creationDate}
                           {document.type === 'monthly-report' &&
                             isProcessingReport && (
-                              <span className="text-blue-600 italic ml-2">
+                              <span className="italic ml-2" style={{ color: '#0052CC' }}>
                                 Processing...
                               </span>
                             )}
@@ -2021,25 +2269,38 @@ const ProofOfEffortToolkit: React.FC = () => {
                         className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${
                           index === 0 ? 'poe-document-dropdown' : ''
                         }`}
+                        ref={
+                          openDropdownIndex === index
+                            ? dropdownTriggerRef
+                            : undefined
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDropdownToggle(index);
                         }}
+                        aria-label={document.name ? `More options for ${document.name}` : 'More options'}
+                        aria-expanded={openDropdownIndex === index}
+                        aria-haspopup="true"
                       >
                         <MdMoreVert
                           className="w-4 h-4"
-                          style={{ color: '#445AE7' }}
+                          style={{ color: '#0052CC' }}
+                          aria-hidden="true"
                         />
                       </button>
 
                       {/* Dropdown menu */}
                       {openDropdownIndex === index && (
                         <div
+                          role="menu"
+                          aria-label={`Options for ${document.name}`}
+                          ref={dropdownMenuRef}
                           className={`absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 min-w-32 ${
                             index === 0 ? 'poe-dropdown-menu' : ''
                           }`}
                         >
                           <button
+                            role="menuitem"
                             onClick={() =>
                               handleDropdownAction(document, 'view')
                             }
@@ -2056,6 +2317,7 @@ const ProofOfEffortToolkit: React.FC = () => {
                             View
                           </button>
                           <button
+                            role="menuitem"
                             onClick={() =>
                               handleDropdownAction(document, 'download')
                             }
@@ -2082,11 +2344,24 @@ const ProofOfEffortToolkit: React.FC = () => {
             {/* Download All Button */}
             <div className="mt-6 pt-12 border-t border-gray-200">
               <button
-                className={`poe-download-zip-button w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-md transition-colors ${
+                className={`poe-download-zip-button w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-white rounded-md transition-colors ${
                   isDownloadingZip || isEmailSending
-                    ? 'bg-blue-400 cursor-not-allowed'
-                    : 'hover:bg-blue-700'
+                    ? 'cursor-not-allowed'
+                    : ''
                 }`}
+                style={{
+                  backgroundColor: isDownloadingZip || isEmailSending ? '#9ca3af' : '#0052CC',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isDownloadingZip && !isEmailSending) {
+                    e.currentTarget.style.backgroundColor = '#003EB8';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isDownloadingZip && !isEmailSending) {
+                    e.currentTarget.style.backgroundColor = '#0052CC';
+                  }
+                }}
                 onClick={handleDownloadZip}
                 disabled={isDownloadingZip || isEmailSending}
               >
@@ -2097,16 +2372,17 @@ const ProofOfEffortToolkit: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <MdFileDownload className="w-4 h-4" />
+                    <MdFileDownload className="w-4 h-4" style={{ color: '#ffffff' }} aria-hidden="true" />
                     Download
                   </>
                 )}
               </button>
-              <div className="poe-documents-count text-sm text-gray-500 mt-3 text-center">
+              <div className="poe-documents-count text-sm text-gray-700 mt-3 text-center">
                 {documents.length} Documents
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
 

@@ -32,7 +32,7 @@ const ResetPasswordForm: React.FC<Props> = ({
           <Logo />
         </div>
         <div className="space-y-3">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold" style={{ color: '#0052CC' }}>
             {t('Common.title.reset_password')}
           </h1>
           <p className="text-gray-600 text-base leading-relaxed max-w-sm mx-auto">
@@ -42,44 +42,58 @@ const ResetPasswordForm: React.FC<Props> = ({
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
+        <p className="text-xs text-gray-600 mb-4">
+          Fields marked with an asterisk (*) are required.
+        </p>
         {/* Password Input */}
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
-            {t('Common.label.password')}
+          <label htmlFor="reset-password" className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
+            {t('Common.label.password')} <span className="text-red-600" aria-label="required">*</span>
           </label>
           <div className="relative">
             <Input
               type="password"
+              id="reset-password"
               placeholder={t('Common.placeholder.password')}
               name="password"
               ref={register}
-              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
+              autoComplete="new-password"
+              aria-required="true"
+              aria-invalid={errors?.password ? 'true' : 'false'}
+              aria-describedby={errors?.password ? 'reset-password-error' : undefined}
+              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl transition-all duration-200 placeholder:text-[#4B5563]"
             />
           </div>
           {errors?.password?.message && (
             <div className="mt-2">
-              <ErrorText message={String(t(errors.password.message))} />
+              <ErrorText id="reset-password-error" message={String(t(errors.password.message))} />
             </div>
           )}
         </div>
 
         {/* Confirm Password Input */}
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
-            {t('Common.label.confirm_password')}
+          <label htmlFor="reset-password-confirmation" className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
+            {t('Common.label.confirm_password')} <span className="text-red-600" aria-label="required">*</span>
           </label>
           <div className="relative">
             <Input
               type="password"
+              id="reset-password-confirmation"
               placeholder={t('Common.placeholder.confirm_password')}
               name="passwordConfirmation"
               ref={register}
-              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
+              autoComplete="new-password"
+              aria-required="true"
+              aria-invalid={errors?.passwordConfirmation ? 'true' : 'false'}
+              aria-describedby={errors?.passwordConfirmation ? 'reset-password-confirmation-error' : undefined}
+              className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl transition-all duration-200 placeholder:text-[#4B5563]"
             />
           </div>
           {errors?.passwordConfirmation?.message && (
             <div className="mt-2">
               <ErrorText
+                id="reset-password-confirmation-error"
                 message={String(t(errors.passwordConfirmation.message))}
               />
             </div>
@@ -92,7 +106,8 @@ const ResetPasswordForm: React.FC<Props> = ({
             color="primary"
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full py-3 px-6 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            style={{ backgroundColor: '#0052CC' }}
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center space-x-2">
@@ -139,7 +154,8 @@ const ResetPasswordForm: React.FC<Props> = ({
               components={[
                 <a
                   href="mailto:support@webability.com"
-                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                  className="font-medium transition-colors duration-200"
+                  style={{ color: '#0052CC' }}
                 ></a>,
               ]}
             />

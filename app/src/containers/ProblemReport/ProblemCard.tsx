@@ -74,14 +74,7 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
               ? 'bg-transparent'
               : 'border-gray-400 bg-white hover:border-gray-500'
           }`}
-          style={
-            problem.fixed
-              ? {
-                  borderColor: baseColors.brandPrimary,
-                  color: baseColors.brandPrimary,
-                }
-              : undefined
-          }
+          style={problem.fixed ? { borderColor: '#0052CC' } : {}}
           onClick={handleToggleFixed}
           title={problem.fixed ? 'Mark as unfixed' : 'Mark as fixed'}
         >
@@ -92,6 +85,7 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
+              style={{ color: '#0052CC' }}
             >
               <path
                 d="M7 12l3 3 7-7"

@@ -16,9 +16,10 @@ const ServiceRequests: React.FC = () => {
   const { data: userData } = useSelector((state: RootState) => state.user);
   useDocumentHeader({ title: 'Service Requests' });
 
-  // Check if user's organization ID is 1 or 87
+  // Check if user's organization ID matches allowed org
   const currentOrganizationId = userData?.current_organization_id;
-  const hasAccess = currentOrganizationId === 1 || currentOrganizationId === 87;
+  const allowedOrgId = Number(process.env.REACT_APP_CURRENT_ORG || '1');
+  const hasAccess = currentOrganizationId === allowedOrgId;
 
   if (!hasAccess) {
     return <Redirect to="/dashboard" />;
@@ -169,7 +170,7 @@ const ServiceRequests: React.FC = () => {
         <div 
           className="relative rounded-2xl shadow-sm overflow-hidden border"
           style={{
-            backgroundColor: '#344288',
+            backgroundColor: '#13206B',
             borderColor: '#A2ADF3',
           }}
         >
@@ -191,7 +192,10 @@ const ServiceRequests: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight text-white">
+                <h1 
+                  className="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight text-white"
+                  aria-label="Professional Accessibility Services"
+                >
                   Professional<br />
                   <span className="text-white">
                     Accessibility Services
@@ -310,7 +314,7 @@ const ServiceRequests: React.FC = () => {
                     </div>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Certified</span>
+                    <span className="text-xs font-semibold text-green-800 bg-green-50 px-2 py-0.5 rounded-full">Certified</span>
                     <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
                     </svg>
@@ -387,12 +391,12 @@ const ServiceRequests: React.FC = () => {
             }}
           >
             <div>
-              <h3 
+              <h2 
                 className="text-xl sm:text-2xl font-medium"
                 style={{ color: baseColors.grayDark2 }}
               >
                 Manage your projects
-              </h3>
+              </h2>
             </div>
             
             {/* Action Buttons */}
@@ -401,13 +405,13 @@ const ServiceRequests: React.FC = () => {
                 onClick={handleGetQuote}
                 className="flex items-center justify-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 text-white rounded-lg font-medium text-sm sm:text-base transition-colors"
                 style={{
-                  backgroundColor: baseColors.brandPrimary,
+                  backgroundColor: '#0052CC',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = baseColors.brandPrimaryHover;
+                  e.currentTarget.style.backgroundColor = '#003EB8';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = baseColors.brandPrimary;
+                  e.currentTarget.style.backgroundColor = '#0052CC';
                 }}
               >
                 <FiPlus className="w-5 h-5" />
@@ -541,13 +545,13 @@ const ServiceRequests: React.FC = () => {
                         onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white rounded-lg transition-colors text-xs font-medium"
                         style={{
-                          backgroundColor: baseColors.brandPrimary,
+                          backgroundColor: '#0052CC',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = baseColors.brandPrimaryHover;
+                          e.currentTarget.style.backgroundColor = '#003EB8';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = baseColors.brandPrimary;
+                          e.currentTarget.style.backgroundColor = '#0052CC';
                         }}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -556,7 +560,7 @@ const ServiceRequests: React.FC = () => {
                         View
                       </a>
                     ) : (
-                      <span className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-xs font-semibold">
+                      <span className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-800 rounded-lg text-xs font-semibold">
                         <svg className="w-3.5 h-3.5 mr-1.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                         </svg>
@@ -633,7 +637,7 @@ const ServiceRequests: React.FC = () => {
               key={service.id}
               className="w-full transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
               style={{
-                background: 'linear-gradient(135deg, #2E3A7D 0%, #4A5AA0 100%)',
+                backgroundColor: '#13206B',
                 borderRadius: '16px',
                 padding: '28px',
                 position: 'relative',
@@ -656,12 +660,12 @@ const ServiceRequests: React.FC = () => {
                   })}
                 </div>
                 <div className="flex-1">
-                  <h2
+                  <h3
                     className="text-xl sm:text-2xl font-bold mb-3"
                     style={{ color: baseColors.white }}
                   >
                     {service.title}
-                  </h2>
+                  </h3>
                   <p
                     className="text-sm sm:text-base leading-relaxed mb-4"
                     style={{ 

@@ -33,7 +33,7 @@ const ForgotPasswordForm: React.FC<Props> = ({
           <Logo />
         </div>
         <div className="space-y-3">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold" style={{ color: '#0052CC' }}>
             {t('Common.title.forgot_password')}
           </h1>
           <p className="text-gray-600 text-base leading-relaxed max-w-sm mx-auto">
@@ -44,23 +44,33 @@ const ForgotPasswordForm: React.FC<Props> = ({
 
       {!isSubmitted ? (
         <form onSubmit={onSubmit} className="space-y-6">
+          <p className="text-xs text-gray-600 mb-4">
+            Fields marked with an asterisk (*) are required.
+          </p>
           {/* Email Input */}
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
-              {t('Common.label.your_email')}
+            <label htmlFor="forgot-password-email" className="block text-sm font-semibold text-gray-700 uppercase tracking-wider">
+              {t('Common.label.your_email')} <span className="text-red-600" aria-label="required">*</span>
             </label>
             <div className="relative">
               <Input
                 type="email"
+                id="forgot-password-email"
                 placeholder={t('Common.placeholder.email')}
                 name="email"
                 ref={register}
-                className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder:text-gray-400"
+                autoComplete="username"
+                aria-label="Your Email"
+                aria-required="true"
+                aria-invalid={errors?.email ? 'true' : 'false'}
+                aria-describedby={errors?.email ? 'forgot-password-email-error' : undefined}
+                className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl transition-all duration-200 placeholder:text-[#4B5563]"
+
               />
             </div>
             {errors?.email?.message && (
               <div className="mt-2">
-                <ErrorText message={String(t(errors.email.message))} />
+                <ErrorText id="forgot-password-email-error" message={String(t(errors.email.message))} />
               </div>
             )}
           </div>
@@ -71,7 +81,8 @@ const ForgotPasswordForm: React.FC<Props> = ({
               color="primary"
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full py-3 px-6 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              style={{ backgroundColor: '#0052CC' }}
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -102,7 +113,8 @@ const ForgotPasswordForm: React.FC<Props> = ({
                 components={[
                   <a
                     href="mailto:support@webability.com"
-                    className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                    className="font-medium underline transition-colors duration-200"
+                    style={{ color: '#0052CC' }}
                   ></a>,
                 ]}
               />
@@ -139,7 +151,8 @@ const ForgotPasswordForm: React.FC<Props> = ({
               components={[
                 <Link
                   to="/auth/signin"
-                  className="text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                  className="font-medium underline transition-colors duration-200"
+                  style={{ color: '#0052CC' }}
                 ></Link>,
               ]}
             >
