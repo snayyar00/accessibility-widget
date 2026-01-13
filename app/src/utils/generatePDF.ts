@@ -179,6 +179,11 @@ export const generatePDF = async (
     widgetInfo: { result: string };
     scriptCheckResult?: string;
     url: string;
+    totalStats?: {
+      score?: number;
+      originalScore?: number;
+      hasWebAbility?: boolean;
+    };
   },
   currentLanguage: string,
   domain?: string,
@@ -226,7 +231,13 @@ export const generatePDF = async (
   const MAX_TOTAL_SCORE = 95;
   const issues = extractIssuesFromReport(reportData);
 
-  const baseScore = reportData.score || 0;
+  // Use totalStats.score if available (already enhanced), otherwise use reportData.score
+  // totalStats.score is calculated in accessibilityReport.service.ts and already includes WebAbility bonus
+  const totalStats = reportData.totalStats || {};
+  const enhancedScore = typeof totalStats.score === 'number' 
+    ? totalStats.score 
+    : (reportData.score || 0);
+  
   const scriptCheckResult = reportData.scriptCheckResult;
   const widgetInfoResult = reportData.widgetInfo?.result;
   // Check both scriptCheckResult and widgetInfo.result for Web Ability
@@ -239,10 +250,13 @@ export const generatePDF = async (
     scriptCheckResult === 'true' ||
     widgetInfoResult === 'true';
 
-    console.log('hasWebAbility', scriptCheckResult, widgetInfoResult, hasWebAbility);
-  const enhancedScore = hasWebAbility
-    ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
-    : baseScore;
+  console.log('PDF Score calculation:', {
+    totalStatsScore: totalStats.score,
+    reportDataScore: reportData.score,
+    enhancedScore,
+    hasWebAbility,
+    originalScore: totalStats.originalScore
+  });
 
   let status: string, message: string, statusColor: [number, number, number];
   let statusKey: 'compliant' | 'partial' | 'non';
@@ -3198,6 +3212,11 @@ export const generateShortPDF = async (
     widgetInfo: { result: string };
     scriptCheckResult?: string;
     url: string;
+    totalStats?: {
+      score?: number;
+      originalScore?: number;
+      hasWebAbility?: boolean;
+    };
   },
   currentLanguage: string,
   domain: string,
@@ -3245,7 +3264,13 @@ export const generateShortPDF = async (
   const MAX_TOTAL_SCORE = 95;
   const issues = extractIssuesFromReport(reportData);
 
-  const baseScore = reportData.score || 0;
+  // Use totalStats.score if available (already enhanced), otherwise use reportData.score
+  // totalStats.score is calculated in accessibilityReport.service.ts and already includes WebAbility bonus
+  const totalStats = reportData.totalStats || {};
+  const enhancedScore = typeof totalStats.score === 'number' 
+    ? totalStats.score 
+    : (reportData.score || 0);
+  
   const scriptCheckResult = reportData.scriptCheckResult;
   const widgetInfoResult = reportData.widgetInfo?.result;
   // Check both scriptCheckResult and widgetInfo.result for Web Ability
@@ -3258,9 +3283,13 @@ export const generateShortPDF = async (
     scriptCheckResult === 'true' ||
     widgetInfoResult === 'true';
 
-  const enhancedScore = hasWebAbility
-    ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE)
-    : baseScore;
+  console.log('PDF Score calculation (prospect):', {
+    totalStatsScore: totalStats.score,
+    reportDataScore: reportData.score,
+    enhancedScore,
+    hasWebAbility,
+    originalScore: totalStats.originalScore
+  });
 
   let status: string, message: string, statusColor: [number, number, number];
   let statusKey: 'compliant' | 'partial' | 'non';
