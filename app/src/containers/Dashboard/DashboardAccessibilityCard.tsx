@@ -5,6 +5,7 @@ import { baseColors } from '@/config/colors';
 import { AlertTriangle, AlertCircle, Info, FileText, ExternalLink, LayoutGrid, FormInput, Brain, Navigation as NavigationIcon, TrendingUp, Layers } from 'lucide-react';
 import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccessibilityReport';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
+import { isCodeCompliant } from '@/utils/translator';
 
 interface DashboardAccessibilityCardProps {
   siteUrl?: string;
@@ -155,6 +156,43 @@ function extractIssuesFromReport(report: any) {
   return issues;
 }
 
+// Normalize WCAG codes into a consistent "WCAG AA 2.1 Criteria X.X.X" format
+function normalizeWcagCode(rawCode: string): string {
+  if (!rawCode) return '';
+
+  const code = (rawCode || '').trim();
+
+  // Already in the desired format - validate it doesn't contain undefined
+  if (code.startsWith('WCAG AA 2.1 Criteria')) {
+    // Check if it contains "undefined" and filter it out
+    if (code.includes('undefined')) {
+      return '';
+    }
+    return code;
+  }
+
+  // Format like "WCAG AA 2.1 Criteria 1.3.1" embedded in a longer string
+  const criteriaFromNewFormat = code.match(/Criteria\s+(\d+\.\d+(?:\.\d+)?)/);
+  if (criteriaFromNewFormat && criteriaFromNewFormat[1]) {
+    return `WCAG AA 2.1 Criteria ${criteriaFromNewFormat[1]}`;
+  }
+
+  // Old formats like "WCAG2AA.1.3.1" or "WCAG2AA.Principle 1.Guideline 1.3.1"
+  const criteriaFromOldFormat = code.match(/WCAG[^.]*\.(\d+\.\d+(?:\.\d+)?)/);
+  if (criteriaFromOldFormat && criteriaFromOldFormat[1]) {
+    return `WCAG AA 2.1 Criteria ${criteriaFromOldFormat[1]}`;
+  }
+
+  // Last‑chance: look for a bare criteria pattern "1.3.1" in the string
+  const bareCriteria = code.match(/(\d+\.\d+(?:\.\d+)?)/);
+  if (bareCriteria && bareCriteria[1]) {
+    return `WCAG AA 2.1 Criteria ${bareCriteria[1]}`;
+  }
+
+  // Return empty string if we can't extract a valid criteria (filtered out later)
+  return '';
+}
+
 const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({ siteUrl }) => {
   const history = useHistory();
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
@@ -296,6 +334,55 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
       .sort((a, b) => b.count - a.count);
   }, [allIssues]);
 
+  // Derive WCAG codes that WebAbility can auto-fix vs those requiring manual work
+  const wcagCoverage = useMemo(() => {
+    const codeMap = new Map<
+      string,
+      {
+        count: number;
+      }
+    >();
+
+    allIssues.forEach((issue: any) => {
+      const rawCode = issue.wcag_code || issue.code || '';
+      if (!rawCode) return;
+      const normalized = normalizeWcagCode(rawCode);
+      // Filter out empty strings and codes containing "undefined"
+      if (!normalized || normalized.includes('undefined')) return;
+
+      const existing = codeMap.get(normalized) || { count: 0 };
+      existing.count += 1;
+      codeMap.set(normalized, existing);
+    });
+
+    const fixed: { code: string; count: number }[] = [];
+    const notFixed: { code: string; count: number }[] = [];
+
+    codeMap.forEach((value, code) => {
+      if (isCodeCompliant(code)) {
+        fixed.push({ code, count: value.count });
+      } else {
+        notFixed.push({ code, count: value.count });
+      }
+    });
+
+    const sortByCountDescThenCode = (
+      a: { code: string; count: number },
+      b: { code: string; count: number },
+    ) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.code.localeCompare(b.code);
+    };
+
+    fixed.sort(sortByCountDescThenCode);
+    notFixed.sort(sortByCountDescThenCode);
+
+    return {
+      fixedWcagCodes: fixed,
+      notFixedWcagCodes: notFixed,
+      hasAnyCodes: fixed.length > 0 || notFixed.length > 0,
+    };
+  }, [allIssues]);
 
   // Get latest report key for navigation
   const latestReportKey = reportKeysData?.fetchAccessibilityReportFromR2?.[0]?.r2_key;
@@ -613,6 +700,81 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
           </div>
         )}
       </div>
+
+      {/* WCAG Criteria Coverage */}
+      {wcagCoverage.hasAnyCodes && (
+        <div className="mb-4 sm:mb-6">
+          <h3
+            className="text-base sm:text-lg font-semibold mb-3"
+            style={{ color: baseColors.grayText }}
+          >
+            WCAG 2.1 AA Criteria in this Report
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div
+              className="rounded-lg p-3"
+              style={{
+                backgroundColor: baseColors.blueLight,
+              }}
+            >
+              <p
+                className="text-xs font-semibold mb-2 uppercase tracking-wide"
+                style={{ color: baseColors.blueInfo }}
+              >
+                Auto-fixable with WebAbility
+              </p>
+              {wcagCoverage.fixedWcagCodes.length === 0 && (
+                <p className="text-xs" style={{ color: baseColors.grayMuted }}>
+                  No WCAG criteria in this report are fully auto-fixable yet.
+                </p>
+              )}
+              {wcagCoverage.fixedWcagCodes.length > 0 && (
+                <ul className="space-y-1 max-h-32 overflow-y-auto pr-1">
+                  {wcagCoverage.fixedWcagCodes.map(({ code, count }) => (
+                    <li key={code} className="text-xs flex justify-between gap-2">
+                      <span style={{ color: baseColors.blueInfo }}>{code}</span>
+                      <span style={{ color: baseColors.grayMuted }}>
+                        {count} {count === 1 ? 'issue' : 'issues'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div
+              className="rounded-lg p-3"
+              style={{
+                backgroundColor: baseColors.white,
+                border: '1px solid rgba(148, 163, 184, 0.3)',
+              }}
+            >
+              <p
+                className="text-xs font-semibold mb-2 uppercase tracking-wide"
+                style={{ color: baseColors.grayText }}
+              >
+                Require Manual Attention
+              </p>
+              {wcagCoverage.notFixedWcagCodes.length === 0 && (
+                <p className="text-xs" style={{ color: baseColors.grayMuted }}>
+                  No additional WCAG criteria require manual fixes in this report.
+                </p>
+              )}
+              {wcagCoverage.notFixedWcagCodes.length > 0 && (
+                <ul className="space-y-1 max-h-32 overflow-y-auto pr-1">
+                  {wcagCoverage.notFixedWcagCodes.map(({ code, count }) => (
+                    <li key={code} className="text-xs flex justify-between gap-2">
+                      <span style={{ color: baseColors.grayText }}>{code}</span>
+                      <span style={{ color: baseColors.grayMuted }}>
+                        {count} {count === 1 ? 'issue' : 'issues'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
