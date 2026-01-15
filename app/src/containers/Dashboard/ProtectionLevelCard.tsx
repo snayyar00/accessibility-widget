@@ -5,6 +5,7 @@ import { Shield, ShieldAlert, ShieldCheck, Info } from 'lucide-react';
 import { useMutation } from '@apollo/client';
 import updateProtectionLevelMutation from '@/queries/sites/updateProtectionLevel';
 import { getAuthenticationCookie } from '@/utils/cookie';
+import { toast } from 'sonner';
 
 interface ProtectionLevelCardProps {
   protectionLevel: string | null | undefined;
@@ -105,17 +106,26 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
           setLocalProtectionLevel('Automation');
           
           try {
-            await updateProtectionLevel({
+            const result = await updateProtectionLevel({
               variables: { siteId, protectionLevel: 'Automation' },
             });
             
-            // Notify parent to refetch data
-            if (onProtectionLevelUpdated) {
-              onProtectionLevelUpdated();
+            // Check if mutation was successful
+            if (result?.data?.updateSiteProtectionLevel) {
+              toast.success('Protection level updated to Automation');
+              
+              // Notify parent to refetch data
+              if (onProtectionLevelUpdated) {
+                onProtectionLevelUpdated();
+              }
+            } else {
+              throw new Error('Update returned false - protection level may not have been saved');
             }
-          } catch (updateError) {
+          } catch (updateError: any) {
             // Revert on error
             setLocalProtectionLevel(protectionLevel);
+            const errorMessage = updateError?.message || updateError?.graphQLErrors?.[0]?.message || 'Failed to update protection level';
+            toast.error(errorMessage);
             console.error('Failed to update protection level:', updateError);
           }
         } else if (checkResult === 'false' && currentLevelCheck === 'Automation') {
@@ -123,19 +133,34 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
           setLocalProtectionLevel('No protection');
           
           try {
-            await updateProtectionLevel({
+            const result = await updateProtectionLevel({
               variables: { siteId, protectionLevel: 'No protection' },
             });
             
-            // Notify parent to refetch data
-            if (onProtectionLevelUpdated) {
-              onProtectionLevelUpdated();
+            // Check if mutation was successful
+            if (result?.data?.updateSiteProtectionLevel) {
+              toast.success('Protection level updated to No protection');
+              
+              // Notify parent to refetch data
+              if (onProtectionLevelUpdated) {
+                onProtectionLevelUpdated();
+              }
+            } else {
+              throw new Error('Update returned false - protection level may not have been saved');
             }
-          } catch (updateError) {
+          } catch (updateError: any) {
             // Revert on error
             setLocalProtectionLevel(protectionLevel);
+            const errorMessage = updateError?.message || updateError?.graphQLErrors?.[0]?.message || 'Failed to update protection level';
+            toast.error(errorMessage);
             console.error('Failed to update protection level:', updateError);
           }
+        } else if (checkResult === 'false' && currentLevelCheck === 'No protection') {
+          // Widget not found and already at No protection - just inform user
+          toast.info('Widget not detected. Please ensure the WebAbility script is installed on your website.');
+        } else if ((checkResult === 'true' || checkResult === 'Web Ability' || checkResult === 'WebAbility') && currentLevelCheck === 'Automation') {
+          // Widget found and already at Automation - just inform user
+          toast.info('Widget is properly installed. Protection level is already set to Automation.');
         }
       }
     } catch (error) {

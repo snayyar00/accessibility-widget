@@ -150,9 +150,8 @@ const InstallWidgetModal: React.FC<InstallWidgetModalProps> = ({
               }}
             >
               <p className="text-sm text-gray-700">
-                <strong>Note:</strong> You can still proceed with the scan, but
-                installing the widget will provide better protection and automated
-                fixes.
+                <strong>Note:</strong> To begin scanning, you must first install the widget on your site.
+                This is necessary to enable effective protection and automated accessibility fixes. To check your protection level, please visit dashboard.
               </p>
             </div>
           </div>
@@ -168,7 +167,7 @@ const InstallWidgetModal: React.FC<InstallWidgetModalProps> = ({
             >
               Install Widget
             </button>
-            <button
+            {/* <button
               onClick={handleContinueScan}
               className="flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg transform hover:-translate-y-0.5 border-2"
               style={{
@@ -178,7 +177,7 @@ const InstallWidgetModal: React.FC<InstallWidgetModalProps> = ({
               }}
             >
               Continue Scan
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
