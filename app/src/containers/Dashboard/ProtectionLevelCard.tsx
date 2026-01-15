@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
 import { baseColors } from '@/config/colors';
 import { Shield, ShieldAlert, ShieldCheck, Info } from 'lucide-react';
@@ -25,10 +25,12 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
   const [updateProtectionLevel] = useMutation(updateProtectionLevelMutation);
   const [isChecking, setIsChecking] = useState(false);
   const [localProtectionLevel, setLocalProtectionLevel] = useState<string | null | undefined>(protectionLevel);
+  const hasAutoCheckedRef = useRef<string>(''); // Track which site we've auto-checked
 
   // Reset checking state when site changes
   useEffect(() => {
     setIsChecking(false);
+    hasAutoCheckedRef.current = ''; // Reset auto-check tracking when site changes
   }, [siteId]);
 
   // Format the protection level value for display
@@ -74,7 +76,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
   };
 
   // Handle Check button click for Automation level
-  const handleCheckScript = async () => {
+  const handleCheckScript = useCallback(async () => {
     if (!siteId || !siteUrl || isChecking) return;
 
     setIsChecking(true);
@@ -96,9 +98,9 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
         
         // Only update protection level for "No protection" -> "Automation" or "Automation" -> "No protection"
         // Don't change "Managed" or "Managed + Assurance" levels as they are higher tiers
-        const isNoProtectionOrAutomation = currentLevel === 'No protection' || currentLevel === 'Automation';
+        const currentLevelCheck = formatProtectionLevel(localProtectionLevel);
         
-        if ((checkResult === 'true' || checkResult === 'Web Ability' || checkResult === 'WebAbility') && currentLevel === 'No protection') {
+        if ((checkResult === 'true' || checkResult === 'Web Ability' || checkResult === 'WebAbility') && currentLevelCheck === 'No protection') {
           // Widget found and current level is No protection - update to Automation
           setLocalProtectionLevel('Automation');
           
@@ -116,7 +118,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
             setLocalProtectionLevel(protectionLevel);
             console.error('Failed to update protection level:', updateError);
           }
-        } else if (checkResult === 'false' && currentLevel === 'Automation') {
+        } else if (checkResult === 'false' && currentLevelCheck === 'Automation') {
           // Widget not found and current level is Automation - revert to No protection
           setLocalProtectionLevel('No protection');
           
@@ -141,7 +143,41 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
     } finally {
       setIsChecking(false);
     }
-  };
+  }, [siteId, siteUrl, isChecking, localProtectionLevel, protectionLevel, updateProtectionLevel, onProtectionLevelUpdated]);
+
+  // Auto-check protection level when dashboard loads and protection level is "No protection"
+  useEffect(() => {
+    const siteKey = `${siteId}-${siteUrl}`;
+    
+    // Only auto-check if:
+    // 1. We have siteId and siteUrl
+    // 2. Current level is "No protection"
+    // 3. We haven't already auto-checked this site
+    // 4. We're not currently checking
+    if (
+      siteId &&
+      siteUrl &&
+      currentLevel === 'No protection' &&
+      hasAutoCheckedRef.current !== siteKey &&
+      !isChecking
+    ) {
+      // Mark that we've auto-checked this site
+      hasAutoCheckedRef.current = siteKey;
+      
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        console.log(`Auto-checking protection level for ${siteUrl} (No protection detected)`);
+        handleCheckScript();
+      }, 500); // 500ms delay to ensure UI is ready
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+    
+    // Return undefined cleanup function if condition is not met
+    return undefined;
+  }, [siteId, siteUrl, currentLevel, isChecking, handleCheckScript]); // Dependencies for auto-check
 
   const isNoProtection = currentLevel === 'No protection';
   const isAutomation = currentLevel === 'Automation';
