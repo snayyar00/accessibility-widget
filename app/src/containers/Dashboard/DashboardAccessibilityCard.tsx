@@ -6,6 +6,17 @@ import { AlertTriangle, AlertCircle, Info, FileText, ExternalLink, LayoutGrid, F
 import FETCH_ACCESSIBILITY_REPORT_KEYS from '@/queries/accessibility/fetchAccessibilityReport';
 import FETCH_REPORT_BY_R2_KEY from '@/queries/accessibility/fetchReportByR2Key';
 import { isCodeCompliant } from '@/utils/translator';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 
 interface DashboardAccessibilityCardProps {
   siteUrl?: string;
@@ -701,77 +712,189 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
         )}
       </div>
 
-      {/* WCAG Criteria Coverage */}
+      {/* WCAG Criteria Coverage - Graph View */}
       {wcagCoverage.hasAnyCodes && (
         <div className="mb-4 sm:mb-6">
           <h3
-            className="text-base sm:text-lg font-semibold mb-3"
+            className="text-base sm:text-lg font-semibold mb-4"
             style={{ color: baseColors.grayText }}
           >
             WCAG 2.1 AA Criteria in this Report
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div
-              className="rounded-lg p-3"
-              style={{
-                backgroundColor: baseColors.blueLight,
-              }}
-            >
-              <p
-                className="text-xs font-semibold mb-2 uppercase tracking-wide"
-                style={{ color: baseColors.blueInfo }}
-              >
-                Auto-fixable with WebAbility
-              </p>
-              {wcagCoverage.fixedWcagCodes.length === 0 && (
-                <p className="text-xs" style={{ color: baseColors.grayMuted }}>
-                  No WCAG criteria in this report are fully auto-fixable yet.
-                </p>
-              )}
-              {wcagCoverage.fixedWcagCodes.length > 0 && (
-                <ul className="space-y-1 max-h-32 overflow-y-auto pr-1">
-                  {wcagCoverage.fixedWcagCodes.map(({ code, count }) => (
-                    <li key={code} className="text-xs flex justify-between gap-2">
-                      <span style={{ color: baseColors.blueInfo }}>{code}</span>
-                      <span style={{ color: baseColors.grayMuted }}>
-                        {count} {count === 1 ? 'issue' : 'issues'}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+          <div
+            className="rounded-xl p-5 sm:p-6"
+            style={{
+              backgroundColor: baseColors.white,
+              border: '1px solid rgba(148, 163, 184, 0.15)',
+              boxShadow: '0 8px 24px rgba(51, 67, 173, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            {/* Enhanced Legend */}
+            <div className="flex flex-wrap gap-6 mb-6 pb-4 border-b" style={{ borderColor: 'rgba(148, 163, 184, 0.2)' }}>
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-5 h-5 rounded-md shadow-sm"
+                  style={{ 
+                    backgroundColor: '#445ae7',
+                    boxShadow: '0 2px 4px rgba(68, 90, 231, 0.3)',
+                  }}
+                />
+                <span className="text-sm font-semibold" style={{ color: baseColors.grayText }}>
+                  Auto-fixable with WebAbility
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-5 h-5 rounded-md shadow-sm"
+                  style={{ 
+                    backgroundColor: '#EF4444',
+                    boxShadow: '0 2px 4px rgba(239, 68, 68, 0.3)',
+                  }}
+                />
+                <span className="text-sm font-semibold" style={{ color: baseColors.grayText }}>
+                  Require Manual Attention
+                </span>
+              </div>
             </div>
-            <div
-              className="rounded-lg p-3"
-              style={{
-                backgroundColor: baseColors.white,
-                border: '1px solid rgba(148, 163, 184, 0.3)',
-              }}
-            >
-              <p
-                className="text-xs font-semibold mb-2 uppercase tracking-wide"
-                style={{ color: baseColors.grayText }}
-              >
-                Require Manual Attention
-              </p>
-              {wcagCoverage.notFixedWcagCodes.length === 0 && (
-                <p className="text-xs" style={{ color: baseColors.grayMuted }}>
-                  No additional WCAG criteria require manual fixes in this report.
-                </p>
-              )}
-              {wcagCoverage.notFixedWcagCodes.length > 0 && (
-                <ul className="space-y-1 max-h-32 overflow-y-auto pr-1">
-                  {wcagCoverage.notFixedWcagCodes.map(({ code, count }) => (
-                    <li key={code} className="text-xs flex justify-between gap-2">
-                      <span style={{ color: baseColors.grayText }}>{code}</span>
-                      <span style={{ color: baseColors.grayMuted }}>
-                        {count} {count === 1 ? 'issue' : 'issues'}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+
+            {/* Combined Chart Data */}
+            {(() => {
+              // Combine all WCAG codes for the chart
+              const chartData = [
+                ...wcagCoverage.fixedWcagCodes.map(({ code, count }) => ({
+                  code: code.replace('WCAG AA 2.1 Criteria ', ''),
+                  fullCode: code,
+                  autoFixable: count,
+                  manual: 0,
+                  total: count,
+                })),
+                ...wcagCoverage.notFixedWcagCodes.map(({ code, count }) => ({
+                  code: code.replace('WCAG AA 2.1 Criteria ', ''),
+                  fullCode: code,
+                  autoFixable: 0,
+                  manual: count,
+                  total: count,
+                })),
+              ]
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 15); // Show top 15
+
+              if (chartData.length === 0) {
+                return (
+                  <p className="text-sm text-center py-8" style={{ color: baseColors.grayMuted }}>
+                    No WCAG criteria data available to display.
+                  </p>
+                );
+              }
+
+              return (
+                <ResponsiveContainer width="100%" height={Math.max(450, chartData.length * 55)}>
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 25, right: 30, left: 25, bottom: 90 }}
+                  >
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      stroke="#e5e7eb" 
+                      strokeOpacity={0.6}
+                      vertical={false}
+                    />
+                    <XAxis 
+                      type="category"
+                      dataKey="code"
+                      angle={0}
+                      textAnchor="middle"
+                      height={60}
+                      style={{ fontSize: '11px', fontWeight: 500 }}
+                      tick={{ fill: baseColors.grayText }}
+                      interval={0}
+                      axisLine={{ stroke: baseColors.grayLight, strokeWidth: 1 }}
+                      tickLine={{ stroke: baseColors.grayLight }}
+                      label={{ 
+                        value: 'WCAG 2.1 AA', 
+                        position: 'insideBottom', 
+                        offset: -5, 
+                        style: { 
+                          fontSize: '13px', 
+                          fontWeight: 600,
+                          fill: baseColors.grayText, 
+                          textAnchor: 'middle' 
+                        } 
+                      }}
+                    />
+                    <YAxis
+                      type="number"
+                      style={{ fontSize: '11px' }}
+                      tick={{ fill: baseColors.grayMuted, fontWeight: 500 }}
+                      axisLine={{ stroke: baseColors.grayLight, strokeWidth: 1 }}
+                      tickLine={{ stroke: baseColors.grayLight }}
+                      label={{ 
+                        value: 'Number of Issues', 
+                        angle: -90, 
+                        position: 'insideLeft', 
+                        style: { 
+                          fontSize: '13px', 
+                          fontWeight: 600,
+                          fill: baseColors.grayText, 
+                          textAnchor: 'middle' 
+                        } 
+                      }}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(68, 90, 231, 0.1)' }}
+                      contentStyle={{
+                        backgroundColor: baseColors.white,
+                        border: `1px solid ${baseColors.grayLight}`,
+                        borderRadius: '10px',
+                        fontSize: '12px',
+                        padding: '10px 14px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        fontWeight: 500,
+                      }}
+                      formatter={(value: number, name: string, props: any) => {
+                        if (name === 'autoFixable' && value > 0) {
+                          return [`${value} ${value === 1 ? 'issue' : 'issues'}`, 'Auto-fixable with WebAbility'];
+                        }
+                        if (name === 'manual' && value > 0) {
+                          return [`${value} ${value === 1 ? 'issue' : 'issues'}`, 'Require Manual Attention'];
+                        }
+                        return null;
+                      }}
+                      labelFormatter={(label) => `WCAG AA 2.1 Criteria ${label}`}
+                      labelStyle={{ fontWeight: 600, color: baseColors.grayText, marginBottom: '4px' }}
+                    />
+                    <Bar
+                      dataKey="autoFixable"
+                      stackId="a"
+                      fill="#445ae7"
+                      radius={[8, 8, 0, 0]}
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-auto-${index}`} 
+                          fill="#445ae7"
+                          style={{ filter: 'drop-shadow(0 2px 4px rgba(68, 90, 231, 0.2))' }}
+                        />
+                      ))}
+                    </Bar>
+                    <Bar
+                      dataKey="manual"
+                      stackId="a"
+                      fill="#EF4444"
+                      radius={[8, 8, 0, 0]}
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-manual-${index}`} 
+                          fill="#EF4444"
+                          style={{ filter: 'drop-shadow(0 2px 4px rgba(239, 68, 68, 0.2))' }}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              );
+            })()}
           </div>
         </div>
       )}
