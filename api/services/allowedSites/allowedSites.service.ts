@@ -1,3 +1,6 @@
+import { Browserbase } from '@browserbasehq/sdk'
+import puppeteer from 'puppeteer-core'
+
 import { TRIAL_PLAN_INTERVAL, TRIAL_PLAN_NAME } from '../../constants/billing.constant'
 import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
 import compileEmailTemplate from '../../helpers/compile-email-template'
@@ -23,6 +26,7 @@ import { generatePDF } from '../../utils/generatePDF'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
+import { detectAccessibilityWidget } from '../accessibilityReport/accessibilityReport.service'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'
 import { UserLogined } from '../authentication/get-user-logined.service'
@@ -41,47 +45,141 @@ async function isAdminOrManager(user: UserLogined): Promise<boolean> {
   return user.currentOrganizationUser ? canManageOrganization(user.currentOrganizationUser.role) : false
 }
 
+/**
+ * Check if WebAbility widget is installed on a website using Browserbase and Puppeteer
+ * Uses detectAccessibilityWidget to scan the page for widget scripts
+ */
 export async function checkScript(url: string, retries = 3): Promise<string> {
+  // Ensure URL has protocol
+  let normalizedUrl = url
+  if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+    normalizedUrl = 'https://' + normalizedUrl
+  }
+
+  let browser: any = null
+  let session: any = null
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const apiUrl = `${process.env.SECONDARY_SERVER_URL}/checkscript/?url=${url}`
+      logger.info(`Checking script for ${url} (attempt ${attempt}/${retries}) using Browserbase`)
 
-      // Set up timeout to prevent hanging requests
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000)
-
-      const response = await fetch(apiUrl, {
-        signal: controller.signal,
+      // Initialize Browserbase
+      const bb = new Browserbase({
+        apiKey: process.env.BROWSERBASE_API_KEY,
       })
 
-      clearTimeout(timeoutId)
+      // Create a new session
+      session = await bb.sessions.create({
+        projectId: process.env.BROWSERBASE_PROJECT_ID!,
+        proxies: true,
+      })
 
-      if (!response.ok) {
-        if (attempt === retries) {
-          logger.warn(`Failed to check script for ${url} after ${retries} attempts, returning 'false'`)
-          return 'false'
+      logger.info(`🔗 Connecting to remote browser for ${url}...`)
+
+      // Connect to the browser using puppeteer
+      browser = await puppeteer.connect({
+        browserWSEndpoint: session.connectUrl,
+      })
+
+      // Get the first page or create a new one
+      const pages = await browser.pages()
+      const page = pages[0] || (await browser.newPage())
+
+      // Set viewport size
+      await page.setViewport({ width: 1920, height: 1080 })
+
+      // Handle blocking JS dialogs
+      page.on('dialog', async (dialog: any) => {
+        logger.info(`⚠️ Closing dialog: ${dialog.message()}`)
+        await dialog.dismiss()
+      })
+
+      // Handle popup windows
+      browser.on('targetcreated', async (target: any) => {
+        if (target.type() === 'page') {
+          const newPage = await target.page()
+          if (newPage) {
+            logger.info('🪟 Closing unwanted popup window...')
+            await newPage.close()
+          }
         }
-        await new Promise((resolve) => setTimeout(resolve, attempt * 1000))
-        continue
+      })
+
+      logger.info(`🌐 Navigating to: ${normalizedUrl}`)
+
+      // Navigate to the URL with timeout
+      await page.goto(normalizedUrl, {
+        waitUntil: 'networkidle2',
+        timeout: 30000,
+      })
+
+      // Check for accessibility widget scripts using detectAccessibilityWidget
+      logger.info('🔍 Checking for accessibility widget scripts...')
+      const widgetDetection = await detectAccessibilityWidget(page)
+
+      // Clean up browser resources
+      try {
+        if (browser) {
+          await browser.close()
+          browser = null
+        }
+      } catch (cleanupError) {
+        logger.warn('⚠️ Error during browser cleanup:', cleanupError)
       }
 
-      const responseData = await response.json()
+      if (widgetDetection.found) {
+        logger.info(`✅ Found accessibility widget scripts for ${url}:`)
+        widgetDetection.scripts.forEach((widget) => {
+          logger.info(`   - ${widget.url} ${widget.isExactMatch ? '(exact match)' : '(contains widget.min.js)'}`)
+        })
 
-      if ((responseData as { result: string }).result === 'WebAbility') {
-        return 'Web Ability'
-      }
-      if ((responseData as { result: string }).result !== 'Not Found') {
+        // Check if it's a WebAbility widget (exact match)
+        const hasWebAbilityWidget = widgetDetection.scripts.some(
+          (widget) => widget.isExactMatch && widget.url.includes('webability.io')
+        )
+
+        if (hasWebAbilityWidget) {
+          return 'Web Ability'
+        }
+        // Any widget found
         return 'true'
-      }
-      return 'false'
-    } catch (error) {
-      if (attempt === retries) {
-        logger.warn(`Failed to check script for ${url} after ${retries} attempts: ${error.message}`)
+      } else {
+        logger.info(`ℹ️  No accessibility widget scripts found on ${url}`)
         return 'false'
       }
+    } catch (error: any) {
+      const errorType = error?.name || 'Unknown'
+      const errorMessage = error?.message || 'Unknown error'
+      const isTimeout = errorType === 'AbortError' || errorMessage.includes('timeout')
+
+      logger.warn(
+        `Script check error for ${url} on attempt ${attempt}/${retries}. ` +
+        `Type: ${errorType}, Message: ${errorMessage}, IsTimeout: ${isTimeout}`
+      )
+
+      // Clean up browser resources on error
+      try {
+        if (browser) {
+          await browser.close()
+          browser = null
+        }
+      } catch (cleanupError) {
+        logger.warn('⚠️ Error during browser cleanup after error:', cleanupError)
+      }
+
+      if (attempt === retries) {
+        logger.error(
+          `Failed to check script for ${url} after ${retries} attempts. ` +
+          `Last error: ${errorType} - ${errorMessage}. Returning 'false'`
+        )
+        return 'false'
+      }
+
+      // Wait before retrying (exponential backoff)
       await new Promise((resolve) => setTimeout(resolve, attempt * 1000))
     }
   }
+
   return 'false'
 }
 
