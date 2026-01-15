@@ -341,7 +341,7 @@ export async function findUserSites(user: UserLogined, limit?: number, offset?: 
     return { sites: sortedSites, total }
   } catch (e) {
     logger.error(e)
-    throw e
+    throw new ApolloError('Failed to update site protection level')
   }
 }
 

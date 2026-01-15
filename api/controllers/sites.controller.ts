@@ -56,7 +56,7 @@ export async function checkSiteScript(req: Request, res: Response): Promise<Resp
     }
 
     const result = await checkScript(siteUrl)
-    return res.json(result)
+    return res.json({ result })
   } catch (error: any) {
     console.error('Error checking script:', error)
     return res.status(500).json({

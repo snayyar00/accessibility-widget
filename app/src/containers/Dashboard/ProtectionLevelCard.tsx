@@ -341,7 +341,7 @@ const ProtectionLevelCard: React.FC<ProtectionLevelCardProps> = ({
             <button
               className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 whitespace-nowrap w-full md:w-auto"
               style={{
-                backgroundColor: baseColors.brandPrimary,
+                backgroundColor: '#0052CC',
                 color: baseColors.white,
               }}
               onClick={handleCheckScript}

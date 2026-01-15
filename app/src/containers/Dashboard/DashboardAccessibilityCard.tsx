@@ -530,27 +530,27 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
           onClick={handleViewFullReport}
           className="flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm w-full md:w-auto button-3d"
           style={{
-            backgroundColor: '#3343ad',
+            backgroundColor: '#0052CC',
             color: baseColors.white,
-            boxShadow: '0 4px 12px rgba(51, 67, 173, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 4px 12px rgba(0, 82, 204, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
             transform: 'perspective(1000px) translateZ(0)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'perspective(1000px) translateZ(8px) translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 82, 204, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(51, 67, 173, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 82, 204, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)';
           }}
           onMouseDown={(e) => {
             e.currentTarget.style.transform = 'perspective(1000px) translateZ(-4px) translateY(1px)';
-            e.currentTarget.style.boxShadow = '0 2px 6px rgba(51, 67, 173, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15)';
+            e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 82, 204, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15)';
           }}
           onMouseUp={(e) => {
             e.currentTarget.style.transform = 'perspective(1000px) translateZ(8px) translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 82, 204, 0.4), 0 4px 8px rgba(0, 0, 0, 0.25)';
           }}
         >
           <span>View Full Report</span>
@@ -562,29 +562,17 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
       <div className={`grid gap-6 mb-4 sm:mb-6 ${categoryStats.length > 0 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
         {/* Score Breakdown */}
         <div
-          className="rounded-xl p-4 relative stat-card-3d"
+          className="rounded-xl p-4 relative"
           style={{
             backgroundColor: baseColors.white,
             border: 'none',
             boxShadow: '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
-            transform: 'perspective(1000px) translateZ(0) rotateY(0deg)',
-            transformStyle: 'preserve-3d',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'perspective(1000px) translateZ(30px) translateY(-10px) rotateY(5deg)';
-            e.currentTarget.style.boxShadow = '0 20px 40px rgba(51, 67, 173, 0.25), 0 10px 20px rgba(0, 0, 0, 0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'perspective(1000px) translateZ(0) translateY(0px) rotateY(0deg)';
-            e.currentTarget.style.boxShadow = '0 8px 20px rgba(51, 67, 173, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)';
           }}
         >
           {hasWebAbility && (
             <div 
               className="absolute top-2 right-2 text-white px-3 py-1 text-xs font-medium rounded-full z-10"
-              style={{ backgroundColor: '#445ae7' }}
+              style={{ backgroundColor: '#0052CC' }}
             >
               Enhanced
             </div>
@@ -616,7 +604,7 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
               className="absolute left-0 top-0 h-full rounded-full"
               style={{ 
                 width: `${enhancedScore}%`,
-                backgroundColor: '#445ae7'
+                backgroundColor: '#0052CC'
               }}
             />
           </div>
@@ -735,8 +723,8 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
                 <div
                   className="w-5 h-5 rounded-md shadow-sm"
                   style={{ 
-                    backgroundColor: '#445ae7',
-                    boxShadow: '0 2px 4px rgba(68, 90, 231, 0.3)',
+                    backgroundColor: '#0052CC',
+                    boxShadow: '0 2px 4px rgba(0, 82, 204, 0.3)',
                   }}
                 />
                 <span className="text-sm font-semibold" style={{ color: baseColors.grayText }}>
@@ -866,14 +854,14 @@ const DashboardAccessibilityCard: React.FC<DashboardAccessibilityCardProps> = ({
                     <Bar
                       dataKey="autoFixable"
                       stackId="a"
-                      fill="#445ae7"
+                      fill="#0052CC"
                       radius={[8, 8, 0, 0]}
                     >
                       {chartData.map((entry, index) => (
                         <Cell 
                           key={`cell-auto-${index}`} 
-                          fill="#445ae7"
-                          style={{ filter: 'drop-shadow(0 2px 4px rgba(68, 90, 231, 0.2))' }}
+                          fill="#0052CC"
+                          style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 82, 204, 0.2))' }}
                         />
                       ))}
                     </Bar>
