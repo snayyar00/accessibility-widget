@@ -154,10 +154,25 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
   const MAX_TOTAL_SCORE = 95
   const issues = extractIssuesFromReport(reportData)
 
-  // Calculate score and status
-  const baseScore = reportData.score || 0
-  const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility'
-  const enhancedScore = hasWebAbility ? Math.min(baseScore + WEBABILITY_SCORE_BONUS, MAX_TOTAL_SCORE) : baseScore
+  // Use totalStats.score if available (already enhanced), otherwise use reportData.score
+  // totalStats.score is calculated in accessibilityReport.service.ts and already includes WebAbility bonus
+  const totalStats = reportData.totalStats || {}
+  const enhancedScore = typeof totalStats.score === 'number' 
+    ? totalStats.score 
+    : (reportData.score || 0)
+  
+  const hasWebAbility = reportData.widgetInfo?.result === 'WebAbility' || 
+    reportData.scriptCheckResult === 'Web Ability' ||
+    reportData.scriptCheckResult === 'WebAbility' ||
+    reportData.scriptCheckResult === 'true'
+  
+  console.log('PDF Score calculation:', {
+    totalStatsScore: totalStats.score,
+    reportDataScore: reportData.score,
+    enhancedScore,
+    hasWebAbility,
+    originalScore: totalStats.originalScore
+  });
 
   let status: string
   let message: string

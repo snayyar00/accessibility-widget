@@ -20,6 +20,7 @@ export default gql`
           name
         }
         user_email
+        protection_level
       }
       total
     }

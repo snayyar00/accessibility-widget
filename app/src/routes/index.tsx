@@ -94,7 +94,7 @@ const routes = [
   },
   {
     path: '/ai-insights',
-    name: 'AI Insights',
+    name: 'Content and Web Analysis',
     exact: true,
     component: AIInsights,
     beta: true,
@@ -102,7 +102,7 @@ const routes = [
       <MdOutlineInsights
         className="menu-icon text-white-blue transition-colors duration-200"
         size={25}
-        aria-label="AI Insights navigation icon"
+        aria-label="Content and Web Analysis navigation icon"
       />
     ),
     isSidebar: true,

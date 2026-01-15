@@ -39,13 +39,13 @@ export const WEBABILITY_COMPLIANT_CODES = [
 
 /**
  * Check if a WCAG code is considered compliant/fixed by WebAbility
- * @param code - The WCAG code to check
- * @returns true if the code is in the compliant list
+ * @param code - The WCAG code to check (supports both "WCAG AA 2.1 Criteria 1.3.1" and "WCAG2AA.1.3.1" formats)
+ * @returns true if the code is in the compliant list or in CURATED_WCAG_CODES
  */
 export const isCodeCompliant = (code: string): boolean => {
   if (!code) return false;
 
-  // Add extra compliant codes as per instruction
+  // Add extra compliant codes as per instruction (in both formats)
   const EXTRA_COMPLIANT_CODES = [
     'WCAG2AA.1.1.1',
     'WCAG2AA.1.2.1',
@@ -133,68 +133,128 @@ export const isCodeCompliant = (code: string): boolean => {
     'WCAG2AA.3.3.8',
   ];
 
-  const result =
-    WEBABILITY_COMPLIANT_CODES.some((compliantCode) =>
-      code.startsWith(compliantCode),
-    ) || EXTRA_COMPLIANT_CODES.some((extraCode) => code.startsWith(extraCode));
+  // First, check if the code is in CURATED_WCAG_CODES (all curated codes are considered compliant)
+  // CURATED_WCAG_CODES is defined below, but we can reference it in the function
+  const isInCuratedCodes = CURATED_WCAG_CODES.some(
+    (curated) => curated.code === code
+  );
+  if (isInCuratedCodes) return true;
 
-  return result;
+  // Extract criteria number from both formats:
+  // "WCAG AA 2.1 Criteria 1.3.1" -> "1.3.1"
+  // "WCAG2AA.1.3.1" -> "1.3.1"
+  let criteriaNumber = '';
+  if (code.includes('Criteria')) {
+    // New format: "WCAG AA 2.1 Criteria 1.3.1"
+    const match = code.match(/Criteria\s+(\d+\.\d+(?:\.\d+)?)/);
+    if (match) {
+      criteriaNumber = match[1];
+    }
+  } else {
+    // Old format: "WCAG2AA.1.3.1" or "WCAG2AA.Principle 1.Guideline 1.3"
+    const match = code.match(/WCAG[^.]*\.(\d+\.\d+(?:\.\d+)?)/);
+    if (match) {
+      criteriaNumber = match[1];
+    }
+  }
+
+  // If we couldn't extract criteria number, check against old format directly
+  if (!criteriaNumber) {
+    const result =
+      WEBABILITY_COMPLIANT_CODES.some((compliantCode) =>
+        code.startsWith(compliantCode),
+      ) ||
+      EXTRA_COMPLIANT_CODES.some((extraCode) => code.startsWith(extraCode));
+    return result;
+  }
+
+  // Check against compliant codes using criteria number
+  // Convert criteria number to old format for comparison
+  const oldFormatCode = `WCAG2AA.${criteriaNumber}`;
+  const newFormatCode = `WCAG AA 2.1 Criteria ${criteriaNumber}`;
+
+  const EXTRA_COMPLIANT_CODES_NEW_FORMAT = EXTRA_COMPLIANT_CODES.map(
+    (code) => {
+      const match = code.match(/WCAG2AA\.(\d+\.\d+(?:\.\d+)?)/);
+      return match ? `WCAG AA 2.1 Criteria ${match[1]}` : code;
+    }
+  );
+
+  // Check against both old and new format compliant codes
+  const isInExtraCompliant =
+    EXTRA_COMPLIANT_CODES.includes(oldFormatCode) ||
+    EXTRA_COMPLIANT_CODES_NEW_FORMAT.includes(newFormatCode);
+
+  // Check against WEBABILITY_COMPLIANT_CODES (these are guideline-level, so check if criteria starts with the guideline)
+  const isInWebAbilityCompliant = WEBABILITY_COMPLIANT_CODES.some(
+    (compliantCode) => {
+      // Extract guideline number from compliant code (e.g., "Guideline 1.3" -> "1.3")
+      const guidelineMatch = compliantCode.match(/Guideline\s+(\d+\.\d+)/);
+      if (guidelineMatch) {
+        const guidelineNum = guidelineMatch[1];
+        return criteriaNumber.startsWith(guidelineNum);
+      }
+      return code.startsWith(compliantCode);
+    }
+  );
+
+  return isInExtraCompliant || isInWebAbilityCompliant;
 };
 
 // Curated WCAG 2.1 AA codes with short messages used in PDF reports
 export const CURATED_WCAG_CODES: { code: string; message: string }[] = [
   {
-    code: 'WCAG2AA.1.1.1',
+    code: 'WCAG AA 2.1 Criteria 1.1.1',
     message: 'Provide text alternatives for non-text content',
   },
   {
-    code: 'WCAG2AA.1.2.2',
+    code: 'WCAG AA 2.1 Criteria 1.2.2',
     message: 'Provide captions for prerecorded audio content',
   },
   {
-    code: 'WCAG2AA.1.3.1',
+    code: 'WCAG AA 2.1 Criteria 1.3.1',
     message: 'Preserve information and relationships (semantic structure)',
   },
   {
-    code: 'WCAG2AA.1.4.3',
+    code: 'WCAG AA 2.1 Criteria 1.4.3',
     message: 'Ensure sufficient color contrast for text',
   },
   {
-    code: 'WCAG2AA.1.4.11',
+    code: 'WCAG AA 2.1 Criteria 1.4.11',
     message: 'Ensure contrast for non-text UI components and graphics',
   },
   {
-    code: 'WCAG2AA.2.1.1',
+    code: 'WCAG AA 2.1 Criteria 2.1.1',
     message: 'All functionality is operable via a keyboard',
   },
   {
-    code: 'WCAG2AA.2.4.1',
+    code: 'WCAG AA 2.1 Criteria 2.4.1',
     message: 'Provide a mechanism to bypass repeated blocks',
   },
   {
-    code: 'WCAG2AA.2.4.4',
+    code: 'WCAG AA 2.1 Criteria 2.4.4',
     message: 'Link purpose can be determined from its context',
   },
   {
-    code: 'WCAG2AA.2.4.6',
+    code: 'WCAG AA 2.1 Criteria 2.4.6',
     message: 'Headings and labels describe topic or purpose',
   },
   {
-    code: 'WCAG2AA.2.5.3',
+    code: 'WCAG AA 2.1 Criteria 2.5.3',
     message: 'Label in name: visible label text is in the accessible name',
   },
   {
-    code: 'WCAG2AA.3.1.1',
+    code: 'WCAG AA 2.1 Criteria 3.1.1',
     message: 'Specify the default human language of the page',
   },
-  { code: 'WCAG2AA.3.3.1', message: 'Identify input errors clearly' },
+  { code: 'WCAG AA 2.1 Criteria 3.3.1', message: 'Identify input errors clearly' },
   {
-    code: 'WCAG2AA.3.3.2',
+    code: 'WCAG AA 2.1 Criteria 3.3.2',
     message: 'Provide labels, instructions, and cues for inputs',
   },
-  { code: 'WCAG2AA.4.1.1', message: 'Ensure valid and complete HTML/roles' },
+  { code: 'WCAG AA 2.1 Criteria 4.1.1', message: 'Ensure valid and complete HTML/roles' },
   {
-    code: 'WCAG2AA.4.1.2',
+    code: 'WCAG AA 2.1 Criteria 4.1.2',
     message: 'Expose name, role, value for interactive components',
   },
 ];

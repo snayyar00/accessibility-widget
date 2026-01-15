@@ -1,6 +1,6 @@
 import { combineResolvers } from 'graphql-resolvers'
 
-import { addSite, changeURL, deleteSite, findAvailableSitesForWorkspaceAssignment, findUserSites, isDomainAlreadyAdded, toggleSiteMonitoring } from '../../services/allowedSites/allowedSites.service'
+import { addSite, changeURL, deleteSite, findAvailableSitesForWorkspaceAssignment, findUserSites, isDomainAlreadyAdded, toggleSiteMonitoring, updateSiteProtectionLevel } from '../../services/allowedSites/allowedSites.service'
 import { allowedOrganization, isAuthenticated } from './authorization.resolver'
 
 const resolvers = {
@@ -30,6 +30,10 @@ const resolvers = {
 
     toggleSiteMonitoring: combineResolvers(allowedOrganization, isAuthenticated, async (_, { siteId, enabled }, { user }) => {
       return toggleSiteMonitoring(siteId, enabled, user.id, user.current_organization_id, user.is_super_admin)
+    }),
+
+    updateSiteProtectionLevel: combineResolvers(allowedOrganization, isAuthenticated, async (_, { siteId, protectionLevel }, { user }) => {
+      return updateSiteProtectionLevel(siteId, protectionLevel, user.id, user.current_organization_id, user.is_super_admin)
     }),
   },
 }

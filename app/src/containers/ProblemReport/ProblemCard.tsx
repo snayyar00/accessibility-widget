@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Problem } from './ProblemReport';
 import Favicon from '@/components/Common/Favicon';
+import baseColors from '@/config/colors';
 import './ProblemCard.css';
 
 interface ProblemCardProps {
@@ -41,9 +42,13 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
 
   return (
     <div
-      className={`bg-white border border-[#A2ADF3] rounded-lg p-3 sm:p-4 md:p-5 transition-all duration-300 ease-in-out ${
-        isExpanded ? 'shadow-md' : 'shadow-sm hover:shadow-md'
+      className={`bg-white border rounded-lg p-3 sm:p-4 md:p-5 transform transition-all duration-300 ease-in-out shadow-sm hover:shadow-lg hover:-translate-y-1 ${
+        isExpanded ? 'shadow-md' : ''
       }`}
+      style={{
+        backgroundColor: baseColors.white,
+        borderColor: baseColors.cardBorderPurple,
+      }}
       onClick={() => setIsExpanded(!isExpanded)}
     >
       {/* Header with logo, site URL, and status icon */}
