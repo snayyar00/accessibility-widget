@@ -121,8 +121,20 @@ const Modal: React.FC<ModalProps> = ({
         ref={modalRef}
         className="modal-perfect-center w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar modal-container p-4"
       >
-        {/* Content */}
-        <div className="w-full">{children}</div>
+        {/* Content wrapper with relative positioning for close button */}
+        <div className="w-full relative">
+          {/* Close button - only show when paymentView is true (PlanSetting view) since children content has its own close button */}
+          {paymentView && (
+            <button
+              className="absolute top-6 right-6 text-gray-600 hover:text-gray-800 text-2xl hover:bg-gray-100 transition-colors duration-200 p-1.5 rounded-full z-20 bg-white shadow-md w-8 h-8 flex items-center justify-center leading-none font-light"
+              onClick={closeModal}
+              aria-label="Close modal"
+            >
+              ×
+            </button>
+          )}
+          {children}
+        </div>
       </div>
     </div>
   );
