@@ -152,7 +152,7 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
       onClick={billingLoading ? undefined : onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg mx-4 border border-gray-100 transform transition-all duration-300 hover:shadow-3xl"
+        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg mx-4 border border-gray-100 transform transition-all duration-300 hover:shadow-3xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         style={{
           boxShadow:
@@ -256,11 +256,11 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
           {/* Discount Offer for "Too Expensive" */}
           {showDiscountOffer && (
             <div className="mt-6 p-6 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 border-2 border-emerald-200 rounded-2xl shadow-lg">
-              <div className="flex items-start">
+              <div className="flex items-start mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                   <span className="text-2xl">🎉</span>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h4 className="text-xl font-bold text-emerald-900 mb-3 leading-tight">
                     Wait! We have a special offer for you!
                   </h4>
@@ -271,114 +271,131 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
                     </span>{' '}
                     on your next billing cycle?
                   </p>
-
-                  {!couponCode && !discountApplied && (
-                    <div className="flex">
-                      <button
-                        onClick={handleRedeemDiscount}
-                        disabled={applyingDiscount}
-                        className={`w-full px-6 py-3 rounded-xl transition-all duration-200 text-sm font-medium flex items-center justify-center shadow-sm hover:shadow-md ${
-                          applyingDiscount
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:from-emerald-600 hover:to-green-700 transform hover:scale-105'
-                        }`}
-                      >
-                        {applyingDiscount ? (
-                          <>
-                            <CircularProgress
-                              size={16}
-                              sx={{ color: 'white', marginRight: 1 }}
-                            />
-                            Redeeming Discount...
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-4 h-4 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                              />
-                            </svg>
-                            Redeem Discount & Keep Site
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
-
-                  {couponCode && (
-                    <>
-                      <div className="bg-white p-4 rounded-xl border-2 border-dashed border-emerald-300 mb-4 shadow-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-emerald-800">
-                            Your Discount Code:
-                          </span>
-                          <div className="flex items-center">
-                            <code className="bg-gradient-to-r from-emerald-100 to-green-100 px-3 py-2 rounded-lg text-emerald-900 font-mono font-bold text-lg border border-emerald-200">
-                              {couponCode}
-                            </code>
-                            <Tooltip title={copyTooltip} arrow>
-                              <button
-                                onClick={handleCopyCode}
-                                className="ml-3 text-emerald-600 hover:text-emerald-800 transition-all duration-200 p-2 rounded-lg hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300"
-                              >
-                                <Copy size={18} />
-                              </button>
-                            </Tooltip>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-emerald-100 rounded-xl p-3 border border-emerald-200">
-                        <p className="text-sm text-emerald-800 text-center font-medium">
-                          🎯 Use this code at checkout to get your 5% discount!
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  {discountApplied && (
-                    <div className="text-center">
-                      <div className="bg-gradient-to-r from-emerald-100 to-green-100 p-6 rounded-xl mb-4 border-2 border-emerald-200 shadow-sm">
-                        <div className="w-16 h-16 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <svg
-                            className="w-8 h-8 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
-                        </div>
-                        <p className="text-emerald-900 font-bold text-lg mb-2">
-                          Discount Applied Successfully!
-                        </p>
-                        <p className="text-emerald-800 text-sm leading-relaxed">
-                          Your 5% discount has been applied to your
-                          subscription. Thank you for staying with us!
-                        </p>
-                      </div>
-                      <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
-                        <p className="text-sm text-emerald-700 font-medium">
-                          ⏱️ This modal will close automatically in 10
-                          seconds...
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
+
+              {/* Redeem Discount Button - Always show when discount offer is visible and not already applied */}
+              <div className="mt-4 w-full" style={{ display: 'block', width: '100%' }}>
+                {!couponCode && !discountApplied && (
+                  <button
+                    onClick={handleRedeemDiscount}
+                    disabled={applyingDiscount}
+                    type="button"
+                    style={{ 
+                      width: '100%',
+                      minHeight: '52px',
+                      padding: '16px 24px',
+                      backgroundColor: applyingDiscount ? '#9CA3AF' : '#10b981',
+                      backgroundImage: !applyingDiscount ? 'linear-gradient(to right, #10b981, #059669)' : 'none',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      cursor: applyingDiscount ? 'not-allowed' : 'pointer',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                      transition: 'all 0.2s',
+                      zIndex: 10,
+                      position: 'relative'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!applyingDiscount) {
+                        e.currentTarget.style.transform = 'scale(1.02)';
+                        e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!applyingDiscount) {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                      }
+                    }}
+                  >
+                    {applyingDiscount ? (
+                      <>
+                        <CircularProgress
+                          size={18}
+                          sx={{ color: 'white', marginRight: 1 }}
+                        />
+                        <span>Redeeming Discount...</span>
+                      </>
+                    ) : (
+                      <>
+              
+                        <span>Redeem Discount & Keep Site</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {couponCode && (
+                <>
+                  <div className="bg-white p-4 rounded-xl border-2 border-dashed border-emerald-300 mb-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-emerald-800">
+                        Your Discount Code:
+                      </span>
+                      <div className="flex items-center">
+                        <code className="bg-gradient-to-r from-emerald-100 to-green-100 px-3 py-2 rounded-lg text-emerald-900 font-mono font-bold text-lg border border-emerald-200">
+                          {couponCode}
+                        </code>
+                        <Tooltip title={copyTooltip} arrow>
+                          <button
+                            onClick={handleCopyCode}
+                            className="ml-3 text-emerald-600 hover:text-emerald-800 transition-all duration-200 p-2 rounded-lg hover:bg-emerald-50 border border-emerald-200 hover:border-emerald-300"
+                          >
+                            <Copy size={18} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-emerald-100 rounded-xl p-3 border border-emerald-200">
+                    <p className="text-sm text-emerald-800 text-center font-medium">
+                      🎯 Use this code at checkout to get your 5% discount!
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {discountApplied && (
+                <div className="text-center">
+                  <div className="bg-gradient-to-r from-emerald-100 to-green-100 p-6 rounded-xl mb-4 border-2 border-emerald-200 shadow-sm">
+                    <div className="w-16 h-16 bg-gradient-to-r from-emerald-400 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg
+                        className="w-8 h-8 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-emerald-900 font-bold text-lg mb-2">
+                      Discount Applied Successfully!
+                    </p>
+                    <p className="text-emerald-800 text-sm leading-relaxed">
+                      Your 5% discount has been applied to your
+                      subscription. Thank you for staying with us!
+                    </p>
+                  </div>
+                  <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                    <p className="text-sm text-emerald-700 font-medium">
+                      ⏱️ This modal will close automatically in 10
+                      seconds...
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
