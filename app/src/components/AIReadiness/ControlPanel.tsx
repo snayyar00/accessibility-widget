@@ -406,6 +406,27 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     }
   }, [selectedHeatmapCategory, viewMode]);
 
+  // Handle Esc key to dismiss tooltip
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && hoveredStatusIcon) {
+        setHoveredStatusIcon(null);
+        // Optionally blur the trigger element to remove focus
+        const trigger = document.activeElement as HTMLElement;
+        if (trigger && trigger.getAttribute('role') === 'button') {
+          trigger.blur();
+        }
+      }
+    };
+
+    if (hoveredStatusIcon) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+    
+    return undefined;
+  }, [hoveredStatusIcon]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
