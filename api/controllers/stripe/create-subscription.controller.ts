@@ -144,6 +144,7 @@ export async function createSubscription(req: Request & { user: UserLogined }, r
 
     if (no_sub) {
       let promoCodeData: Stripe.PromotionCode[] = []
+      let regularPromoCouponId: string | null = null
 
       if (promoCode && promoCode.length > 0 && typeof promoCode[0] !== 'number') {
         const validCodesData: Stripe.PromotionCode[] = []
@@ -166,6 +167,11 @@ export async function createSubscription(req: Request & { user: UserLogined }, r
         }
 
         promoCodeData = validCodesData
+
+        // Check if this is a regular promo code (not AppSumo)
+        if (promoCodeData.length > 0 && !APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id)) {
+          regularPromoCouponId = promoCodeData[0].coupon?.id
+        }
       }
 
       if (typeof promoCode[0] === 'number' || (promoCodeData && promoCodeData[0]?.coupon.valid && promoCodeData[0]?.active && APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon.id))) {
@@ -203,7 +209,35 @@ export async function createSubscription(req: Request & { user: UserLogined }, r
         })
 
         cleanupPromises = [expireUsedPromo(numPromoSites, stripe, orderedCodes, user.id, user.current_organization_id, user.email)]
-      } else if (promoCode && promoCode.length > 0) {
+      } else if (regularPromoCouponId) {
+        // Handle regular promo code
+        subscription = await stripe.subscriptions.create({
+          customer: customer.id,
+          items: [{ price: price.price_stripe_id, quantity: 1 }],
+          expand: ['latest_invoice.payment_intent'],
+          default_payment_method: customer.invoice_settings.default_payment_method,
+          coupon: regularPromoCouponId,
+          metadata: {
+            domainId,
+            userId: user.id,
+            maxDomains: 1,
+            usedDomains: 1,
+            ...(user.referral && { referral: user.referral }),
+            ...(agencyAccountId && { agency_account_id: agencyAccountId }),
+          },
+          description: `Plan for ${domainUrl}`,
+          // Agency Program: Configurable revenue share per organization
+          ...(agencyAccountId && {
+            application_fee_percent: getAgencyRevenueSharePercent(organization), // Platform's share
+            transfer_data: {
+              destination: agencyAccountId, // Remaining goes to agency
+            },
+            on_behalf_of: agencyAccountId, // Fixes cross-region settlement issues
+          }),
+        })
+        console.log('[PROMO] Subscription created with promo code:', regularPromoCouponId)
+      } else if (promoCode && promoCode.length > 0 && !regularPromoCouponId) {
+        // Coupon is not valid (not AppSumo and not a regular promo)
         return res.json({ valid: false, error: 'Invalid promo code' })
       } else if (cardTrial) {
         subscription = await stripe.subscriptions.create({
