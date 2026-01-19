@@ -131,10 +131,34 @@ const ConfirmDeleteSiteModal: React.FC<ConfirmDeleteSiteModalProps> = ({
 
   const handleCopyCode = async () => {
     try {
-      await navigator.clipboard.writeText(couponCode);
-      setCopyTooltip('Copied!');
-      setTimeout(() => setCopyTooltip('Copy code'), 2000);
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(couponCode);
+        setCopyTooltip('Copied!');
+        setTimeout(() => setCopyTooltip('Copy code'), 2000);
+      } else {
+        // Fallback to older method
+        const textArea = document.createElement('textarea');
+        textArea.value = couponCode;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (successful) {
+          setCopyTooltip('Copied!');
+          setTimeout(() => setCopyTooltip('Copy code'), 2000);
+        } else {
+          throw new Error('Copy command failed');
+        }
+      }
     } catch (error) {
+      console.error('Failed to copy:', error);
       setCopyTooltip('Failed to copy');
       setTimeout(() => setCopyTooltip('Copy code'), 2000);
     }

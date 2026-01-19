@@ -88,6 +88,8 @@ type Props = {
   validatedCoupons: any;
   appSumoCount: any;
   infinityToken: any;
+  discount?: number;
+  percentDiscount?: boolean;
 };
 
 const Plans: React.FC<Props> = ({
@@ -104,6 +106,8 @@ const Plans: React.FC<Props> = ({
   validatedCoupons,
   appSumoCount,
   infinityToken,
+  discount = 0,
+  percentDiscount = false,
 }) => {
   const { t } = useTranslation();
   const currentPlan = plans.find((plan) => checkIsCurrentPlan(plan.id));
@@ -149,7 +153,7 @@ const Plans: React.FC<Props> = ({
     checkReferral();
   }, []);
 
-  // Helper function to calculate discounted price
+  // Helper function to calculate discounted price (Rewardful)
   const calculateDiscountedPrice = (basePrice: number): number => {
     if (!hasReferral || !rewardfulDiscount.valid) {
       return basePrice;
@@ -166,9 +170,29 @@ const Plans: React.FC<Props> = ({
     return basePrice;
   };
 
+  // Helper function to calculate promo code discount
+  const calculatePromoDiscount = (basePrice: number): number => {
+    if (!discount || discount === 0) {
+      return basePrice;
+    }
+
+    if (percentDiscount) {
+      return basePrice * (1 - discount);
+    }
+
+    return Math.max(0, basePrice - discount);
+  };
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: boolean) => {
     setisYearly(newValue);
   };
+
+  // Debug logging
+  useEffect(() => {
+    if (discount > 0) {
+      console.log('[PLANS] Discount received:', { discount, percentDiscount });
+    }
+  }, [discount, percentDiscount]);
 
   let maxSites = appSumoCount * 2 || 2;
   let appSumoPlan = 'Professional';
@@ -432,7 +456,17 @@ const Plans: React.FC<Props> = ({
                           ${plan.price}
                         </span>
                       )}
-                      {hasReferral && rewardfulDiscount.valid ? (
+                      {discount > 0 ? (
+                        <>
+                          <span className="line-through mr-2 text-light-grey text-[24px]">
+                            ${isYearly ? plan.price - 2 : plan.price}
+                          </span>
+                          $
+                          {calculatePromoDiscount(
+                            isYearly ? plan.price - 2 : plan.price,
+                          ).toFixed(2)}
+                        </>
+                      ) : hasReferral && rewardfulDiscount.valid ? (
                         <>
                           <span className="line-through mr-2 text-light-grey text-[24px]">
                             ${isYearly ? plan.price - 2 : plan.price}
@@ -449,7 +483,14 @@ const Plans: React.FC<Props> = ({
                     <span className="unit text-[12px] leading-[25px] text-white-gray opacity-90">
                       /{'month'}
                     </span>
-                    {hasReferral && rewardfulDiscount.valid && (
+                    {discount > 0 && (
+                      <span className="text-[10px] text-green-600 font-semibold mt-1">
+                        {percentDiscount
+                          ? `${(discount * 100).toFixed(0)}% Promo Discount Applied!`
+                          : `$${discount.toFixed(2)} Promo Discount Applied!`}
+                      </span>
+                    )}
+                    {!discount && hasReferral && rewardfulDiscount.valid && (
                       <span className="text-[10px] text-green-600 font-semibold mt-1">
                         {rewardfulDiscount.percentOff
                           ? `${rewardfulDiscount.percentOff}% Referral Discount Applied!`

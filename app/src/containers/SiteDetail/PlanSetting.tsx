@@ -101,6 +101,7 @@ const PlanSetting: React.FC<{
   const siteId = parseInt(domain.id);
   const [clicked, setClicked] = useState(false);
   const [coupon, setCoupon] = useState('');
+  const [validatedCouponCode, setValidatedCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [percentDiscount, setpercentDiscount] = useState(false);
   const [isStripeCustomer, setisStripeCustomer] = useState(false);
@@ -216,7 +217,9 @@ const PlanSetting: React.FC<{
       domainId: domain.id,
       userId: data.id,
       domain: domain.url,
-      promoCode: validatedCoupons.length
+      promoCode: validatedCouponCode && validCoupon
+        ? [validatedCouponCode]
+        : validatedCoupons.length
         ? validatedCoupons
         : appSumoCount >= codeCount * 2
         ? validatedCoupons
@@ -281,7 +284,9 @@ const PlanSetting: React.FC<{
       domainId: domain.id,
       domainUrl: domain.url,
       userId: data.id,
-      promoCode: validatedCoupons.length
+      promoCode: validatedCouponCode && validCoupon
+        ? [validatedCouponCode]
+        : validatedCoupons.length
         ? validatedCoupons
         : appSumoCount >= codeCount * 2
         ? validatedCoupons
@@ -360,11 +365,21 @@ const PlanSetting: React.FC<{
         response.json().then((data) => {
           // Handle the JSON data received from the backend
           if (data?.valid == true) {
-            setCouponStack((prevCount) => prevCount + 1);
-            setValidatedCoupons((prevCoupons) => [...prevCoupons, coupon]);
-            setValidCoupon(true);
-            setpercentDiscount(true);
-            setDiscount(data.discount);
+            if (data.appSumo) {
+              // AppSumo coupon - add to validatedCoupons array
+              setCouponStack((prevCount) => prevCount + 1);
+              setValidatedCoupons((prevCoupons) => [...prevCoupons, coupon]);
+              console.log('[APPSUMO] Coupon added:', coupon);
+              toast.success('AppSumo coupon added!');
+            } else {
+              // Regular promo code - set discount states
+              setValidCoupon(true);
+              setpercentDiscount(data.percent || true);
+              setDiscount(data.discount);
+              setValidatedCouponCode(coupon); // Store the actual promo code string
+              console.log('[PROMO] Discount applied:', { discount: data.discount, percent: data.percent, couponCode: coupon });
+              toast.success(`Coupon applied! ${data.percent ? (data.discount * 100).toFixed(0) + '% off' : '$' + data.discount + ' off'}`);
+            }
           } else {
             toast.error(data?.error);
           }
@@ -545,6 +560,8 @@ const PlanSetting: React.FC<{
             validatedCoupons={validatedCoupons}
             appSumoCount={codeCount}
             infinityToken={infinityToken}
+            discount={discount}
+            percentDiscount={percentDiscount}
             billingButtons={
               <>
                 {isEmpty(currentPlan) ||
