@@ -5,6 +5,7 @@ import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { TbReportSearch } from 'react-icons/tb';
 import { MdOutlineGavel, MdOutlineInsights } from 'react-icons/md';
 import { FiFile, FiShoppingBag } from 'react-icons/fi';
+import { RiRobot2Line } from 'react-icons/ri';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
 import Users from '@/containers/Users';
@@ -13,6 +14,7 @@ import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
 import ServiceRequests from '@/containers/ServiceRequests';
+import ScraperAnalysis from '@/containers/ScraperAnalysis/ScraperAnalysis';
 
 const routes = [
   {
@@ -103,6 +105,20 @@ const routes = [
         className="menu-icon text-white-blue transition-colors duration-200"
         size={25}
         aria-label="AI Insights navigation icon"
+      />
+    ),
+    isSidebar: true,
+  },
+  {
+    path: '/auto-fix-analysis',
+    name: 'Auto-Fix Analysis',
+    exact: true,
+    component: ScraperAnalysis,
+    icon: (
+      <RiRobot2Line
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={25}
+        aria-label="Auto-Fix Analysis navigation icon"
       />
     ),
     isSidebar: true,

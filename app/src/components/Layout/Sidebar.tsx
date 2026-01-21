@@ -7,7 +7,7 @@ import { toggleSidebar, setSidebarLockedOpen } from '@/features/admin/sidebar';
 import { ReactComponent as LogoIcon } from '@/assets/images/svg/logo.svg';
 import routes from '@/routes';
 import { GoGear } from 'react-icons/go';
-import { RiStackLine } from 'react-icons/ri';
+import { RiStackLine, RiRobot2Line } from 'react-icons/ri';
 import {
   Folders,
   UserIcon,
@@ -165,6 +165,7 @@ const Sidebar = () => {
       }
 
       items.push({ id: 'ai-insights', label: 'AI insights' });
+      items.push({ id: 'auto-fix-analysis', label: 'Auto-Fix Analysis' });
 
       if (showAdminControls) {
         items.push(
@@ -670,6 +671,44 @@ const Sidebar = () => {
                   )}
                 </NavLink>
 
+                {/* Auto-Fix Analysis */}
+                <NavLink
+                  to="/auto-fix-analysis"
+                  onClick={closeSidebar}
+                  aria-label={buildAriaLabel('auto-fix-analysis')}
+                  className={`flex items-center rounded-lg transition-all duration-200 ${
+                    isActiveRoute('/auto-fix-analysis')
+                      ? isCollapsed
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
+                      : isCollapsed
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <RiRobot2Line
+                      size={24}
+                      className={
+                        isActiveRoute('/auto-fix-analysis')
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                  {!isCollapsed && (
+                    <span
+                      className={`text-sm whitespace-nowrap ${
+                        isActiveRoute('/auto-fix-analysis')
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }`}
+                    >
+                      Auto-Fix Analysis
+                    </span>
+                  )}
+                </NavLink>
+
                 {/* Admin Controls - Only visible for admin/owner roles */}
                 {showAdminControls && (
                   <>
@@ -1061,6 +1100,29 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/ai-insights')
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                </NavLink>
+
+                {/* Auto-Fix Analysis */}
+                <NavLink
+                  to="/auto-fix-analysis"
+                  onClick={closeSidebar}
+                  aria-label={buildAriaLabel('auto-fix-analysis')}
+                  className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                    isActiveRoute('/auto-fix-analysis')
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
+                      : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <RiRobot2Line
+                      size={24}
+                      className={
+                        isActiveRoute('/auto-fix-analysis')
                           ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }

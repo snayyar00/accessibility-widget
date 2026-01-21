@@ -24,6 +24,7 @@ export const TABLES = {
   userNotifications: 'user_notifications',
   serviceQuoteRequests: 'service_quote_requests',
   serviceMeetingRequests: 'service_meeting_requests',
+  autoFixesRecords: 'auto_fixes_records',
 }
 
 export const DEFAULT_LIMIT = 25
