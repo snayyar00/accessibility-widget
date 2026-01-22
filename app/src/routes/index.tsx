@@ -5,6 +5,7 @@ import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { TbReportSearch } from 'react-icons/tb';
 import { MdOutlineGavel, MdOutlineInsights } from 'react-icons/md';
 import { FiFile, FiShoppingBag } from 'react-icons/fi';
+import { MdAnalytics } from 'react-icons/md';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
 import Users from '@/containers/Users';
@@ -13,6 +14,7 @@ import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
 import ServiceRequests from '@/containers/ServiceRequests';
+import DomainAnalyses from '@/containers/DomainAnalyses/DomainAnalyses';
 
 const routes = [
   {
@@ -46,6 +48,20 @@ const routes = [
         className="menu-icon text-white-blue transition-colors duration-200"
         size={35}
         aria-label="Issues navigation icon"
+      />
+    ),
+    isSidebar: true,
+  },
+  {
+    path: '/domain-analyses',
+    name: 'Domain Analyses',
+    exact: true,
+    component: DomainAnalyses,
+    icon: (
+      <MdAnalytics
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={30}
+        aria-label="Domain Analyses navigation icon"
       />
     ),
     isSidebar: true,

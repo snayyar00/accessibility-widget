@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { LuCircleDollarSign } from 'react-icons/lu';
 import { PiNotebookBold, PiBookOpenBold } from 'react-icons/pi';
-import { MdLightbulbOutline } from 'react-icons/md';
+import { MdLightbulbOutline, MdAnalytics } from 'react-icons/md';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
@@ -156,6 +156,7 @@ const Sidebar = () => {
         { id: 'my-sites', label: 'My sites' },
         { id: 'scanner', label: 'Scanner' },
         { id: 'issues', label: 'Issues' },
+        { id: 'domain-analyses', label: 'Domain Analyses' },
         { id: 'ai-statement', label: 'AI statement' },
         { id: 'proof-of-effort', label: 'Proof of effort' },
       ];
@@ -512,6 +513,44 @@ const Sidebar = () => {
                       }`}
                     >
                       Issues
+                    </span>
+                  )}
+                </NavLink>
+
+                {/* Domain Analyses */}
+                <NavLink
+                  to="/domain-analyses"
+                  onClick={closeSidebar}
+                  aria-label={buildAriaLabel('domain-analyses')}
+                  className={`flex items-center rounded-lg transition-all duration-200 ${
+                    isActiveRoute('/domain-analyses')
+                      ? isCollapsed
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
+                      : isCollapsed
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <MdAnalytics
+                      size={24}
+                      className={
+                        isActiveRoute('/domain-analyses')
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                  {!isCollapsed && (
+                    <span
+                      className={`text-sm whitespace-nowrap ${
+                        isActiveRoute('/domain-analyses')
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }`}
+                    >
+                      Domain Analyses
                     </span>
                   )}
                 </NavLink>
