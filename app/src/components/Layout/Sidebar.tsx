@@ -156,7 +156,7 @@ const Sidebar = () => {
         { id: 'my-sites', label: 'My sites' },
         { id: 'scanner', label: 'Scanner' },
         { id: 'issues', label: 'Issues' },
-        { id: 'domain-analyses', label: 'Domain Analyses' },
+        { id: 'domain-analyses', label: 'Auto-Fixes' },
         { id: 'ai-statement', label: 'AI statement' },
         { id: 'proof-of-effort', label: 'Proof of effort' },
       ];
@@ -517,7 +517,7 @@ const Sidebar = () => {
                   )}
                 </NavLink>
 
-                {/* Domain Analyses */}
+                {/* Auto-Fixes */}
                 <NavLink
                   to="/domain-analyses"
                   onClick={closeSidebar}
@@ -550,7 +550,7 @@ const Sidebar = () => {
                           : 'text-[#656565]'
                       }`}
                     >
-                      Domain Analyses
+                      Auto-Fixes
                     </span>
                   )}
                 </NavLink>

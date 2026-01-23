@@ -37,7 +37,7 @@ export interface Analysis {
 
 const DomainAnalyses: React.FC = () => {
   const { t } = useTranslation();
-  useDocumentHeader({ title: 'Accessibility Issues' });
+  useDocumentHeader({ title: 'Auto Fixes' });
   
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loader, setLoader] = useState(false);
@@ -379,7 +379,7 @@ const DomainAnalyses: React.FC = () => {
                   </svg>
                 </div>
                 <h2 className="text-sm font-bold text-gray-900">
-                  Select Domain
+                  Select Website
                 </h2>
               </div>
               <div>
@@ -669,17 +669,17 @@ const DomainAnalyses: React.FC = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
-                    Accessibility Issues
+                    Auto Fixes
                   </h1>
                 </div>
               </div>
               
-              {filteredFixes.length > 0 && (
-                <p className="text-sm text-gray-600 flex items-center gap-2 sm:ml-14">
-                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#0052CC' }}></span>
-                  {filteredFixes.length} issue{filteredFixes.length !== 1 ? 's' : ''} found
-                </p>
-              )}
+                {filteredFixes.length > 0 && (
+                  <p className="text-sm text-gray-600 flex items-center gap-2 sm:ml-14">
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#0052CC' }}></span>
+                    {filteredFixes.length} auto-fix{filteredFixes.length !== 1 ? 'es' : ''} applied
+                  </p>
+                )}
 
               {/* Filter Buttons */}
               {allFixes.length > 0 && (
@@ -704,7 +704,7 @@ const DomainAnalyses: React.FC = () => {
                     }`}
                     style={filter === 'active' ? { backgroundColor: '#16a34a' } : {}}
                   >
-                    Active
+                    Enabled
                   </button>
                   <button
                     onClick={() => setFilter('deleted')}
@@ -715,7 +715,7 @@ const DomainAnalyses: React.FC = () => {
                     }`}
                     style={filter === 'deleted' ? { backgroundColor: '#dc2626' } : {}}
                   >
-                    Removed
+                    Disabled
                   </button>
                 </div>
               )}
@@ -758,7 +758,7 @@ const DomainAnalyses: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Get Started</h3>
                 <p className="text-gray-600 text-center max-w-md">
-                  Select a domain from the left sidebar to view and manage accessibility issues
+                  Select a website from the left sidebar to view auto-fixes applied by the widget
                 </p>
               </div>
             ) : filteredFixes.length > 0 ? (
@@ -801,17 +801,17 @@ const DomainAnalyses: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {filter === 'deleted'
-                    ? 'No Removed Fixes'
+                    ? 'No Disabled Auto-Fixes'
                     : filter === 'active'
-                    ? 'No Active Issues'
+                    ? 'No Enabled Auto-Fixes'
                     : 'All Clear!'}
                 </h3>
                 <p className="text-gray-600 text-center max-w-md">
                   {filter === 'deleted'
-                    ? 'No removed fixes found for the selected filters'
+                    ? 'No disabled auto-fixes found for the selected filters'
                     : filter === 'active'
-                    ? 'No active fixes found. Great job!'
-                    : 'No accessibility issues found for this domain. Your site looks good!'}
+                    ? 'No enabled auto-fixes found for the selected filters'
+                    : 'No auto-fixes found for this website. The widget has not applied any fixes yet.'}
                 </p>
               </div>
             )}
@@ -837,14 +837,14 @@ const DomainAnalyses: React.FC = () => {
               )}
             </div>
             <h2 id="confirm-modal-title" className="text-xl font-bold text-gray-900">
-              {confirmModal.type === 'remove' ? 'Remove Auto-Fix?' : 'Restore Auto-Fix?'}
+              {confirmModal.type === 'remove' ? 'Disable Auto-Fix?' : 'Enable Auto-Fix?'}
             </h2>
           </div>
 
           <p className="text-gray-700 mb-6">
             {confirmModal.type === 'remove'
-              ? 'Are you sure you want to remove this auto-fix? It will not be applied to your website.'
-              : 'Are you sure you want to restore this auto-fix? It will be applied to your website.'}
+              ? 'Are you sure you want to disable this auto-fix? The widget will stop applying this fix to your website.'
+              : 'Are you sure you want to enable this auto-fix? The widget will start applying this fix to your website.'}
           </p>
 
           <div className="flex justify-end gap-3">
@@ -865,11 +865,11 @@ const DomainAnalyses: React.FC = () => {
             >
               {updatingFixId !== null
                 ? confirmModal.type === 'remove'
-                  ? 'Removing...'
-                  : 'Restoring...'
+                  ? 'Disabling...'
+                  : 'Enabling...'
                 : confirmModal.type === 'remove'
-                ? 'Remove'
-                : 'Restore'}
+                ? 'Disable'
+                : 'Enable'}
             </button>
           </div>
         </div>

@@ -54,14 +54,14 @@ const routes = [
   },
   {
     path: '/domain-analyses',
-    name: 'Domain Analyses',
+    name: 'Auto-Fixes',
     exact: true,
     component: DomainAnalyses,
     icon: (
       <MdAnalytics
         className="menu-icon text-white-blue transition-colors duration-200"
         size={30}
-        aria-label="Domain Analyses navigation icon"
+        aria-label="Auto-Fixes navigation icon"
       />
     ),
     isSidebar: true,

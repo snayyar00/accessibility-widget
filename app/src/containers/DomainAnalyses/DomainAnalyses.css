@@ -1,4 +1,4 @@
-/* Ensure no horizontal overflow for Domain Analyses page */
+/* Ensure no horizontal overflow for Auto-Fixes page */
 .domain-analyses-container {
   width: 100%;
   max-width: 100vw;
