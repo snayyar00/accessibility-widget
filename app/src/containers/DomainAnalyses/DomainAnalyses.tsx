@@ -47,6 +47,8 @@ const DomainAnalyses: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedPage, setSelectedPage] = useState<string>('all');
   const [filter, setFilter] = useState<'all' | 'active' | 'deleted'>('all');
+  const [selectedImpact, setSelectedImpact] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [updatingFixId, setUpdatingFixId] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -127,6 +129,8 @@ const DomainAnalyses: React.FC = () => {
       setSelectedOption(selected);
       setSelectedDomain(selected.value);
       setSelectedPage('all');
+      setSelectedImpact('all');
+      setSelectedCategory('all');
       fetchAnalyses(selected.value);
     } else {
       setSelectedOption(null);
@@ -148,6 +152,8 @@ const DomainAnalyses: React.FC = () => {
     setSelectedOption(newOption);
     setSelectedDomain(normalizedDomain);
     setSelectedPage('all');
+    setSelectedImpact('all');
+    setSelectedCategory('all');
     fetchAnalyses(normalizedDomain);
   };
 
@@ -180,17 +186,64 @@ const DomainAnalyses: React.FC = () => {
     return fixes;
   }, [analyses]);
 
-  // Get unique pages with counts
+  // Get unique pages with counts (filtered by status, impact, category - but NOT page)
   const pages = useMemo(() => {
     const pageMap = new Map<string, number>();
-    allFixes.forEach(({ url }) => {
+    allFixes.forEach(({ fix, url }) => {
+      // Apply all filters EXCEPT page filter
+      if (filter === 'active' && fix.action === 'deleted') return;
+      if (filter === 'deleted' && fix.action !== 'deleted') return;
+      if (selectedImpact !== 'all' && (fix.impact || 'minor') !== selectedImpact) return;
+      if (selectedCategory !== 'all' && (fix.category || 'other') !== selectedCategory) return;
+      
       const count = pageMap.get(url) || 0;
       pageMap.set(url, count + 1);
     });
     return Array.from(pageMap.entries()).map(([url, count]) => ({ url, count }));
-  }, [allFixes]);
+  }, [allFixes, filter, selectedImpact, selectedCategory]);
 
-  // Filter fixes based on selected page and filter
+  // Get unique impacts with counts (filtered by status, page, category - but NOT impact)
+  const impacts = useMemo(() => {
+    const impactMap = new Map<string, number>();
+    allFixes.forEach(({ fix, url }) => {
+      // Apply all filters EXCEPT impact filter
+      if (selectedPage !== 'all' && url !== selectedPage) return;
+      if (filter === 'active' && fix.action === 'deleted') return;
+      if (filter === 'deleted' && fix.action !== 'deleted') return;
+      if (selectedCategory !== 'all' && (fix.category || 'other') !== selectedCategory) return;
+      
+      const impact = fix.impact || 'minor';
+      const count = impactMap.get(impact) || 0;
+      impactMap.set(impact, count + 1);
+    });
+    return Array.from(impactMap.entries())
+      .map(([impact, count]) => ({ impact, count }))
+      .sort((a, b) => {
+        const order = { serious: 0, moderate: 1, minor: 2 };
+        return (order[a.impact as keyof typeof order] || 3) - (order[b.impact as keyof typeof order] || 3);
+      });
+  }, [allFixes, selectedPage, filter, selectedCategory]);
+
+  // Get unique categories with counts (filtered by status, page, impact - but NOT category)
+  const categories = useMemo(() => {
+    const categoryMap = new Map<string, number>();
+    allFixes.forEach(({ fix, url }) => {
+      // Apply all filters EXCEPT category filter
+      if (selectedPage !== 'all' && url !== selectedPage) return;
+      if (filter === 'active' && fix.action === 'deleted') return;
+      if (filter === 'deleted' && fix.action !== 'deleted') return;
+      if (selectedImpact !== 'all' && (fix.impact || 'minor') !== selectedImpact) return;
+      
+      const category = fix.category || 'other';
+      const count = categoryMap.get(category) || 0;
+      categoryMap.set(category, count + 1);
+    });
+    return Array.from(categoryMap.entries())
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [allFixes, selectedPage, filter, selectedImpact]);
+
+  // Filter fixes based on selected page, status, impact, and category
   const filteredFixes = useMemo(() => {
     return allFixes.filter(({ fix, url }) => {
       // Filter by page
@@ -200,9 +253,46 @@ const DomainAnalyses: React.FC = () => {
       if (filter === 'active' && fix.action === 'deleted') return false;
       if (filter === 'deleted' && fix.action !== 'deleted') return false;
       
+      // Filter by impact
+      if (selectedImpact !== 'all' && (fix.impact || 'minor') !== selectedImpact) return false;
+      
+      // Filter by category
+      if (selectedCategory !== 'all' && (fix.category || 'other') !== selectedCategory) return false;
+      
       return true;
     });
-  }, [allFixes, selectedPage, filter]);
+  }, [allFixes, selectedPage, filter, selectedImpact, selectedCategory]);
+
+  // Calculate "All" counts for each filter type (excluding its own filter)
+  const allPagesCount = useMemo(() => {
+    return allFixes.filter(({ fix }) => {
+      if (filter === 'active' && fix.action === 'deleted') return false;
+      if (filter === 'deleted' && fix.action !== 'deleted') return false;
+      if (selectedImpact !== 'all' && (fix.impact || 'minor') !== selectedImpact) return false;
+      if (selectedCategory !== 'all' && (fix.category || 'other') !== selectedCategory) return false;
+      return true;
+    }).length;
+  }, [allFixes, filter, selectedImpact, selectedCategory]);
+
+  const allImpactsCount = useMemo(() => {
+    return allFixes.filter(({ fix, url }) => {
+      if (selectedPage !== 'all' && url !== selectedPage) return false;
+      if (filter === 'active' && fix.action === 'deleted') return false;
+      if (filter === 'deleted' && fix.action !== 'deleted') return false;
+      if (selectedCategory !== 'all' && (fix.category || 'other') !== selectedCategory) return false;
+      return true;
+    }).length;
+  }, [allFixes, selectedPage, filter, selectedCategory]);
+
+  const allCategoriesCount = useMemo(() => {
+    return allFixes.filter(({ fix, url }) => {
+      if (selectedPage !== 'all' && url !== selectedPage) return false;
+      if (filter === 'active' && fix.action === 'deleted') return false;
+      if (filter === 'deleted' && fix.action !== 'deleted') return false;
+      if (selectedImpact !== 'all' && (fix.impact || 'minor') !== selectedImpact) return false;
+      return true;
+    }).length;
+  }, [allFixes, selectedPage, filter, selectedImpact]);
 
   // Handle fix action update
   const handleFixAction = async (analysisId: string, fixIndex: number, action: 'update' | 'deleted') => {
@@ -340,7 +430,7 @@ const DomainAnalyses: React.FC = () => {
 
             {/* Pages Filter */}
             {pages.length > 0 && (
-              <div>
+              <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-2 bg-purple-50 rounded-lg">
                     <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -373,40 +463,182 @@ const DomainAnalyses: React.FC = () => {
                           : 'bg-gray-200 text-gray-700'
                       }`}
                     >
-                      {allFixes.length}
+                      {allPagesCount}
                     </span>
                   </button>
-                  {pages.map(({ url, count }) => {
-                    let pathname = '/';
-                    try {
-                      pathname = new URL(url).pathname || '/';
-                    } catch {
-                      pathname = url;
-                    }
-                    return (
-                      <button
-                        key={url}
-                        onClick={() => setSelectedPage(url)}
-                        className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                          selectedPage === url
-                            ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
-                            : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                  <div className="pages-list-scrollable max-h-[400px] overflow-y-auto pr-1">
+                    <div className="space-y-1.5">
+                      {pages.map(({ url, count }) => {
+                        let pathname = '/';
+                        try {
+                          pathname = new URL(url).pathname || '/';
+                        } catch {
+                          pathname = url;
+                        }
+                        return (
+                          <button
+                            key={url}
+                            onClick={() => setSelectedPage(url)}
+                            className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                              selectedPage === url
+                                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                                : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                            }`}
+                          >
+                            <span className="truncate flex-1 text-left">{pathname}</span>
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-xs font-semibold ml-2 ${
+                                selectedPage === url
+                                  ? 'bg-blue-500/20 text-white'
+                                  : 'bg-gray-200 text-gray-700'
+                              }`}
+                            >
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Impact Filter */}
+            {impacts.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-red-50 rounded-lg">
+                    <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-sm font-bold text-gray-900">
+                    Impact
+                  </h2>
+                </div>
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => setSelectedImpact('all')}
+                    className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      selectedImpact === 'all'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                        : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                    }`}
+                  >
+                    <span>All Impacts</span>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        selectedImpact === 'all'
+                          ? 'bg-blue-500/20 text-white'
+                          : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {allImpactsCount}
+                    </span>
+                  </button>
+                  {impacts.map(({ impact, count }) => (
+                    <button
+                      key={impact}
+                      onClick={() => setSelectedImpact(impact)}
+                      className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        selectedImpact === impact
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                          : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                      }`}
+                    >
+                      <span className="capitalize">{impact}</span>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          selectedImpact === impact
+                            ? 'bg-blue-500/20 text-white'
+                            : 'bg-gray-200 text-gray-700'
                         }`}
                       >
-                        <span className="truncate flex-1 text-left">{pathname}</span>
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-semibold ml-2 ${
-                            selectedPage === url
-                              ? 'bg-blue-500/20 text-white'
-                              : 'bg-gray-200 text-gray-700'
-                          }`}
-                        >
-                          {count}
-                        </span>
-                      </button>
-                    );
-                  })}
+                        {count}
+                      </span>
+                    </button>
+                  ))}
                 </div>
+              </div>
+            )}
+
+            {/* Category Filter */}
+            {categories.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-sm font-bold text-gray-900">
+                    Category
+                  </h2>
+                </div>
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      selectedCategory === 'all'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                        : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                    }`}
+                  >
+                    <span>All Categories</span>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        selectedCategory === 'all'
+                          ? 'bg-blue-500/20 text-white'
+                          : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {allCategoriesCount}
+                    </span>
+                  </button>
+                  {categories.map(({ category, count }) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        selectedCategory === category
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                          : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                      }`}
+                    >
+                      <span className="capitalize">{category.replace(/_/g, ' ')}</span>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                          selectedCategory === category
+                            ? 'bg-blue-500/20 text-white'
+                            : 'bg-gray-200 text-gray-700'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Clear All Filters Button */}
+            {(selectedPage !== 'all' || filter !== 'all' || selectedImpact !== 'all' || selectedCategory !== 'all') && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setSelectedPage('all');
+                    setFilter('all');
+                    setSelectedImpact('all');
+                    setSelectedCategory('all');
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-lg hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg transform hover:scale-[1.02]"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear All Filters
+                </button>
               </div>
             )}
           </div>
@@ -514,20 +746,22 @@ const DomainAnalyses: React.FC = () => {
                 </p>
               </div>
             ) : filteredFixes.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {filteredFixes.map(({ fix, url, analysisId, fixIndex }) => {
-                  const fixId = `${analysisId}-${fixIndex}`;
-                  return (
-                    <FixCard
-                      key={fixId}
-                      fix={fix}
-                      url={url}
-                      onRemove={() => handleRemoveClick(analysisId, fixIndex)}
-                      onRestore={() => handleRestoreClick(analysisId, fixIndex)}
-                      isUpdating={updatingFixId === fixId}
-                    />
-                  );
-                })}
+              <div className="issues-cards-scrollable max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  {filteredFixes.map(({ fix, url, analysisId, fixIndex }) => {
+                    const fixId = `${analysisId}-${fixIndex}`;
+                    return (
+                      <FixCard
+                        key={fixId}
+                        fix={fix}
+                        url={url}
+                        onRemove={() => handleRemoveClick(analysisId, fixIndex)}
+                        onRestore={() => handleRestoreClick(analysisId, fixIndex)}
+                        isUpdating={updatingFixId === fixId}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16">
