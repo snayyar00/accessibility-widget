@@ -1617,115 +1617,140 @@ const DomainAnalyses: React.FC = () => {
             </div>
 
             {/* Filter Buttons */}
-            <div className="px-6 py-4 border-b flex-shrink-0 space-y-4" style={{ borderColor: '#A2ADF3' }}>
-              {/* Status Filters */}
-              <div className="flex flex-wrap gap-2.5">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                    filter === 'all'
-                      ? 'text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                  }`}
-                  style={filter === 'all' ? { backgroundColor: '#0052CC' } : {}}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilter('active')}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                    filter === 'active'
-                      ? 'text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                  }`}
-                  style={filter === 'active' ? { backgroundColor: '#16a34a' } : {}}
-                >
-                  Enabled
-                </button>
-                <button
-                  onClick={() => setFilter('deleted')}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                    filter === 'deleted'
-                      ? 'text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                  }`}
-                  style={filter === 'deleted' ? { backgroundColor: '#dc2626' } : {}}
-                >
-                  Disabled
-                </button>
+            <div className="flex-shrink-0 border-b" style={{ backgroundColor: '#f9fafb', borderColor: '#e5e7eb' }}>
+              <div className="px-4 sm:px-5 py-3.5">
+                {/* Status Filters Row */}
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <button
+                    onClick={() => setFilter('all')}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      filter === 'all'
+                        ? 'text-white shadow-md'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                    }`}
+                    style={filter === 'all' ? { backgroundColor: '#0052CC' } : {}}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    All
+                  </button>
+                  <button
+                    onClick={() => setFilter('active')}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      filter === 'active'
+                        ? 'text-white shadow-md'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                    }`}
+                    style={filter === 'active' ? { backgroundColor: '#16a34a' } : {}}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Enabled
+                  </button>
+                  <button
+                    onClick={() => setFilter('deleted')}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      filter === 'deleted'
+                        ? 'text-white shadow-md'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                    }`}
+                    style={filter === 'deleted' ? { backgroundColor: '#dc2626' } : {}}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Disabled
+                  </button>
+                </div>
+
+                {/* Impact & Category Filters Row */}
+                <div className="flex flex-wrap items-center gap-3 text-xs">
+                  {/* Impact Filters */}
+                  {impacts.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-gray-600 font-semibold mr-1">Impact:</span>
+                      <button
+                        onClick={() => setSelectedImpact('all')}
+                        className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                          selectedImpact === 'all'
+                            ? 'text-white shadow-sm'
+                            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                        }`}
+                        style={selectedImpact === 'all' ? { backgroundColor: '#0052CC' } : {}}
+                      >
+                        All <span className={`ml-0.5 ${selectedImpact === 'all' ? 'opacity-80' : 'text-gray-500'}`}>({allImpactsCount})</span>
+                      </button>
+                      {impacts.map(({ impact, count }) => (
+                        <button
+                          key={impact}
+                          onClick={() => setSelectedImpact(impact)}
+                          className={`px-2.5 py-1 rounded-md font-medium transition-all capitalize ${
+                            selectedImpact === impact
+                              ? 'text-white shadow-sm'
+                              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                          }`}
+                          style={selectedImpact === impact ? { backgroundColor: '#0052CC' } : {}}
+                        >
+                          {impact} <span className={`ml-0.5 ${selectedImpact === impact ? 'opacity-80' : 'text-gray-500'}`}>({count})</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Divider */}
+                  {impacts.length > 0 && categories.length > 0 && (
+                    <div className="h-4 w-px bg-gray-300"></div>
+                  )}
+
+                  {/* Category Filters */}
+                  {categories.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-gray-600 font-semibold mr-1">Category:</span>
+                      <button
+                        onClick={() => setSelectedCategory('all')}
+                        className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                          selectedCategory === 'all'
+                            ? 'text-white shadow-sm'
+                            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                        }`}
+                        style={selectedCategory === 'all' ? { backgroundColor: '#0052CC' } : {}}
+                      >
+                        All <span className={`ml-0.5 ${selectedCategory === 'all' ? 'opacity-80' : 'text-gray-500'}`}>({allCategoriesCount})</span>
+                      </button>
+                      {categories.map(({ category, count }) => (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedCategory(category)}
+                          className={`px-2.5 py-1 rounded-md font-medium transition-all ${
+                            selectedCategory === category
+                              ? 'text-white shadow-sm'
+                              : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                          }`}
+                          style={selectedCategory === category ? { backgroundColor: '#0052CC' } : {}}
+                        >
+                          {category.replace(/_/g, ' ')} <span className={`ml-0.5 ${selectedCategory === category ? 'opacity-80' : 'text-gray-500'}`}>({count})</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Results Count */}
+                {sliderFixes.length > 0 && (
+                  <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-gray-200">
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: '#0052CC' }}></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: '#0052CC' }}></span>
+                      </span>
+                      <span className="font-semibold text-gray-900">{sliderFixes.length} auto-fix{sliderFixes.length !== 1 ? 'es' : ''}</span>
+                      <span className="text-gray-500">displayed</span>
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* Impact Filters */}
-              {impacts.length > 0 && (
-                <div className="flex flex-wrap gap-2.5 items-center">
-                  <span className="text-xs font-semibold text-gray-700 mr-2">Impact:</span>
-                  <button
-                    onClick={() => setSelectedImpact('all')}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      selectedImpact === 'all'
-                        ? 'text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                    }`}
-                    style={selectedImpact === 'all' ? { backgroundColor: '#0052CC' } : {}}
-                  >
-                    All ({allImpactsCount})
-                  </button>
-                  {impacts.map(({ impact, count }) => (
-                    <button
-                      key={impact}
-                      onClick={() => setSelectedImpact(impact)}
-                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all capitalize ${
-                        selectedImpact === impact
-                          ? 'text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                      }`}
-                      style={selectedImpact === impact ? { backgroundColor: '#0052CC' } : {}}
-                    >
-                      {impact} ({count})
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Category Filters */}
-              {categories.length > 0 && (
-                <div className="flex flex-wrap gap-2.5 items-center">
-                  <span className="text-xs font-semibold text-gray-700 mr-2">Category:</span>
-                  <button
-                    onClick={() => setSelectedCategory('all')}
-                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      selectedCategory === 'all'
-                        ? 'text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                    }`}
-                    style={selectedCategory === 'all' ? { backgroundColor: '#0052CC' } : {}}
-                  >
-                    All ({allCategoriesCount})
-                  </button>
-                  {categories.map(({ category, count }) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                        selectedCategory === category
-                          ? 'text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
-                      }`}
-                      style={selectedCategory === category ? { backgroundColor: '#0052CC' } : {}}
-                    >
-                      {category.replace(/_/g, ' ')} ({count})
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Fix Count */}
-              {sliderFixes.length > 0 && (
-                <p className="text-sm text-gray-600 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#0052CC' }}></span>
-                  {sliderFixes.length} auto-fix{sliderFixes.length !== 1 ? 'es' : ''} applied
-                </p>
-              )}
             </div>
 
             {/* Slider Content */}
