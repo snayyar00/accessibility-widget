@@ -3,12 +3,11 @@ import { CircularProgress } from '@mui/material';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { getAuthenticationCookie } from '@/utils/cookie';
-import notFoundImage from '@/assets/images/not_found_image.png';
 import Favicon from '@/components/Common/Favicon';
 import { useQuery } from '@apollo/client';
 import GET_USER_SITES from '@/queries/sites/getSites';
 import { Site } from '@/generated/graphql';
-import Select from 'react-select/creatable';
+import Select from 'react-select';
 import Modal from '@/components/Common/Modal';
 import './DomainAnalyses.css';
 import FixCard from './FixCard';
@@ -77,6 +76,37 @@ const DomainAnalyses: React.FC = () => {
       .filter((opt: OptionType) => opt.value);
   }, [sitesData]);
 
+  // Normalize domain: extract root domain from URLs
+  const normalizeDomain = (input: string): string => {
+    if (!input) return '';
+    
+    // Remove protocol
+    let normalized = input.replace(/^https?:\/\//i, '');
+    
+    // Remove www.
+    normalized = normalized.replace(/^www\./i, '');
+    
+    // Remove trailing slashes and paths
+    normalized = normalized.replace(/\/.*$/, '');
+    
+    // Remove trailing spaces
+    normalized = normalized.trim();
+    
+    return normalized.toLowerCase();
+  };
+
+  // Find matching domain in user's sites by root domain
+  const findMatchingDomain = (input: string): OptionType | null => {
+    const normalizedInput = normalizeDomain(input);
+    if (!normalizedInput) return null;
+
+    // Check if any site's root domain matches
+    return siteOptions.find((option: OptionType) => {
+      const normalizedOption = normalizeDomain(option.value);
+      return normalizedOption === normalizedInput;
+    }) || null;
+  };
+
   useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -140,21 +170,25 @@ const DomainAnalyses: React.FC = () => {
     }
   };
 
-  const handleCreateOption = (inputValue: string) => {
-    // Normalize domain (remove protocol, www, trailing slashes)
-    let normalizedDomain = inputValue
-      .replace(/^https?:\/\//, '')
-      .replace(/^www\./, '')
-      .replace(/\/$/, '')
-      .split('/')[0]; // Get just the domain part
-    
-    const newOption: OptionType = { value: normalizedDomain, label: normalizedDomain };
-    setSelectedOption(newOption);
-    setSelectedDomain(normalizedDomain);
-    setSelectedPage('all');
-    setSelectedImpact('all');
-    setSelectedCategory('all');
-    fetchAnalyses(normalizedDomain);
+  // Handle input change to detect pasted URLs and auto-select matching domains
+  const handleInputChange = (inputValue: string, { action }: { action: string }) => {
+    // Only process when user is typing/pasting, not when menu is opening/closing
+    if (action === 'input-change' && inputValue) {
+      // Check if input looks like a URL (contains protocol, www, or has a TLD pattern)
+      const trimmedInput = inputValue.trim();
+      const looksLikeUrl = /^(https?:\/\/|www\.|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})/i.test(trimmedInput);
+      
+      if (looksLikeUrl) {
+        const matchingDomain = findMatchingDomain(trimmedInput);
+        if (matchingDomain && (!selectedOption || selectedOption.value !== matchingDomain.value)) {
+          // Use setTimeout to avoid conflicts with react-select's internal state
+          setTimeout(() => {
+            handleDomainChange(matchingDomain);
+          }, 100);
+        }
+      }
+    }
+    return inputValue;
   };
 
   // Extract all fixes from all analyses
@@ -366,10 +400,10 @@ const DomainAnalyses: React.FC = () => {
   return (
     <div className="domain-analyses-container min-h-screen">
       {/* Two-column layout: Sidebar + Main Content */}
-      <div className="flex flex-col lg:flex-row gap-6 p-6">
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 p-6">
         {/* Left Sidebar */}
-        <aside className="lg:w-96 w-full lg:flex-shrink-0">
-          <div className="rounded-xl border-2 p-6 sticky top-4" style={{ backgroundColor: '#e9ecfb', borderColor: '#A2ADF3' }}>
+        <aside className="lg:w-96 w-full lg:flex-shrink-0 flex">
+          <div className="rounded-xl border-2 p-6 sticky top-4 w-full" style={{ backgroundColor: '#e9ecfb', borderColor: '#A2ADF3' }}>
             {/* Domain Selector */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
@@ -394,8 +428,8 @@ const DomainAnalyses: React.FC = () => {
                   options={siteOptions}
                   value={selectedOption}
                   onChange={handleDomainChange}
-                  onCreateOption={handleCreateOption}
-                  placeholder="Select or enter a domain"
+                  onInputChange={handleInputChange}
+                  placeholder="Select a domain or paste a URL"
                   isSearchable
                   isClearable
                   isLoading={sitesLoading}
@@ -405,9 +439,6 @@ const DomainAnalyses: React.FC = () => {
                       <span className="truncate min-w-0">{option.label}</span>
                     </div>
                   )}
-                  formatCreateLabel={(inputValue: string) =>
-                    `Enter a new domain: "${inputValue}"`
-                  }
                   classNamePrefix="react-select"
                   className="w-full"
                   styles={{
@@ -657,8 +688,8 @@ const DomainAnalyses: React.FC = () => {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 min-w-0">
-          <div className="bg-white rounded-xl border-2 p-6 md:p-7" style={{ borderColor: '#A2ADF3' }}>
+        <main className="flex-1 min-w-0 flex">
+          <div className="bg-white rounded-xl border-2 p-6 md:p-7 w-full" style={{ borderColor: '#A2ADF3' }}>
             {/* Header */}
             <div className="flex flex-col gap-4 mb-7 pb-6 border-b border-gray-200">
               <div className="flex items-center gap-3">

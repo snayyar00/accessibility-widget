@@ -1013,6 +1013,29 @@ const Sidebar = () => {
                   </div>
                 </NavLink>
 
+                {/* Auto-Fixes */}
+                <NavLink
+                  to="/domain-analyses"
+                  onClick={closeSidebar}
+                  aria-label={buildAriaLabel('domain-analyses')}
+                  className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                    isActiveRoute('/domain-analyses')
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
+                      : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <MdAnalytics
+                      size={24}
+                      className={
+                        isActiveRoute('/domain-analyses')
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                </NavLink>
+
                 {/* AI Statement */}
                 <NavLink
                   to="/statement-generator"
