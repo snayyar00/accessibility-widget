@@ -49,6 +49,13 @@ const DomainAnalyses: React.FC = () => {
   const [selectedImpact, setSelectedImpact] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [updatingFixId, setUpdatingFixId] = useState<string | null>(null);
+  // View state: 'domain-selection' | 'url-list' | 'fixes-view'
+  const [currentView, setCurrentView] = useState<'domain-selection' | 'url-list' | 'fixes-view'>('domain-selection');
+  // Slider state for fixes view
+  const [isSliderOpen, setIsSliderOpen] = useState(false);
+  const [sliderUrl, setSliderUrl] = useState<string | null>(null);
+  // Search state for URL list
+  const [urlSearchQuery, setUrlSearchQuery] = useState<string>('');
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     type: 'remove' | 'restore';
@@ -161,13 +168,92 @@ const DomainAnalyses: React.FC = () => {
       setSelectedPage('all');
       setSelectedImpact('all');
       setSelectedCategory('all');
+      setCurrentView('url-list'); // Show URL list after domain selection
       fetchAnalyses(selected.value);
     } else {
       setSelectedOption(null);
       setSelectedDomain(null);
       setAnalyses([]);
       setHasSearched(false);
+      setCurrentView('domain-selection'); // Go back to domain selection
     }
+  };
+
+  // Get unique URLs from analyses with metrics
+  const urlList = useMemo(() => {
+    const urlMap = new Map<string, {
+      url: string;
+      fixCount: number;
+      activeFixCount: number;
+      deletedFixCount: number;
+      score: number | null;
+      analyzedAt: number;
+    }>();
+
+    analyses.forEach((analysis) => {
+      const url = analysis.url || analysis.domain || '';
+      if (!url) return;
+
+      try {
+        const parsed = JSON.parse(analysis.result_json);
+        const fixes = parsed?.analysis?.fixes || [];
+        const activeFixes = fixes.filter((f: any) => f.action !== 'deleted');
+        const deletedFixes = fixes.filter((f: any) => f.action === 'deleted');
+
+        const existing = urlMap.get(url) || {
+          url,
+          fixCount: 0,
+          activeFixCount: 0,
+          deletedFixCount: 0,
+          score: null,
+          analyzedAt: 0,
+        };
+
+        existing.fixCount += fixes.length;
+        existing.activeFixCount += activeFixes.length;
+        existing.deletedFixCount += deletedFixes.length;
+        if (analysis.score !== null && (existing.score === null || analysis.analyzed_at > existing.analyzedAt)) {
+          existing.score = analysis.score;
+        }
+        if (analysis.analyzed_at > existing.analyzedAt) {
+          existing.analyzedAt = analysis.analyzed_at;
+        }
+
+        urlMap.set(url, existing);
+      } catch (error) {
+        console.error('Error parsing analysis:', error);
+      }
+    });
+
+    return Array.from(urlMap.values()).sort((a, b) => b.analyzedAt - a.analyzedAt);
+  }, [analyses]);
+
+  // Filter URL list based on search query
+  const filteredUrlList = useMemo(() => {
+    if (!urlSearchQuery.trim()) return urlList;
+    
+    const query = urlSearchQuery.toLowerCase().trim();
+    return urlList.filter((item) => {
+      const url = item.url.toLowerCase();
+      return url.includes(query);
+    });
+  }, [urlList, urlSearchQuery]);
+
+  const handleUrlClick = (url: string) => {
+    setSliderUrl(url);
+    setSelectedPage(url);
+    setIsSliderOpen(true);
+  };
+
+  const handleCloseSlider = () => {
+    setIsSliderOpen(false);
+    setSliderUrl(null);
+    setSelectedPage('all');
+  };
+
+  const handleBackToUrlList = () => {
+    setCurrentView('url-list');
+    setSelectedPage('all');
   };
 
   // Handle input change to detect pasted URLs and auto-select matching domains
@@ -220,6 +306,20 @@ const DomainAnalyses: React.FC = () => {
     return fixes;
   }, [analyses]);
 
+  // Get fixes for the slider URL
+  const sliderFixes = useMemo(() => {
+    if (!sliderUrl) return [];
+    return allFixes.filter(({ fix, url }) => {
+      if (url !== sliderUrl) return false;
+      // Apply filters
+      if (filter === 'active' && fix.action === 'deleted') return false;
+      if (filter === 'deleted' && fix.action !== 'deleted') return false;
+      if (selectedImpact !== 'all' && (fix.impact || 'minor') !== selectedImpact) return false;
+      if (selectedCategory !== 'all' && (fix.category || 'other') !== selectedCategory) return false;
+      return true;
+    });
+  }, [allFixes, sliderUrl, filter, selectedImpact, selectedCategory]);
+
   // Get unique pages with counts (filtered by status, impact, category - but NOT page)
   const pages = useMemo(() => {
     const pageMap = new Map<string, number>();
@@ -237,11 +337,14 @@ const DomainAnalyses: React.FC = () => {
   }, [allFixes, filter, selectedImpact, selectedCategory]);
 
   // Get unique impacts with counts (filtered by status, page, category - but NOT impact)
+  // When slider is open, use sliderUrl instead of selectedPage
   const impacts = useMemo(() => {
     const impactMap = new Map<string, number>();
+    const currentPage = isSliderOpen && sliderUrl ? sliderUrl : selectedPage;
+    
     allFixes.forEach(({ fix, url }) => {
       // Apply all filters EXCEPT impact filter
-      if (selectedPage !== 'all' && url !== selectedPage) return;
+      if (currentPage !== 'all' && url !== currentPage) return;
       if (filter === 'active' && fix.action === 'deleted') return;
       if (filter === 'deleted' && fix.action !== 'deleted') return;
       if (selectedCategory !== 'all' && (fix.category || 'other') !== selectedCategory) return;
@@ -256,14 +359,17 @@ const DomainAnalyses: React.FC = () => {
         const order = { serious: 0, moderate: 1, minor: 2 };
         return (order[a.impact as keyof typeof order] || 3) - (order[b.impact as keyof typeof order] || 3);
       });
-  }, [allFixes, selectedPage, filter, selectedCategory]);
+  }, [allFixes, selectedPage, filter, selectedCategory, isSliderOpen, sliderUrl]);
 
   // Get unique categories with counts (filtered by status, page, impact - but NOT category)
+  // When slider is open, use sliderUrl instead of selectedPage
   const categories = useMemo(() => {
     const categoryMap = new Map<string, number>();
+    const currentPage = isSliderOpen && sliderUrl ? sliderUrl : selectedPage;
+    
     allFixes.forEach(({ fix, url }) => {
       // Apply all filters EXCEPT category filter
-      if (selectedPage !== 'all' && url !== selectedPage) return;
+      if (currentPage !== 'all' && url !== currentPage) return;
       if (filter === 'active' && fix.action === 'deleted') return;
       if (filter === 'deleted' && fix.action !== 'deleted') return;
       if (selectedImpact !== 'all' && (fix.impact || 'minor') !== selectedImpact) return;
@@ -275,7 +381,7 @@ const DomainAnalyses: React.FC = () => {
     return Array.from(categoryMap.entries())
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count);
-  }, [allFixes, selectedPage, filter, selectedImpact]);
+  }, [allFixes, selectedPage, filter, selectedImpact, isSliderOpen, sliderUrl]);
 
   // Filter fixes based on selected page, status, impact, and category
   const filteredFixes = useMemo(() => {
@@ -309,24 +415,26 @@ const DomainAnalyses: React.FC = () => {
   }, [allFixes, filter, selectedImpact, selectedCategory]);
 
   const allImpactsCount = useMemo(() => {
+    const currentPage = isSliderOpen && sliderUrl ? sliderUrl : selectedPage;
     return allFixes.filter(({ fix, url }) => {
-      if (selectedPage !== 'all' && url !== selectedPage) return false;
+      if (currentPage !== 'all' && url !== currentPage) return false;
       if (filter === 'active' && fix.action === 'deleted') return false;
       if (filter === 'deleted' && fix.action !== 'deleted') return false;
       if (selectedCategory !== 'all' && (fix.category || 'other') !== selectedCategory) return false;
       return true;
     }).length;
-  }, [allFixes, selectedPage, filter, selectedCategory]);
+  }, [allFixes, filter, selectedPage, selectedCategory, isSliderOpen, sliderUrl]);
 
   const allCategoriesCount = useMemo(() => {
+    const currentPage = isSliderOpen && sliderUrl ? sliderUrl : selectedPage;
     return allFixes.filter(({ fix, url }) => {
-      if (selectedPage !== 'all' && url !== selectedPage) return false;
+      if (currentPage !== 'all' && url !== currentPage) return false;
       if (filter === 'active' && fix.action === 'deleted') return false;
       if (filter === 'deleted' && fix.action !== 'deleted') return false;
       if (selectedImpact !== 'all' && (fix.impact || 'minor') !== selectedImpact) return false;
       return true;
     }).length;
-  }, [allFixes, selectedPage, filter, selectedImpact]);
+  }, [allFixes, filter, selectedPage, selectedImpact, isSliderOpen, sliderUrl]);
 
   // Handle fix action update
   const handleFixAction = async (analysisId: string, fixIndex: number, action: 'update' | 'deleted') => {
@@ -397,26 +505,356 @@ const DomainAnalyses: React.FC = () => {
     }
   };
 
+  // Render URL List View
+  const renderUrlListView = () => (
+    <div className="w-full">
+      <div className="bg-white rounded-xl border-2 p-4 sm:p-6 md:p-7 w-full max-w-full overflow-hidden" style={{ borderColor: '#A2ADF3' }}>
+        {/* Header */}
+        <div className="flex flex-col gap-3 md:gap-4 mb-4 md:mb-7 pb-4 md:pb-6 border-b border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+              <button
+                onClick={() => {
+                  setCurrentView('domain-selection');
+                  setSelectedDomain(null);
+                  setSelectedOption(null);
+                  setAnalyses([]);
+                  setHasSearched(false);
+                }}
+                className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                title="Back to domain selection"
+                aria-label="Back to domain selection"
+              >
+                <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </button>
+              <div className="p-2 md:p-2.5 rounded-lg shadow-md flex-shrink-0" style={{ backgroundColor: '#0052CC' }}>
+                <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
+                  Pages
+                </h1>
+                {selectedDomain && (
+                  <p className="text-xs md:text-sm text-gray-600 mt-1 flex items-center gap-2 min-w-0">
+                    <Favicon domain={selectedDomain} size={14} className="flex-shrink-0" />
+                    <span className="truncate">{selectedDomain}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="text-xs md:text-sm text-gray-600 whitespace-nowrap flex-shrink-0 sm:text-right">
+              {filteredUrlList.length} page{filteredUrlList.length !== 1 ? 's' : ''}
+            </div>
+          </div>
+
+          {/* Search Input */}
+          <div className="mt-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search pages by URL..."
+                value={urlSearchQuery}
+                onChange={(e) => setUrlSearchQuery(e.target.value)}
+                className="block w-full pl-9 md:pl-10 pr-8 md:pr-10 py-2 md:py-2.5 border border-gray-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {urlSearchQuery && (
+                <button
+                  onClick={() => setUrlSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  aria-label="Clear search"
+                >
+                  <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* URL Table */}
+        {loader ? (
+          <div className="flex justify-center py-12">
+            <CircularProgress size={40} />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => selectedDomain && fetchAnalyses(selectedDomain)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        ) : filteredUrlList.length > 0 ? (
+          <>
+            {/* Mobile/Tablet Card View - for sm (≤768px) */}
+            <div className="w-full block md:hidden space-y-3">
+              {filteredUrlList.map((item) => {
+                let fullUrl = item.url;
+                try {
+                  if (!item.url.startsWith('http://') && !item.url.startsWith('https://')) {
+                    fullUrl = `https://${item.url}`;
+                  }
+                } catch {
+                  fullUrl = item.url;
+                }
+                return (
+                  <div
+                    key={item.url}
+                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleUrlClick(item.url)}
+                  >
+                    {/* URL Section */}
+                    <div className="mb-3">
+                      <a
+                        href={fullUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-blue-600 hover:text-blue-800 flex items-start gap-2 group"
+                      >
+                        <span className="text-sm break-all flex-1">{item.url}</span>
+                        <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+
+                    {/* Stats Section */}
+                    <div className="grid grid-cols-3 gap-3 mb-3">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500 mb-1">Auto-Fixes</div>
+                        <div className="text-base font-semibold text-gray-900">{item.fixCount}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500 mb-1">Enabled</div>
+                        <div className="text-base font-semibold text-green-600">{item.activeFixCount}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-500 mb-1">Disabled</div>
+                        <div className="text-base font-semibold text-red-600">{item.deletedFixCount}</div>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUrlClick(item.url);
+                      }}
+                      className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      View Fixes
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View - for md (≥768px) */}
+            <div className="hidden md:block w-full overflow-x-auto">
+              <table className="w-full border-collapse min-w-[600px]">
+                <thead>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700">URL</th>
+                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">Auto-Fixes</th>
+                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">Enabled</th>
+                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">Disabled</th>
+                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUrlList.map((item) => {
+                    let fullUrl = item.url;
+                    try {
+                      if (!item.url.startsWith('http://') && !item.url.startsWith('https://')) {
+                        fullUrl = `https://${item.url}`;
+                      }
+                    } catch {
+                      fullUrl = item.url;
+                    }
+                    return (
+                      <tr
+                        key={item.url}
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => handleUrlClick(item.url)}
+                      >
+                        <td className="py-3 md:py-4 px-3 md:px-4 min-w-[200px] max-w-[400px]">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <a
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-blue-600 hover:text-blue-800 flex items-center gap-2 min-w-0 group"
+                            >
+                              <span className="text-xs md:text-sm break-words break-all">{item.url}</span>
+                              <svg className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          </div>
+                        </td>
+                        <td className="py-3 md:py-4 px-3 md:px-4 whitespace-nowrap">
+                          <span className="text-xs md:text-sm font-medium text-gray-900">{item.fixCount}</span>
+                        </td>
+                        <td className="py-3 md:py-4 px-3 md:px-4 whitespace-nowrap">
+                          <span className="text-xs md:text-sm font-medium text-green-600">{item.activeFixCount}</span>
+                        </td>
+                        <td className="py-3 md:py-4 px-3 md:px-4 whitespace-nowrap">
+                          <span className="text-xs md:text-sm font-medium text-red-600">{item.deletedFixCount}</span>
+                        </td>
+                        <td className="py-3 md:py-4 px-3 md:px-4 whitespace-nowrap">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUrlClick(item.url);
+                            }}
+                            className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-600 text-white text-xs md:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                          >
+                            View Fixes
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        ) : urlList.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-blue-100 rounded-full blur-xl opacity-50"></div>
+              <div className="relative p-6 bg-blue-50 rounded-2xl shadow-lg">
+                <svg className="h-16 w-16 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Pages Found</h3>
+            <p className="text-gray-600 text-center max-w-md">
+              No pages have been analyzed for this domain yet.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-gray-100 rounded-full blur-xl opacity-50"></div>
+              <div className="relative p-6 bg-gray-50 rounded-2xl shadow-lg">
+                <svg className="h-16 w-16 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
+            <p className="text-gray-600 text-center max-w-md">
+              No pages match your search query "{urlSearchQuery}". Try a different search term.
+            </p>
+            <button
+              onClick={() => setUrlSearchQuery('')}
+              className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Render Domain Selection View
+  const renderDomainSelectionView = () => (
+    <div className="w-full flex items-center justify-center min-h-[60vh]">
+      <div className="bg-white rounded-xl border-2 p-8 max-w-2xl w-full" style={{ borderColor: '#A2ADF3' }}>
+        <div className="flex flex-col items-center text-center">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-blue-100 rounded-full blur-xl opacity-50 animate-pulse"></div>
+            <div className="relative p-6 bg-blue-50 rounded-2xl shadow-lg">
+              <svg className="h-16 w-16 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Select a Domain</h2>
+          <p className="text-gray-600 mb-8 max-w-md">
+            Choose a domain to view auto-fixes applied by the widget
+          </p>
+          <div className="w-full max-w-md">
+            <label htmlFor="domain-select-input-main" className="block text-sm font-medium text-gray-700 mb-2">
+              Domain name
+            </label>
+            <Select
+              inputId="domain-select-input-main"
+              options={siteOptions}
+              value={selectedOption}
+              onChange={handleDomainChange}
+              onInputChange={handleInputChange}
+              placeholder="Select a domain or paste a URL"
+              isSearchable
+              isClearable
+              isLoading={sitesLoading}
+              formatOptionLabel={(option: OptionType) => (
+                <div className="flex items-center gap-2 min-w-0">
+                  <Favicon domain={option.value} size={16} className="flex-shrink-0" />
+                  <span className="truncate min-w-0">{option.label}</span>
+                </div>
+              )}
+              classNamePrefix="react-select"
+              className="w-full"
+              styles={{
+                control: (base: any) => ({
+                  ...base,
+                  maxWidth: '100%',
+                  borderColor: '#d1d5db',
+                  '&:hover': {
+                    borderColor: '#9ca3af',
+                  },
+                }),
+                menu: (base: any) => ({
+                  ...base,
+                  maxWidth: '100%',
+                }),
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="domain-analyses-container min-h-screen">
       {/* Two-column layout: Sidebar + Main Content */}
       <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 p-6">
-        {/* Left Sidebar */}
-        <aside className="lg:w-96 w-full lg:flex-shrink-0 flex">
-          <div className="rounded-xl border-2 p-6 sticky top-4 w-full" style={{ backgroundColor: '#e9ecfb', borderColor: '#A2ADF3' }}>
-            {/* Domain Selector */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 bg-blue-50 rounded-lg">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                  </svg>
+        {/* Left Sidebar - Only show in fixes-view */}
+        {currentView === 'fixes-view' && (
+          <aside className="lg:w-96 w-full lg:flex-shrink-0 flex">
+            <div className="rounded-xl border-2 p-6 sticky top-4 w-full" style={{ backgroundColor: '#e9ecfb', borderColor: '#A2ADF3' }}>
+              {/* Domain Selector */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-2 bg-blue-50 rounded-lg">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                    </svg>
+                  </div>
+                  <h2 className="text-sm font-bold text-gray-900">
+                    Select Website
+                  </h2>
                 </div>
-                <h2 className="text-sm font-bold text-gray-900">
-                  Select Website
-                </h2>
-              </div>
-              <div>
+                <div>
                 <label
                   htmlFor="domain-select-input"
                   className="block text-xs font-medium text-gray-700 mb-2"
@@ -686,24 +1124,40 @@ const DomainAnalyses: React.FC = () => {
             )}
           </div>
         </aside>
+        )}
 
         {/* Main Content Area */}
         <main className="flex-1 min-w-0 flex">
-          <div className="bg-white rounded-xl border-2 p-4 sm:p-6 md:p-7 w-full max-w-full overflow-hidden" style={{ borderColor: '#A2ADF3' }}>
-            {/* Header */}
-            <div className="flex flex-col gap-4 mb-7 pb-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-lg shadow-md" style={{ backgroundColor: '#0052CC' }}>
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+          {currentView === 'domain-selection' && renderDomainSelectionView()}
+          {currentView === 'url-list' && renderUrlListView()}
+          {currentView === 'fixes-view' && (
+            <div className="bg-white rounded-xl border-2 p-4 sm:p-6 md:p-7 w-full max-w-full overflow-hidden" style={{ borderColor: '#A2ADF3' }}>
+              {/* Header */}
+              <div className="flex flex-col gap-4 mb-7 pb-6 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleBackToUrlList}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Back to pages"
+                  >
+                    <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                  </button>
+                  <div className="p-2.5 rounded-lg shadow-md" style={{ backgroundColor: '#0052CC' }}>
+                    <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
+                      Auto Fixes
+                    </h1>
+                    {selectedPage !== 'all' && (
+                      <p className="text-sm text-gray-600 mt-1 truncate">{selectedPage}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">
-                    Auto Fixes
-                  </h1>
-                </div>
-              </div>
               
                 {filteredFixes.length > 0 && (
                   <p className="text-sm text-gray-600 flex items-center gap-2 sm:ml-14">
@@ -846,9 +1300,241 @@ const DomainAnalyses: React.FC = () => {
                 </p>
               </div>
             )}
-          </div>
+            </div>
+          )}
         </main>
       </div>
+
+      {/* Fixes Slider - Opens from Right */}
+      {isSliderOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 transition-opacity duration-300"
+            onClick={handleCloseSlider}
+          />
+
+          {/* Slider Panel */}
+          <div
+            className="fixed right-0 top-0 h-full bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out"
+            style={{
+              width: 'min(90vw, 1200px)',
+              height: '100vh',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Slider Header */}
+            <div className="flex items-center justify-between p-6 border-b flex-shrink-0" style={{ borderColor: '#A2ADF3' }}>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="p-2.5 rounded-lg shadow-md" style={{ backgroundColor: '#0052CC' }}>
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900">Auto Fixes</h2>
+                  {sliderUrl && (
+                    <p className="text-sm text-gray-600 mt-1 truncate">{sliderUrl}</p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleCloseSlider}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors ml-4 flex-shrink-0"
+                aria-label="Close slider"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Filter Buttons */}
+            <div className="px-6 py-4 border-b flex-shrink-0 space-y-4" style={{ borderColor: '#A2ADF3' }}>
+              {/* Status Filters */}
+              <div className="flex flex-wrap gap-2.5">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    filter === 'all'
+                      ? 'text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                  }`}
+                  style={filter === 'all' ? { backgroundColor: '#0052CC' } : {}}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setFilter('active')}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    filter === 'active'
+                      ? 'text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                  }`}
+                  style={filter === 'active' ? { backgroundColor: '#16a34a' } : {}}
+                >
+                  Enabled
+                </button>
+                <button
+                  onClick={() => setFilter('deleted')}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    filter === 'deleted'
+                      ? 'text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                  }`}
+                  style={filter === 'deleted' ? { backgroundColor: '#dc2626' } : {}}
+                >
+                  Disabled
+                </button>
+              </div>
+
+              {/* Impact Filters */}
+              {impacts.length > 0 && (
+                <div className="flex flex-wrap gap-2.5 items-center">
+                  <span className="text-xs font-semibold text-gray-700 mr-2">Impact:</span>
+                  <button
+                    onClick={() => setSelectedImpact('all')}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      selectedImpact === 'all'
+                        ? 'text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                    }`}
+                    style={selectedImpact === 'all' ? { backgroundColor: '#0052CC' } : {}}
+                  >
+                    All ({allImpactsCount})
+                  </button>
+                  {impacts.map(({ impact, count }) => (
+                    <button
+                      key={impact}
+                      onClick={() => setSelectedImpact(impact)}
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all capitalize ${
+                        selectedImpact === impact
+                          ? 'text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                      }`}
+                      style={selectedImpact === impact ? { backgroundColor: '#0052CC' } : {}}
+                    >
+                      {impact} ({count})
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Category Filters */}
+              {categories.length > 0 && (
+                <div className="flex flex-wrap gap-2.5 items-center">
+                  <span className="text-xs font-semibold text-gray-700 mr-2">Category:</span>
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      selectedCategory === 'all'
+                        ? 'text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                    }`}
+                    style={selectedCategory === 'all' ? { backgroundColor: '#0052CC' } : {}}
+                  >
+                    All ({allCategoriesCount})
+                  </button>
+                  {categories.map(({ category, count }) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                        selectedCategory === category
+                          ? 'text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                      }`}
+                      style={selectedCategory === category ? { backgroundColor: '#0052CC' } : {}}
+                    >
+                      {category.replace(/_/g, ' ')} ({count})
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Fix Count */}
+              {sliderFixes.length > 0 && (
+                <p className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#0052CC' }}></span>
+                  {sliderFixes.length} auto-fix{sliderFixes.length !== 1 ? 'es' : ''} applied
+                </p>
+              )}
+            </div>
+
+            {/* Slider Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {loader ? (
+                <div className="flex justify-center py-12">
+                  <CircularProgress size={40} />
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <p className="text-red-600 mb-4">{error}</p>
+                  <button
+                    onClick={() => selectedDomain && fetchAnalyses(selectedDomain)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : sliderFixes.length > 0 ? (
+                <div className="w-full overflow-hidden">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 w-full">
+                    {sliderFixes.map(({ fix, url, analysisId, fixIndex }) => {
+                      const fixId = `${analysisId}-${fixIndex}`;
+                      return (
+                        <FixCard
+                          key={fixId}
+                          fix={fix}
+                          url={url}
+                          onRemove={() => handleRemoveClick(analysisId, fixIndex)}
+                          onRestore={() => handleRestoreClick(analysisId, fixIndex)}
+                          isUpdating={updatingFixId === fixId}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-green-100 rounded-full blur-xl opacity-50"></div>
+                    <div className="relative p-6 bg-green-50 rounded-2xl shadow-lg">
+                      <svg
+                        className="h-16 w-16 text-green-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {filter === 'deleted'
+                      ? 'No Disabled Auto-Fixes'
+                      : filter === 'active'
+                      ? 'No Enabled Auto-Fixes'
+                      : 'All Clear!'}
+                  </h3>
+                  <p className="text-gray-600 text-center max-w-md">
+                    {filter === 'deleted'
+                      ? 'No disabled auto-fixes found for the selected filters'
+                      : filter === 'active'
+                      ? 'No enabled auto-fixes found for the selected filters'
+                      : 'No auto-fixes found for this page.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Confirmation Modal */}
       <Modal isOpen={confirmModal.isOpen} ariaLabelledBy="confirm-modal-title">
