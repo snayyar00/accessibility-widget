@@ -66,7 +66,7 @@ const FixCard: React.FC<FixCardProps> = ({ fix, url, onRemove, onRestore, isUpda
 
   return (
     <div
-      className={`fix-card rounded-xl border-2 p-5 md:p-6 transition-all ${
+      className={`fix-card rounded-xl border-2 p-4 sm:p-5 md:p-6 transition-all w-full max-w-full overflow-hidden ${
         isDeleted
           ? 'bg-gray-50 border-gray-300 opacity-60'
           : 'shadow-md hover:shadow-xl'
@@ -164,8 +164,8 @@ const FixCard: React.FC<FixCardProps> = ({ fix, url, onRemove, onRestore, isUpda
               ></span>
               Current Code:
             </p>
-            <div className="bg-white rounded-lg px-4 py-3 border-2 shadow-sm" style={{ borderColor: colors.border + '40' }}>
-              <code className="text-xs text-gray-800 break-all font-mono leading-relaxed">
+            <div className="bg-white rounded-lg px-3 sm:px-4 py-3 border-2 shadow-sm overflow-x-auto" style={{ borderColor: colors.border + '40' }}>
+              <code className="text-xs text-gray-800 break-words sm:break-all font-mono leading-relaxed">
                 {fix.current_value}
               </code>
             </div>
@@ -177,7 +177,7 @@ const FixCard: React.FC<FixCardProps> = ({ fix, url, onRemove, onRestore, isUpda
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
               Suggested Fix:
             </p>
-            <div className="bg-green-50 rounded-lg px-4 py-3 border-2 border-green-200 shadow-sm">
+            <div className="bg-green-50 rounded-lg px-3 sm:px-4 py-3 border-2 border-green-200 shadow-sm overflow-x-auto">
               <code className="text-xs text-gray-800 break-words font-mono leading-relaxed">
                 {fix.suggested_fix}
               </code>
@@ -195,8 +195,8 @@ const FixCard: React.FC<FixCardProps> = ({ fix, url, onRemove, onRestore, isUpda
             </svg>
             Element Selector:
           </p>
-          <div className="bg-gray-900 rounded-lg px-4 py-3 overflow-x-auto border-2 border-gray-700">
-            <code className="text-sm font-mono whitespace-nowrap" style={{ color: '#34d399' }}>
+          <div className="bg-gray-900 rounded-lg px-3 sm:px-4 py-3 overflow-x-auto border-2 border-gray-700">
+            <code className="text-xs sm:text-sm font-mono break-words sm:whitespace-nowrap" style={{ color: '#34d399' }}>
               {fix.selector}
             </code>
           </div>
@@ -205,7 +205,7 @@ const FixCard: React.FC<FixCardProps> = ({ fix, url, onRemove, onRestore, isUpda
 
       {/* URL with enhanced styling */}
       <div className="mb-5 pb-4 border-b-2" style={{ borderColor: colors.border + '30' }}>
-        <div className="flex items-center gap-2 bg-white/50 rounded-lg px-3 py-2.5">
+        <div className="flex items-center gap-2 bg-white/50 rounded-lg px-3 py-2.5 min-w-0">
           <svg
             className="w-4 h-4 flex-shrink-0"
             fill="none"
@@ -215,7 +215,7 @@ const FixCard: React.FC<FixCardProps> = ({ fix, url, onRemove, onRestore, isUpda
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
-          <p className="text-xs text-gray-600 truncate font-medium">{url}</p>
+          <p className="text-xs text-gray-600 truncate font-medium min-w-0 flex-1">{url}</p>
         </div>
       </div>
 

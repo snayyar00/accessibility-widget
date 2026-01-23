@@ -689,7 +689,7 @@ const DomainAnalyses: React.FC = () => {
 
         {/* Main Content Area */}
         <main className="flex-1 min-w-0 flex">
-          <div className="bg-white rounded-xl border-2 p-6 md:p-7 w-full" style={{ borderColor: '#A2ADF3' }}>
+          <div className="bg-white rounded-xl border-2 p-4 sm:p-6 md:p-7 w-full max-w-full overflow-hidden" style={{ borderColor: '#A2ADF3' }}>
             {/* Header */}
             <div className="flex flex-col gap-4 mb-7 pb-6 border-b border-gray-200">
               <div className="flex items-center gap-3">
@@ -793,8 +793,8 @@ const DomainAnalyses: React.FC = () => {
                 </p>
               </div>
             ) : filteredFixes.length > 0 ? (
-              <div className="pr-1">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <div className="w-full overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 w-full">
                   {filteredFixes.map(({ fix, url, analysisId, fixIndex }) => {
                     const fixId = `${analysisId}-${fixIndex}`;
                     return (

@@ -217,6 +217,7 @@
 @media (max-width: 768px) {
   .domain-analyses-container {
     padding: 0;
+    overflow-x: hidden;
   }
   
   /* Stack layout on mobile */
@@ -227,5 +228,30 @@
   /* Full width cards on mobile */
   .domain-analyses-container main .grid {
     grid-template-columns: 1fr;
+  }
+  
+  /* Ensure main content doesn't overflow */
+  .domain-analyses-container main {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+  
+  .domain-analyses-container main > div {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+  
+  /* Fix card overflow on small screens */
+  .domain-analyses-container .fix-card {
+    min-width: 0;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* Ensure code blocks wrap on small screens */
+  .domain-analyses-container .fix-card code {
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 }
