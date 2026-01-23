@@ -168,14 +168,20 @@ const DomainAnalyses: React.FC = () => {
       setSelectedPage('all');
       setSelectedImpact('all');
       setSelectedCategory('all');
-      setCurrentView('url-list'); // Show URL list after domain selection
-      fetchAnalyses(selected.value);
+      // Don't automatically fetch - wait for button click
     } else {
       setSelectedOption(null);
       setSelectedDomain(null);
       setAnalyses([]);
       setHasSearched(false);
       setCurrentView('domain-selection'); // Go back to domain selection
+    }
+  };
+
+  const handleFindAutoFixes = () => {
+    if (selectedDomain) {
+      setCurrentView('url-list'); // Show URL list after domain selection
+      fetchAnalyses(selectedDomain);
     }
   };
 
@@ -505,14 +511,26 @@ const DomainAnalyses: React.FC = () => {
     }
   };
 
+  // Calculate summary statistics for URL list
+  const urlListStats = useMemo(() => {
+    const totalFixes = urlList.reduce((sum, item) => sum + item.fixCount, 0);
+    const totalEnabled = urlList.reduce((sum, item) => sum + item.activeFixCount, 0);
+    const totalDisabled = urlList.reduce((sum, item) => sum + item.deletedFixCount, 0);
+    const avgScore = urlList.length > 0
+      ? urlList.reduce((sum, item) => sum + (item.score || 0), 0) / urlList.filter(item => item.score !== null).length
+      : null;
+    
+    return { totalFixes, totalEnabled, totalDisabled, avgScore };
+  }, [urlList]);
+
   // Render URL List View
   const renderUrlListView = () => (
-    <div className="w-full">
-      <div className="bg-white rounded-xl border-2 p-4 sm:p-6 md:p-7 w-full max-w-full overflow-hidden" style={{ borderColor: '#A2ADF3' }}>
-        {/* Header */}
-        <div className="flex flex-col gap-3 md:gap-4 mb-4 md:mb-7 pb-4 md:pb-6 border-b border-gray-200">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+    <div className="w-full h-full flex flex-col md:overflow-hidden">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 w-full max-w-full border border-gray-100 flex flex-col flex-1 md:overflow-hidden md:min-h-0">
+        {/* Enhanced Header */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
               <button
                 onClick={() => {
                   setCurrentView('domain-selection');
@@ -521,86 +539,148 @@ const DomainAnalyses: React.FC = () => {
                   setAnalyses([]);
                   setHasSearched(false);
                 }}
-                className="p-1.5 md:p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0 group"
                 title="Back to domain selection"
                 aria-label="Back to domain selection"
               >
-                <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-gray-600 group-hover:text-gray-900 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
               </button>
-              <div className="p-2 md:p-2.5 rounded-lg shadow-md flex-shrink-0" style={{ backgroundColor: '#0052CC' }}>
-                <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
-                  Pages
-                </h1>
+      
                 {selectedDomain && (
-                  <p className="text-xs md:text-sm text-gray-600 mt-1 flex items-center gap-2 min-w-0">
-                    <Favicon domain={selectedDomain} size={14} className="flex-shrink-0" />
-                    <span className="truncate">{selectedDomain}</span>
-                  </p>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Favicon domain={selectedDomain} size={18} className="flex-shrink-0" />
+                    <span className="text-sm md:text-base text-gray-600 truncate font-medium">{selectedDomain}</span>
+                  </div>
                 )}
               </div>
             </div>
-            <div className="text-xs md:text-sm text-gray-600 whitespace-nowrap flex-shrink-0 sm:text-right">
-              {filteredUrlList.length} page{filteredUrlList.length !== 1 ? 's' : ''}
-            </div>
           </div>
 
-          {/* Search Input */}
-          <div className="mt-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+          {/* Statistics Cards */}
+          {urlList.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {/* Total Pages Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-600">Total Pages</span>
+                  <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">{urlList.length}</div>
               </div>
-              <input
-                type="text"
-                placeholder="Search pages by URL..."
-                value={urlSearchQuery}
-                onChange={(e) => setUrlSearchQuery(e.target.value)}
-                className="block w-full pl-9 md:pl-10 pr-8 md:pr-10 py-2 md:py-2.5 border border-gray-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              {urlSearchQuery && (
-                <button
-                  onClick={() => setUrlSearchQuery('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  aria-label="Clear search"
-                >
-                  <svg className="h-4 w-4 md:h-5 md:w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
+
+              {/* Total Fixes Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-600">Total Fixes</span>
+                  <div className="p-2 bg-indigo-50 rounded-lg">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">{urlListStats.totalFixes}</div>
+              </div>
+
+              {/* Enabled Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-600">Enabled</span>
+                  <div className="p-2 bg-green-50 rounded-lg">
+                    <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">{urlListStats.totalEnabled}</div>
+              </div>
+
+              {/* Disabled Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-gray-600">Disabled</span>
+                  <div className="p-2 bg-red-50 rounded-lg">
+                    <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-gray-900">{urlListStats.totalDisabled}</div>
+              </div>
             </div>
+          )}
+
+          {/* Enhanced Search Input */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search pages by URL..."
+              value={urlSearchQuery}
+              onChange={(e) => setUrlSearchQuery(e.target.value)}
+              className="block w-full pl-12 pr-12 py-3 md:py-3.5 border-2 border-gray-200 rounded-xl text-sm md:text-base focus:outline-none transition-all bg-gray-50 focus:bg-white"
+              onFocus={(e) => {
+                e.target.style.borderColor = '#0052CC';
+                e.target.style.boxShadow = '0 0 0 3px rgba(0, 82, 204, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#e5e7eb';
+                e.target.style.boxShadow = 'none';
+              }}
+            />
+            {urlSearchQuery && (
+              <button
+                onClick={() => setUrlSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-100 rounded-r-xl transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            {urlSearchQuery && (
+              <div className="absolute top-full left-0 right-0 mt-2 text-xs text-gray-500 px-4">
+                Showing {filteredUrlList.length} of {urlList.length} pages
+              </div>
+            )}
           </div>
         </div>
 
         {/* URL Table */}
-        {loader ? (
-          <div className="flex justify-center py-12">
-            <CircularProgress size={40} />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <p className="text-red-600 mb-4">{error}</p>
-            <button
-              onClick={() => selectedDomain && fetchAnalyses(selectedDomain)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Retry
-            </button>
-          </div>
-        ) : filteredUrlList.length > 0 ? (
-          <>
-            {/* Mobile/Tablet Card View - for sm (≤768px) */}
-            <div className="w-full block md:hidden space-y-3">
-              {filteredUrlList.map((item) => {
+        <div className="flex-1 flex flex-col md:overflow-hidden md:min-h-0">
+          {loader ? (
+            <div className="flex justify-center py-12">
+              <CircularProgress size={40} />
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => selectedDomain && fetchAnalyses(selectedDomain)}
+                className="px-4 py-2 text-white rounded transition-colors"
+                style={{ backgroundColor: '#0052CC' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
+              >
+                Retry
+              </button>
+            </div>
+          ) : filteredUrlList.length > 0 ? (
+            <>
+              {/* Mobile/Tablet Card View - for sm (≤768px) */}
+              <div className="w-full block md:hidden space-y-3 pb-6">
+                {filteredUrlList.map((item) => {
                 let fullUrl = item.url;
                 try {
                   if (!item.url.startsWith('http://') && !item.url.startsWith('https://')) {
@@ -612,38 +692,46 @@ const DomainAnalyses: React.FC = () => {
                 return (
                   <div
                     key={item.url}
-                    className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    className="bg-white border-2 border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = 'rgba(0, 82, 204, 0.3)'}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
                     onClick={() => handleUrlClick(item.url)}
                   >
                     {/* URL Section */}
-                    <div className="mb-3">
+                    <div className="mb-4 pb-4 border-b border-gray-100">
                       <a
                         href={fullUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="text-blue-600 hover:text-blue-800 flex items-start gap-2 group"
+                        className="flex items-start gap-2 group/link transition-colors"
+                        style={{ color: '#0052CC' }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#003d99'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#0052CC'}
                       >
-                        <span className="text-sm break-all flex-1">{item.url}</span>
-                        <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        <span className="text-sm break-all flex-1 font-medium leading-relaxed">{item.url}</span>
+                        <svg className="w-4 h-4 flex-shrink-0 mt-1 opacity-0 group-hover/link:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                       </a>
                     </div>
 
                     {/* Stats Section */}
-                    <div className="grid grid-cols-3 gap-3 mb-3">
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 mb-1">Auto-Fixes</div>
-                        <div className="text-base font-semibold text-gray-900">{item.fixCount}</div>
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="bg-gray-50 rounded-lg p-3 text-center border border-gray-100">
+                        <div className="text-xs text-gray-500 mb-1.5 font-medium">Auto-Fixes</div>
+                        <div className="text-2xl font-bold text-gray-900">{item.fixCount}</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 mb-1">Enabled</div>
-                        <div className="text-base font-semibold text-green-600">{item.activeFixCount}</div>
+                      <div className="bg-green-50 rounded-lg p-3 text-center border border-green-100">
+                        <div className="text-xs text-green-600 mb-1.5 font-medium">Enabled</div>
+                        <div className="text-2xl font-bold text-green-700">{item.activeFixCount}</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 mb-1">Disabled</div>
-                        <div className="text-base font-semibold text-red-600">{item.deletedFixCount}</div>
+                      <div className="bg-red-50 rounded-lg p-3 text-center border border-red-100">
+                        <div className="text-xs text-red-600 mb-1.5 font-medium">Disabled</div>
+                        <div className="text-2xl font-bold text-red-700">{item.deletedFixCount}</div>
                       </div>
                     </div>
 
@@ -653,7 +741,10 @@ const DomainAnalyses: React.FC = () => {
                         e.stopPropagation();
                         handleUrlClick(item.url);
                       }}
-                      className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      className="w-full px-4 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100"
+                      style={{ backgroundColor: '#0052CC' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                     >
                       View Fixes
                     </button>
@@ -662,20 +753,22 @@ const DomainAnalyses: React.FC = () => {
               })}
             </div>
 
-            {/* Desktop Table View - for md (≥768px) */}
-            <div className="hidden md:block w-full overflow-x-auto">
-              <table className="w-full border-collapse min-w-[600px]">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700">URL</th>
-                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">Auto-Fixes</th>
-                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">Enabled</th>
-                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">Disabled</th>
-                    <th className="text-left py-3 px-3 md:px-4 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUrlList.map((item) => {
+              {/* Desktop Table View - for md (≥768px) */}
+              <div className="hidden md:flex w-full flex-1 overflow-hidden min-h-0">
+                <div className="rounded-xl border border-gray-200 overflow-hidden flex-1 flex flex-col min-w-0 min-h-0">
+                  <div className="overflow-y-auto flex-1 min-h-0">
+                    <table className="w-full border-collapse min-w-[600px] bg-white">
+                      <thead>
+                        <tr className="bg-gray-50 border-b-2 border-gray-200">
+                          <th className="text-left py-4 px-4 text-sm font-bold text-gray-700 uppercase tracking-wider">URL</th>
+                          <th className="text-left py-4 px-4 text-sm font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Auto-Fixes</th>
+                          <th className="text-left py-4 px-4 text-sm font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Enabled</th>
+                          <th className="text-left py-4 px-4 text-sm font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Disabled</th>
+                          <th className="text-left py-4 px-4 text-sm font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredUrlList.map((item) => {
                     let fullUrl = item.url;
                     try {
                       if (!item.url.startsWith('http://') && !item.url.startsWith('https://')) {
@@ -687,147 +780,317 @@ const DomainAnalyses: React.FC = () => {
                     return (
                       <tr
                         key={item.url}
-                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="border-b border-gray-100 transition-all duration-200 cursor-pointer group"
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 82, 204, 0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                         onClick={() => handleUrlClick(item.url)}
                       >
-                        <td className="py-3 md:py-4 px-3 md:px-4 min-w-[200px] max-w-[400px]">
+                        <td className="py-4 px-4 min-w-[200px] max-w-[400px]">
                           <div className="flex items-center gap-2 min-w-0">
                             <a
                               href={fullUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="text-blue-600 hover:text-blue-800 flex items-center gap-2 min-w-0 group"
+                              className="flex items-center gap-2 min-w-0 group/link transition-colors"
+                              style={{ color: '#0052CC' }}
+                              onMouseEnter={(e) => e.currentTarget.style.color = '#003d99'}
+                              onMouseLeave={(e) => e.currentTarget.style.color = '#0052CC'}
                             >
-                              <span className="text-xs md:text-sm break-words break-all">{item.url}</span>
-                              <svg className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <span className="text-sm break-words break-all font-medium">{item.url}</span>
+                              <svg className="w-4 h-4 flex-shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                               </svg>
                             </a>
                           </div>
                         </td>
-                        <td className="py-3 md:py-4 px-3 md:px-4 whitespace-nowrap">
-                          <span className="text-xs md:text-sm font-medium text-gray-900">{item.fixCount}</span>
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <span className="text-base font-semibold text-gray-900">{item.fixCount}</span>
                         </td>
-                        <td className="py-3 md:py-4 px-3 md:px-4 whitespace-nowrap">
-                          <span className="text-xs md:text-sm font-medium text-green-600">{item.activeFixCount}</span>
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <span className="text-base font-semibold text-green-600">{item.activeFixCount}</span>
                         </td>
-                        <td className="py-3 md:py-4 px-3 md:px-4 whitespace-nowrap">
-                          <span className="text-xs md:text-sm font-medium text-red-600">{item.deletedFixCount}</span>
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <span className="text-base font-semibold text-red-600">{item.deletedFixCount}</span>
                         </td>
-                        <td className="py-3 md:py-4 px-3 md:px-4 whitespace-nowrap">
+                        <td className="py-4 px-4 whitespace-nowrap">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleUrlClick(item.url);
                             }}
-                            className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-600 text-white text-xs md:text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                            className="px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105"
+                            style={{ backgroundColor: '#0052CC' }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                           >
                             View Fixes
                           </button>
                         </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
-        ) : urlList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16">
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : urlList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16">
             <div className="relative mb-6">
-              <div className="absolute inset-0 bg-blue-100 rounded-full blur-xl opacity-50"></div>
-              <div className="relative p-6 bg-blue-50 rounded-2xl shadow-lg">
-                <svg className="h-16 w-16 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="absolute inset-0 rounded-full blur-xl opacity-50" style={{ backgroundColor: 'rgba(0, 82, 204, 0.2)' }}></div>
+              <div className="relative p-6 rounded-2xl shadow-lg" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
+                <svg className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Pages Found</h3>
-            <p className="text-gray-600 text-center max-w-md">
-              No pages have been analyzed for this domain yet.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 bg-gray-100 rounded-full blur-xl opacity-50"></div>
-              <div className="relative p-6 bg-gray-50 rounded-2xl shadow-lg">
-                <svg className="h-16 w-16 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Pages Found</h3>
+              <p className="text-gray-600 text-center max-w-md">
+                No pages have been analyzed for this domain yet.
+              </p>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
-            <p className="text-gray-600 text-center max-w-md">
-              No pages match your search query "{urlSearchQuery}". Try a different search term.
-            </p>
-            <button
-              onClick={() => setUrlSearchQuery('')}
-              className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              Clear search
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-gray-100 rounded-full blur-xl opacity-50"></div>
+                <div className="relative p-6 bg-gray-50 rounded-2xl shadow-lg">
+                  <svg className="h-16 w-16 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Results Found</h3>
+              <p className="text-gray-600 text-center max-w-md">
+                No pages match your search query "{urlSearchQuery}". Try a different search term.
+              </p>
+              <button
+                onClick={() => setUrlSearchQuery('')}
+                className="mt-4 px-4 py-2 text-sm font-medium transition-colors"
+                style={{ color: '#0052CC' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#003d99'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#0052CC'}
+              >
+                Clear search
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 
   // Render Domain Selection View
   const renderDomainSelectionView = () => (
-    <div className="w-full flex items-center justify-center min-h-[60vh]">
-      <div className="bg-white rounded-xl border-2 p-8 max-w-2xl w-full" style={{ borderColor: '#A2ADF3' }}>
-        <div className="flex flex-col items-center text-center">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-blue-100 rounded-full blur-xl opacity-50 animate-pulse"></div>
-            <div className="relative p-6 bg-blue-50 rounded-2xl shadow-lg">
-              <svg className="h-16 w-16 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-              </svg>
+    <div className="w-full px-2 sm:px-4 py-4 sm:py-8">
+      <div className="w-full max-w-7xl mx-auto">
+        {/* Page Header - Outside the card */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Auto Fixes
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600">
+            View and manage accessibility auto-fixes applied by the widget across your websites
+          </p>
+        </div>
+
+        {/* Main Card Container */}
+        <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 w-full">
+          {/* Card Header Section */}
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">
+              Select a Domain
+            </h2>
+            <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+              Choose a domain to view and manage auto-fixes applied by the accessibility widget.
+            </p>
+          </div>
+
+          {/* Input Section */}
+          <div className="flex flex-col md:flex-row gap-3 sm:gap-4 mb-6">
+            <div className="flex-1">
+              <label htmlFor="domain-select-input-main" className="sr-only">
+                Select a Domain
+              </label>
+              <Select
+                inputId="domain-select-input-main"
+                aria-label="Select a Domain"
+                options={siteOptions}
+                value={selectedOption}
+                onChange={handleDomainChange}
+                onInputChange={handleInputChange}
+                placeholder="Enter your Domain URL (e.g. example.com)"
+                isSearchable
+                isClearable
+                isLoading={sitesLoading}
+                formatOptionLabel={(option: OptionType) => (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Favicon domain={option.value} size={16} className="flex-shrink-0" />
+                    <span className="truncate min-w-0">{option.label}</span>
+                  </div>
+                )}
+                classNamePrefix="react-select"
+                className="w-full min-w-0"
+                styles={{
+                  control: (provided: any, state: any) => ({
+                    ...provided,
+                    borderRadius: '8px',
+                    border: state.isFocused
+                      ? '2px solid #0052CC'
+                      : '1px solid #e5e7eb',
+                    minHeight: '44px',
+                    boxShadow: state.isFocused
+                      ? '0 0 0 3px rgba(0, 82, 204, 0.1)'
+                      : 'none',
+                    fontSize: '14px',
+                    '@media (min-width: 640px)': {
+                      fontSize: '16px',
+                      minHeight: '48px',
+                    },
+                    '&:hover': {
+                      border: state.isFocused
+                        ? '2px solid #0052CC'
+                        : '1px solid #d1d5db',
+                    },
+                  }),
+                  placeholder: (provided: any) => ({
+                    ...provided,
+                    color: '#4b5563',
+                    fontSize: '14px',
+                    '@media (min-width: 640px)': {
+                      fontSize: '16px',
+                    },
+                  }),
+                  indicatorSeparator: () => ({
+                    display: 'none',
+                  }),
+                  dropdownIndicator: (provided: any) => ({
+                    ...provided,
+                    color: '#767676',
+                    '&:hover': {
+                      color: '#767676',
+                    },
+                  }),
+                  clearIndicator: (provided: any) => ({
+                    ...provided,
+                    color: '#767676',
+                    '&:hover': {
+                      color: '#767676',
+                    },
+                  }),
+                }}
+              />
+            </div>
+
+            <button
+              type="button"
+              className="text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{
+                backgroundColor: loader || !selectedDomain ? '#9ca3af' : '#0052CC',
+                '--tw-ring-color': '#0052CC',
+              } as React.CSSProperties & { '--tw-ring-color': string }}
+              onClick={handleFindAutoFixes}
+              disabled={loader || !selectedDomain}
+              aria-label={loader ? "Finding auto fixes, please wait" : "Find auto fixes"}
+            >
+              {loader ? (
+                <CircularProgress size={18} sx={{ color: 'white' }} aria-hidden="true" />
+              ) : (
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              )}
+              <span className="hidden sm:inline">Find Auto Fixes</span>
+              <span className="sm:hidden">Find</span>
+            </button>
+          </div>
+          
+          {/* Screen reader announcement for loading state */}
+          <div 
+            className="sr-only" 
+            aria-live="polite" 
+            aria-atomic="true"
+          >
+            {loader && 'Finding auto fixes, please wait'}
+          </div>
+        </div>
+
+        {/* Information Section Below Domain Selector */}
+        <div className="mt-8 sm:mt-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            {/* Feature Card 1 */}
+            <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">View All Fixes</h3>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                See all accessibility fixes automatically applied by the widget across your website pages
+              </p>
+            </div>
+
+            {/* Feature Card 2 */}
+            <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 bg-green-50 rounded-lg">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Manage Fixes</h3>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Enable or disable specific auto-fixes based on your website's needs and preferences
+              </p>
+            </div>
+
+            {/* Feature Card 3 */}
+            <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 bg-purple-50 rounded-lg">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Track Progress</h3>
+              </div>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Monitor accessibility improvements and track fixes across different pages and categories
+              </p>
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Select a Domain</h2>
-          <p className="text-gray-600 mb-8 max-w-md">
-            Choose a domain to view auto-fixes applied by the widget
-          </p>
-          <div className="w-full max-w-md">
-            <label htmlFor="domain-select-input-main" className="block text-sm font-medium text-gray-700 mb-2">
-              Domain name
-            </label>
-            <Select
-              inputId="domain-select-input-main"
-              options={siteOptions}
-              value={selectedOption}
-              onChange={handleDomainChange}
-              onInputChange={handleInputChange}
-              placeholder="Select a domain or paste a URL"
-              isSearchable
-              isClearable
-              isLoading={sitesLoading}
-              formatOptionLabel={(option: OptionType) => (
-                <div className="flex items-center gap-2 min-w-0">
-                  <Favicon domain={option.value} size={16} className="flex-shrink-0" />
-                  <span className="truncate min-w-0">{option.label}</span>
-                </div>
-              )}
-              classNamePrefix="react-select"
-              className="w-full"
-              styles={{
-                control: (base: any) => ({
-                  ...base,
-                  maxWidth: '100%',
-                  borderColor: '#d1d5db',
-                  '&:hover': {
-                    borderColor: '#9ca3af',
-                  },
-                }),
-                menu: (base: any) => ({
-                  ...base,
-                  maxWidth: '100%',
-                }),
-              }}
-            />
+
+          {/* Additional Info Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
+              <h4 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                How it works
+              </h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                The accessibility widget automatically scans your website and applies fixes for common accessibility issues. 
+                You can review, enable, or disable these fixes from this dashboard.
+              </p>
+            </div>
+            <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
+              <h4 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Benefits
+              </h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Improve your website's accessibility compliance, enhance user experience, and ensure your site is 
+                accessible to all users, including those using assistive technologies.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -835,9 +1098,9 @@ const DomainAnalyses: React.FC = () => {
   );
 
   return (
-    <div className="domain-analyses-container min-h-screen">
+    <div className="domain-analyses-container min-h-screen md:h-screen md:overflow-hidden">
       {/* Two-column layout: Sidebar + Main Content */}
-      <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 p-6">
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 p-6 h-full md:overflow-hidden">
         {/* Left Sidebar - Only show in fixes-view */}
         {currentView === 'fixes-view' && (
           <aside className="lg:w-96 w-full lg:flex-shrink-0 flex">
@@ -845,8 +1108,8 @@ const DomainAnalyses: React.FC = () => {
               {/* Domain Selector */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                     </svg>
                   </div>
@@ -1113,7 +1376,7 @@ const DomainAnalyses: React.FC = () => {
                     setSelectedImpact('all');
                     setSelectedCategory('all');
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-lg hover:from-red-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg transform hover:scale-[1.02]"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition-all shadow-md hover:shadow-lg transform hover:scale-[1.02]"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1127,7 +1390,7 @@ const DomainAnalyses: React.FC = () => {
         )}
 
         {/* Main Content Area */}
-        <main className="flex-1 min-w-0 flex">
+        <main className="flex-1 min-w-0 flex md:overflow-hidden">
           {currentView === 'domain-selection' && renderDomainSelectionView()}
           {currentView === 'url-list' && renderUrlListView()}
           {currentView === 'fixes-view' && (
@@ -1216,7 +1479,10 @@ const DomainAnalyses: React.FC = () => {
                 <p className="text-red-600 mb-4">{error}</p>
                 <button
                   onClick={() => selectedDomain && fetchAnalyses(selectedDomain)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 text-white rounded transition-colors"
+                  style={{ backgroundColor: '#0052CC' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                 >
                   Retry
                 </button>
@@ -1224,10 +1490,11 @@ const DomainAnalyses: React.FC = () => {
             ) : !hasSearched ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <div className="relative mb-6">
-                  <div className="absolute inset-0 bg-blue-100 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                  <div className="relative p-6 bg-blue-50 rounded-2xl shadow-lg">
+                  <div className="absolute inset-0 rounded-full blur-xl opacity-50 animate-pulse" style={{ backgroundColor: 'rgba(0, 82, 204, 0.2)' }}></div>
+                  <div className="relative p-6 rounded-2xl shadow-lg" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
                     <svg
-                      className="h-16 w-16 text-blue-600"
+                      className="h-16 w-16"
+                      style={{ color: '#0052CC' }}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -1472,7 +1739,10 @@ const DomainAnalyses: React.FC = () => {
                   <p className="text-red-600 mb-4">{error}</p>
                   <button
                     onClick={() => selectedDomain && fetchAnalyses(selectedDomain)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-4 py-2 text-white rounded transition-colors"
+                    style={{ backgroundColor: '#0052CC' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                   >
                     Retry
                   </button>
