@@ -152,7 +152,12 @@ CRITICAL RULES - READ CAREFULLY:
   - Body prepend (skip link): { "prepend": "<a href=\\"#main-content\\" class=\\"skip-link\\">Skip to main content</a>" }.
   - For alt fixes: use { "alt": "specific description" } with the exact suggested alt text. For decorative images use { "alt": "" }.
   - For aria-expanded / aria-haspopup: use { "aria-expanded": "true" } or { "aria-haspopup": "menu" } etc. as appropriate.
-- impact: "minor" | "moderate" | "serious" | "critical"
+- impact: REQUIRED. Choose the appropriate severity level based on the issue:
+  * "critical": Blocks access completely (e.g., color contrast violations, keyboard traps, missing critical alt text for functional images)
+  * "serious": Significant barriers (e.g., missing labels, missing aria-labels, form errors, heading structure issues, missing skip links)
+  * "moderate": Noticeable issues (e.g., redundant ARIA roles, missing aria-haspopup/controls, non-descriptive alt text, duplicate IDs)
+  * "minor": Low impact, cosmetic issues (e.g., redundant screen reader text, redundant ARIA attributes on semantic elements)
+  IMPORTANT: Most issues should be "moderate" or "minor". Only use "serious" or "critical" for significant accessibility barriers.
 - current_value: the current attribute/value when relevant; use null if not applicable.
 - confidence: number 0–1 (e.g. 0.95).
 - wcag and wcag_criteria: same value (e.g. "4.1.2").
@@ -291,6 +296,65 @@ function inferCategory(issueType: string | undefined): FixCategory {
   return 'aria'
 }
 
+/**
+ * Infer impact level based on issue_type, description, and WCAG criteria.
+ * Returns one of: 'minor' | 'moderate' | 'serious' | 'critical'
+ */
+function inferImpact(f: AutoFixItem): 'minor' | 'moderate' | 'serious' | 'critical' {
+  const issueType = (f.issue_type ?? '').toLowerCase()
+  const description = (f.description ?? '').toLowerCase()
+  const wcag = (f.wcag_criteria ?? f.wcag ?? '').toLowerCase()
+  const suggestedFix = (f.suggested_fix ?? '').toLowerCase()
+
+  // Critical issues - blocks access or major violations
+  if (
+    /color.?contrast|minimum.?contrast|1\.4\.3|1\.4\.6/.test(wcag) ||
+    /contrast.*ratio|insufficient.*contrast/.test(description) ||
+    /aria.*hidden.*focusable|focusable.*hidden/.test(description) ||
+    /keyboard.*trap|trapped.*keyboard/.test(description) ||
+    /no.*keyboard.*access|cannot.*keyboard/.test(description)
+  ) {
+    return 'critical'
+  }
+
+  // Serious issues - significant barriers
+  if (
+    /missing.*alt|no.*alt|image.*alt|1\.1\.1/.test(issueType) && !/decorative/.test(description) ||
+    /missing.*label|no.*label|unlabeled|3\.3\.2/.test(issueType) ||
+    /missing.*aria.*label|no.*aria.*label/.test(issueType) ||
+    /form.*label|input.*label/.test(issueType) ||
+    /error.*identification|error.*message|3\.3\.1/.test(description) ||
+    /bypass.*blocks|skip.*link|2\.4\.1/.test(issueType) ||
+    /heading.*structure|heading.*order|1\.3\.1/.test(issueType) ||
+    /focus.*visible|2\.4\.7/.test(issueType)
+  ) {
+    return 'serious'
+  }
+
+  // Moderate issues - noticeable but manageable
+  if (
+    /redundant.*aria|redundant.*role/.test(issueType) ||
+    /missing.*aria.*haspopup|missing.*aria.*controls|missing.*aria.*expanded/.test(issueType) ||
+    /identify.*input.*purpose|autocomplete|1\.3\.5/.test(issueType) ||
+    /non.*descriptive.*alt|alt.*not.*descriptive/.test(issueType) ||
+    /decorative.*image|decorative.*icon/.test(issueType) ||
+    /duplicate.*id/.test(issueType)
+  ) {
+    return 'moderate'
+  }
+
+  // Minor issues - cosmetic or low impact
+  if (
+    /redundant.*text|redundant.*sr/.test(issueType) ||
+    /aria.*redundant/.test(description)
+  ) {
+    return 'minor'
+  }
+
+  // Default to moderate for unknown issues
+  return 'moderate'
+}
+
 function isEmptyAttributes(v: unknown): boolean {
   if (v == null) return true
   if (typeof v !== 'object' || Array.isArray(v)) return true
@@ -394,6 +458,27 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
     const inferred = inferAttributes(f)
     attrs = Object.keys(inferred).length > 0 ? inferred : attrs
   }
+  
+  // Normalize impact - if GPT returns "serious" for everything, infer based on issue type
+  let impact = f.impact?.toLowerCase()?.trim()
+  const validImpacts = ['minor', 'moderate', 'serious', 'critical']
+  if (!impact || !validImpacts.includes(impact)) {
+    // If impact is missing or invalid, infer it
+    impact = inferImpact(f)
+  } else {
+    // If GPT says "serious" but the issue type suggests it should be lower, re-evaluate
+    const inferredImpact = inferImpact(f)
+    // Only override if GPT's impact seems too high (e.g., "serious" for redundant ARIA)
+    if (impact === 'serious' && (inferredImpact === 'minor' || inferredImpact === 'moderate')) {
+      console.log(`[SuggestedFixes] Correcting impact from "serious" to "${inferredImpact}" for issue_type: ${f.issue_type}`)
+      impact = inferredImpact
+    } else if (impact === 'critical' && inferredImpact !== 'critical') {
+      // Only keep "critical" if it's actually critical
+      console.log(`[SuggestedFixes] Correcting impact from "critical" to "${inferredImpact}" for issue_type: ${f.issue_type}`)
+      impact = inferredImpact
+    }
+  }
+  
   const out: Record<string, unknown> = {
     ...f,
     category,
@@ -401,6 +486,7 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
     wcag_criteria,
     wcag,
     attributes: attrs,
+    impact,
     current_value: f.current_value ?? null,
     confidence: typeof f.confidence === 'number' ? f.confidence : 0.9,
   }
