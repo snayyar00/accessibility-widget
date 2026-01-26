@@ -355,18 +355,18 @@ const DomainAnalyses: React.FC = () => {
         }),
       });
       const fixesData = await fixesRes.json();
-      if (!fixesRes.ok) throw new Error(fixesData?.message ?? fixesData?.error ?? 'Failed to fetch suggestions');
+      if (!fixesRes.ok) {
+        throw new Error(fixesData?.message ?? fixesData?.error ?? 'Failed to fetch suggestions');
+      }
+      // Backend now returns 200 with empty array if no fixes found (not an error)
       const fixes = Array.isArray(fixesData.suggestedFixes) ? fixesData.suggestedFixes : [];
       setModalSuggestedFixes(fixes);
-      
-      // If no fixes returned, show message (don't close immediately)
-      if (fixes.length === 0) {
-        setCurrentFixIndex(0);
-      } else {
-        setCurrentFixIndex(0);
-      }
+      setModalSuggestedFixesError(null);
+      setCurrentFixIndex(0);
     } catch (e) {
-      setModalSuggestedFixesError(e instanceof Error ? e.message : 'Failed to fetch suggested fixes');
+      // Only show error for actual failures, not for "no fixes found"
+      const errorMsg = e instanceof Error ? e.message : 'Failed to fetch suggested fixes';
+      setModalSuggestedFixesError(errorMsg);
     } finally {
       setModalSuggestedFixesLoading(false);
     }

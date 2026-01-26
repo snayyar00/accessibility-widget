@@ -32,7 +32,7 @@ const SUGGESTED_FIXES_FUNCTION_SCHEMA = {
   type: 'function' as const,
   function: {
     name: 'suggest_accessibility_fixes',
-    description: 'Return additional accessibility fixes. Each fix must match the exact format: selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category. Do not repeat existing fixes.',
+    description: 'Return additional accessibility fixes ONLY for selectors NOT already in the existing fixes list. Each fix must match the exact format: selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category. CRITICAL: Check the existing selectors list - do not suggest fixes for selectors that already exist.',
     parameters: {
       type: 'object',
       properties: {
@@ -92,6 +92,23 @@ export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<
   const existingJson = JSON.stringify(existingFixes, null, 2)
   const htmlSnippet = html.length > 80_000 ? html.slice(0, 80_000) + '\n\n...[truncated]' : html
 
+  // Extract and format existing selectors for easy reference
+  const existingSelectorsList = existingFixes
+    .map((f) => f.selector)
+    .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+    .map((s) => `  - "${s.trim()}"`)
+    .join('\n')
+
+  const existingSelectorsSummary = existingSelectorsList.length > 0
+    ? `\n\nEXISTING SELECTORS (DO NOT SUGGEST FIXES FOR THESE):\n${existingSelectorsList}\n\nTotal: ${existingFixes.length} existing fix(es).`
+    : '\n\nNo existing fixes. You can suggest fixes for any element.'
+
+  // Log existing selectors for debugging
+  if (existingFixes.length > 0) {
+    const selectorCount = existingFixes.filter((f) => f.selector && typeof f.selector === 'string').length
+    console.log(`[SuggestedFixes] Sending ${selectorCount} existing selectors to GPT to prevent duplicates`)
+  }
+
   const exactFormatExample = `{
   "selector": "nav.transition-all.bg-transparent.duration-300.w-full",
   "issue_type": "redundant_aria_role",
@@ -110,9 +127,10 @@ export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<
   const systemPrompt = `You are an accessibility expert. You will receive:
 1. A page URL
 2. The raw HTML of that page
-3. The existing auto-fixes JSON for that page (array of fix objects)
+3. A list of EXISTING SELECTORS that already have fixes (you must NOT suggest fixes for these)
+4. The full existing auto-fixes JSON for reference
 
-Your task: Find ADDITIONAL accessibility issues and suggest fixes. Return them in the EXACT same JSON format as below.
+Your task: Find ADDITIONAL accessibility issues and suggest fixes ONLY for elements NOT in the existing selectors list. Return them in the EXACT same JSON format as below.
 
 REQUIRED FORMAT — each fix object MUST have exactly these fields in this order:
 selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category
@@ -120,9 +138,13 @@ selector, issue_type, wcag_criteria, action, attributes, impact, description, cu
 Examples (follow this structure exactly):
 ${exactFormatExample}
 
-Rules:
+CRITICAL RULES - READ CAREFULLY:
 - Return at most 20 suggested fixes to avoid truncation.
-- Do NOT repeat any fix already present in the existing JSON. Match by selector+issue_type or by equivalent meaning.
+- BEFORE suggesting ANY fix, check if its selector is in the EXISTING SELECTORS list provided.
+- If a selector already exists in the list, DO NOT suggest a fix for it - it's already been fixed.
+- ONLY suggest fixes for selectors that are NOT in the existing selectors list.
+- Match selectors EXACTLY - if "a[href=\"/#contact\"]" exists, do NOT suggest "a[href='/#contact']" or any variation.
+- The selector field is the PRIMARY identifier - if it matches an existing one, skip that element entirely.
 - action: "update" (attribute change/removal) or "add" (new element, e.g. skip link).
 - attributes: MUST NOT be empty {}. Always include the concrete attribute change:
   - Remove attribute: { "role": null }, { "aria-hidden": null }, etc.
@@ -137,8 +159,15 @@ Rules:
 - category: REQUIRED. Exactly one of: "animations" | "buttons" | "aria" | "duplicate_ids" | "focus" | "headings" | "tables" | "forms" | "links" | "icons" | "images" | "keyboard" | "media".`
 
   const userPrompt = `URL: ${url}
+${existingSelectorsSummary}
 
-Existing fixes (do not duplicate these):
+STEP 1: Review the EXISTING SELECTORS list above. These elements already have fixes - DO NOT suggest fixes for them.
+
+STEP 2: Analyze the HTML below and find accessibility issues ONLY for elements NOT in the existing selectors list.
+
+STEP 3: For each new issue found, verify its selector is NOT in the existing selectors list before including it.
+
+Full existing fixes JSON (for reference only):
 ${existingJson}
 
 Page HTML:
@@ -146,7 +175,9 @@ Page HTML:
 ${htmlSnippet}
 \`\`\`
 
-Return ONLY new suggested fixes (at most 10). Each fix MUST use the exact same JSON structure as the examples. attributes must never be empty {}—always include the concrete attribute change (e.g. {"alt":"..."}, {"role":null}).`
+Return ONLY new suggested fixes (at most 10) for selectors NOT in the existing list. Each fix MUST use the exact same JSON structure as the examples. attributes must never be empty {}—always include the concrete attribute change (e.g. {"alt":"..."}, {"role":null}).
+
+REMINDER: Cross-reference every suggested selector against the EXISTING SELECTORS list. If it matches, exclude it.`
 
   // Model configuration - can be moved to env var if needed
   const model = 'google/gemini-2.5-flash'
@@ -155,17 +186,50 @@ Return ONLY new suggested fixes (at most 10). Each fix MUST use the exact same J
   if (fixes.length === 0) {
     fixes = await tryWithoutTools(model, systemPrompt, userPrompt)
   }
+  // Empty array is valid - it means no new fixes were found
   if (fixes.length === 0) {
-    throw new Error('No structured response from GPT for suggested fixes')
+    console.log('[SuggestedFixes] GPT returned empty array - no new fixes found')
+    return []
   }
   const normalized = fixes.map(normalizeFix)
+  
+  // Filter out fixes that duplicate existing fixes by selector
+  // Normalize selectors for comparison (trim, lowercase, remove extra spaces)
+  const normalizeSelector = (sel: string | undefined): string => {
+    if (!sel || typeof sel !== 'string') return ''
+    return sel.trim().toLowerCase().replace(/\s+/g, ' ')
+  }
+  
+  const existingSelectors = new Set(
+    existingFixes
+      .map((f) => normalizeSelector(f.selector))
+      .filter((s) => s.length > 0)
+  )
+  
+  const withoutDuplicates = normalized.filter((f) => {
+    const normalizedSel = normalizeSelector(f.selector)
+    if (normalizedSel.length === 0) {
+      // If no selector, we can't check for duplicates, so include it
+      return true
+    }
+    const isDuplicate = existingSelectors.has(normalizedSel)
+    if (isDuplicate) {
+      console.log(`[SuggestedFixes] Filtered out duplicate fix with selector: "${f.selector}"`)
+    }
+    return !isDuplicate
+  })
+  
+  if (withoutDuplicates.length < normalized.length) {
+    console.warn(`[SuggestedFixes] Filtered out ${normalized.length - withoutDuplicates.length} duplicate fixes (by selector)`)
+  }
+  
   // Filter out fixes that still have empty attributes after inference
-  const withAttributes = normalized.filter((f) => {
+  const withAttributes = withoutDuplicates.filter((f) => {
     const attrs = f.attributes
     return attrs && typeof attrs === 'object' && !Array.isArray(attrs) && Object.keys(attrs).length > 0
   })
-  if (withAttributes.length < normalized.length) {
-    console.warn(`[SuggestedFixes] Filtered out ${normalized.length - withAttributes.length} fixes with empty attributes`)
+  if (withAttributes.length < withoutDuplicates.length) {
+    console.warn(`[SuggestedFixes] Filtered out ${withoutDuplicates.length - withAttributes.length} fixes with empty attributes`)
   }
   return withAttributes
 }
@@ -462,7 +526,10 @@ Use this exact shape: {"suggested_fixes": [ ... ]}. Every item MUST have exactly
     return []
   }
   const fixes = parseFixesFromContent(content)
-  if (fixes.length === 0) {
+  // Empty array is valid - it means GPT found no new fixes
+  if (fixes.length === 0 && content.includes('"suggested_fixes"')) {
+    console.log('[SuggestedFixes] GPT returned empty suggested_fixes array - no new fixes found')
+  } else if (fixes.length === 0) {
     console.warn('[SuggestedFixes] JSON-only request: unparseable content', { contentPreview: content.slice(0, 400) })
   }
   return fixes
