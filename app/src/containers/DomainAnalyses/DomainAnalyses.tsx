@@ -250,8 +250,9 @@ const DomainAnalyses: React.FC = () => {
       if (!res.ok) throw new Error(data?.message ?? data?.error ?? 'Failed to fetch suggestions');
       setSuggestedFixes(Array.isArray(data.suggestedFixes) ? data.suggestedFixes : []);
     } catch (e) {
-      setSuggestedFixesError(e instanceof Error ? e.message : 'Failed to fetch suggested fixes');
+      // On any error, show "no fixes found" instead of technical error message
       setSuggestedFixes([]);
+      setSuggestedFixesError(null);
     } finally {
       setSuggestedFixesLoading(false);
     }
@@ -364,9 +365,11 @@ const DomainAnalyses: React.FC = () => {
       setModalSuggestedFixesError(null);
       setCurrentFixIndex(0);
     } catch (e) {
-      // Only show error for actual failures, not for "no fixes found"
-      const errorMsg = e instanceof Error ? e.message : 'Failed to fetch suggested fixes';
-      setModalSuggestedFixesError(errorMsg);
+      // On any error, show "no fixes found" instead of technical error message
+      // Set empty array and clear error state so UI shows friendly "no fixes found" message
+      setModalSuggestedFixes([]);
+      setModalSuggestedFixesError(null);
+      setCurrentFixIndex(0);
     } finally {
       setModalSuggestedFixesLoading(false);
     }
@@ -2236,12 +2239,9 @@ const DomainAnalyses: React.FC = () => {
                                     {suggestedFixesLoading ? 'Loading…' : 'Get suggestions'}
                                   </button>
                                 </div>
-                                {suggestedFixesError && (
-                                  <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{suggestedFixesError}</div>
-                                )}
                                 {suggestedFixes.length === 0 && !suggestedFixesLoading && (
                                   <p className="text-gray-500 text-sm">
-                                    {suggestedFixesError ? 'Try again.' : 'Click “Get suggestions” to fetch AI-generated fixes.'}
+                                    Click "Get suggestions" to fetch AI-generated fixes.
                                   </p>
                                 )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2623,19 +2623,6 @@ const DomainAnalyses: React.FC = () => {
                   />
                 </motion.div>
               </div>
-            </div>
-          ) : modalSuggestedFixesError ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-700 text-center">
-                <p className="font-semibold mb-2">Error loading suggestions</p>
-                <p className="text-sm">{modalSuggestedFixesError}</p>
-              </div>
-              <button
-                onClick={handleCloseSuggestedFixesModal}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Close
-              </button>
             </div>
           ) : modalSuggestedFixes.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-6">

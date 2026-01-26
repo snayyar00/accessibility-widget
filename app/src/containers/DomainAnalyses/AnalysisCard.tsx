@@ -161,28 +161,85 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ analysis, onUpdate }) => {
   }, [filter, allFixes, activeFixes, deletedFixes]);
 
   // Group fixes by category with original indices
+  // Create a stable mapping from filtered fixes to original indices
+  // This prevents wrong fix targeting when duplicates exist
   const fixesByCategory = useMemo(() => {
+    // Build a map of filtered fix indices to their original indices in allFixes
+    const filteredToOriginalMap = new Map<number, number>();
+    const usedOriginalIndices = new Set<number>();
+    
+    // First pass: try reference equality (works if filteredFixes shares references with allFixes)
+    filteredFixes.forEach((fix, filteredIdx) => {
+      const originalIdx = allFixes.findIndex((f) => f === fix);
+      if (originalIdx >= 0 && !usedOriginalIndices.has(originalIdx)) {
+        filteredToOriginalMap.set(filteredIdx, originalIdx);
+        usedOriginalIndices.add(originalIdx);
+      }
+    });
+    
+    // Second pass: for unmapped fixes, use comprehensive field matching
+    // Match on more fields and avoid already-mapped indices to prevent wrong targeting
+    filteredFixes.forEach((fix, filteredIdx) => {
+      if (!filteredToOriginalMap.has(filteredIdx)) {
+        const originalIndex = allFixes.findIndex((f, idx) => {
+          // Skip if this original index is already mapped
+          if (usedOriginalIndices.has(idx)) return false;
+          
+          // Match on comprehensive set of fields to reduce false positives
+          return (
+            f.selector === fix.selector &&
+            f.issue_type === fix.issue_type &&
+            f.description === fix.description &&
+            f.wcag_criteria === fix.wcag_criteria &&
+            f.category === fix.category &&
+            f.action === fix.action &&
+            f.impact === fix.impact
+          );
+        });
+        
+        if (originalIndex >= 0) {
+          filteredToOriginalMap.set(filteredIdx, originalIndex);
+          usedOriginalIndices.add(originalIndex);
+        } else {
+          // Last resort: find any unmapped match (should be rare)
+          const fallbackIndex = allFixes.findIndex(
+            (f, idx) =>
+              !usedOriginalIndices.has(idx) &&
+              f.selector === fix.selector &&
+              f.issue_type === fix.issue_type &&
+              f.description === fix.description,
+          );
+          if (fallbackIndex >= 0) {
+            filteredToOriginalMap.set(filteredIdx, fallbackIndex);
+            usedOriginalIndices.add(fallbackIndex);
+          } else {
+            // Shouldn't happen, but use filtered index as absolute fallback
+            console.warn(
+              `[AnalysisCard] Could not map filtered fix at index ${filteredIdx} to original index`,
+            );
+            filteredToOriginalMap.set(filteredIdx, filteredIdx);
+          }
+        }
+      }
+    });
+    
     const grouped: Record<
       string,
       Array<{ fix: typeof allFixes[0]; originalIndex: number }>
     > = {};
+    
     filteredFixes.forEach((fix, filteredIdx) => {
       const category = fix.category || 'Other';
       if (!grouped[category]) {
         grouped[category] = [];
       }
-      // Find original index in allFixes
-      const originalIndex = allFixes.findIndex(
-        (f) =>
-          f.selector === fix.selector &&
-          f.issue_type === fix.issue_type &&
-          f.description === fix.description,
-      );
+      const originalIndex = filteredToOriginalMap.get(filteredIdx) ?? filteredIdx;
       grouped[category].push({
         fix,
-        originalIndex: originalIndex >= 0 ? originalIndex : filteredIdx,
+        originalIndex,
       });
     });
+    
     return grouped;
   }, [filteredFixes, allFixes]);
 

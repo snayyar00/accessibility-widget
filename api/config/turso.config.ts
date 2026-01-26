@@ -1,4 +1,4 @@
-import { createClient, Client } from '@libsql/client'
+import { Client, createClient } from '@libsql/client'
 
 let tursoClientInstance: Client | null = null
 
