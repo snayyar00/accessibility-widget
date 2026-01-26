@@ -211,14 +211,6 @@ async function logPageCacheDiagnostic(
   }
 }
 
-export interface PageCacheRow {
-  url_hash: string
-  url: string
-  domain: string
-  html_compressed: Uint8Array | Buffer
-  fetched_at: number
-  expires_at: number | null
-}
 
 export type GetPageHtmlOptions = {
   url: string
