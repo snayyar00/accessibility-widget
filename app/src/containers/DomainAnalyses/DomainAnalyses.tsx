@@ -9,6 +9,7 @@ import GET_USER_SITES from '@/queries/sites/getSites';
 import { Site } from '@/generated/graphql';
 import Select from 'react-select';
 import Modal from '@/components/Common/Modal';
+import { motion, AnimatePresence } from 'framer-motion';
 import './DomainAnalyses.css';
 import FixCard from './FixCard';
 import SuggestedFixCard, { type SuggestedFix } from './SuggestedFixCard';
@@ -69,6 +70,21 @@ const DomainAnalyses: React.FC = () => {
   const [suggestedFixesLoading, setSuggestedFixesLoading] = useState(false);
   const [suggestedFixesError, setSuggestedFixesError] = useState<string | null>(null);
   const [acceptingFixKey, setAcceptingFixKey] = useState<string | null>(null);
+  // Modal state for suggested fixes
+  const [suggestedFixesModal, setSuggestedFixesModal] = useState<{
+    isOpen: boolean;
+    url: string | null;
+    analysisId: string | null;
+  }>({
+    isOpen: false,
+    url: null,
+    analysisId: null,
+  });
+  const [modalSuggestedFixes, setModalSuggestedFixes] = useState<SuggestedFix[]>([]);
+  const [modalSuggestedFixesLoading, setModalSuggestedFixesLoading] = useState(false);
+  const [modalSuggestedFixesError, setModalSuggestedFixesError] = useState<string | null>(null);
+  const [currentFixIndex, setCurrentFixIndex] = useState<number>(0);
+  const [swipingFix, setSwipingFix] = useState<{ index: number; direction: 'left' | 'right' } | null>(null);
   // Search state for URL list
   const [urlSearchQuery, setUrlSearchQuery] = useState<string>('');
   const [confirmModal, setConfirmModal] = useState<{
@@ -190,6 +206,17 @@ const DomainAnalyses: React.FC = () => {
     setAcceptingFixKey(null);
   }, [sliderUrl]);
 
+  // Adjust currentFixIndex when fixes list changes (safety check)
+  useEffect(() => {
+    if (modalSuggestedFixes.length > 0) {
+      if (currentFixIndex >= modalSuggestedFixes.length) {
+        setCurrentFixIndex(Math.max(0, modalSuggestedFixes.length - 1));
+      }
+    } else if (modalSuggestedFixes.length === 0) {
+      setCurrentFixIndex(0);
+    }
+  }, [modalSuggestedFixes.length, currentFixIndex]);
+
   const existingFixesForSuggested = useMemo(() => {
     if (!sliderAnalysis) return [];
     try {
@@ -262,6 +289,179 @@ const DomainAnalyses: React.FC = () => {
   const handleRejectSuggestedFix = useCallback((index: number) => {
     setSuggestedFixes((prev) => prev.filter((_, i) => i !== index));
   }, []);
+
+  const handleCloseSuggestedFixesModal = useCallback(() => {
+    setSuggestedFixesModal({ isOpen: false, url: null, analysisId: null });
+    setModalSuggestedFixes([]);
+    setModalSuggestedFixesError(null);
+    setCurrentFixIndex(0);
+    setSwipingFix(null);
+  }, []);
+
+  // Handler for opening suggested fixes modal from URL table
+  const handleOpenSuggestedFixesModal = useCallback(async (url: string) => {
+    const analysis = analyses.find((a) => (a.url || a.domain || '') === url);
+    if (!analysis) {
+      alert('Analysis not found for this URL');
+      return;
+    }
+
+    setSuggestedFixesModal({ isOpen: true, url, analysisId: analysis.id });
+    setModalSuggestedFixes([]);
+    setModalSuggestedFixesLoading(true);
+    setModalSuggestedFixesError(null);
+    setCurrentFixIndex(0);
+
+    // First fetch the HTML
+    const params = new URLSearchParams({ url });
+    if (analysis.url_hash) params.set('url_hash', analysis.url_hash);
+    const htmlApiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/page-html?${params.toString()}`;
+    const token = getAuthenticationCookie();
+
+    try {
+      const htmlRes = await fetch(htmlApiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const htmlData = await htmlRes.json();
+      if (!htmlRes.ok || !htmlData.html) {
+        throw new Error('Failed to fetch page HTML');
+      }
+
+      // Get existing fixes
+      let existingFixes: SuggestedFix[] = [];
+      try {
+        const parsed = JSON.parse(analysis.result_json);
+        existingFixes = Array.isArray(parsed?.analysis?.fixes) ? parsed.analysis.fixes : [];
+      } catch {
+        existingFixes = [];
+      }
+
+      // Fetch suggested fixes
+      const fixesApiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/suggested-fixes`;
+      const fixesRes = await fetch(fixesApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          url,
+          html: htmlData.html,
+          existingFixes,
+        }),
+      });
+      const fixesData = await fixesRes.json();
+      if (!fixesRes.ok) throw new Error(fixesData?.message ?? fixesData?.error ?? 'Failed to fetch suggestions');
+      const fixes = Array.isArray(fixesData.suggestedFixes) ? fixesData.suggestedFixes : [];
+      setModalSuggestedFixes(fixes);
+      
+      // If no fixes returned, show message (don't close immediately)
+      if (fixes.length === 0) {
+        setCurrentFixIndex(0);
+      } else {
+        setCurrentFixIndex(0);
+      }
+    } catch (e) {
+      setModalSuggestedFixesError(e instanceof Error ? e.message : 'Failed to fetch suggested fixes');
+    } finally {
+      setModalSuggestedFixesLoading(false);
+    }
+  }, [analyses, handleCloseSuggestedFixesModal]);
+
+  // Note: We no longer auto-close when fixes list is empty
+  // Instead, we show a "No fixes found" message and let the user close manually
+
+  const handleModalAcceptFix = useCallback(
+    async (fix: SuggestedFix, index: number) => {
+      if (!suggestedFixesModal.analysisId) return;
+      
+      const key = `modal-suggested-${index}-${fix.selector}-${fix.issue_type}`;
+      setAcceptingFixKey(key);
+      
+      // Start swipe animation to the right
+      setSwipingFix({ index, direction: 'right' });
+      
+      // Wait for animation to complete before removing
+      setTimeout(() => {
+        // Remove fix from list after animation
+        setModalSuggestedFixes((prev) => {
+          const updated = prev.filter((_, i) => i !== index);
+          // Calculate new index based on removal
+          setCurrentFixIndex((prevIndex) => {
+            if (index < prevIndex) {
+              // Removed fix was before current, move back one
+              return Math.max(0, prevIndex - 1);
+            } else if (index === prevIndex) {
+              // Removed fix was current, stay at same position (next fix moves up)
+              // But if we're at or beyond the end, move to last item
+              const remainingCount = updated.length;
+              return prevIndex >= remainingCount ? Math.max(0, remainingCount - 1) : prevIndex;
+            }
+            // Removed fix was after current, no change needed
+            return prevIndex;
+          });
+          return updated;
+        });
+        setSwipingFix(null);
+      }, 400); // Match animation duration
+      
+      const apiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/add-fix`;
+      const token = getAuthenticationCookie();
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ analysisId: suggestedFixesModal.analysisId, fix }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.message ?? data?.error ?? 'Failed to add fix');
+        setAnalyses((prev) => prev.map((a) => (a.id === suggestedFixesModal.analysisId ? data : a)));
+      } catch (e) {
+        alert(e instanceof Error ? e.message : 'Failed to add fix');
+        // On error, we could restore the fix, but for now we'll leave it removed
+      } finally {
+        setAcceptingFixKey(null);
+      }
+    },
+    [suggestedFixesModal.analysisId]
+  );
+
+  const handleModalRejectFix = useCallback((index: number) => {
+    // Start swipe animation to the left
+    setSwipingFix({ index, direction: 'left' });
+    
+    // Wait for animation to complete before removing
+    setTimeout(() => {
+      // Remove fix from list after animation
+      setModalSuggestedFixes((prev) => {
+        const updated = prev.filter((_, i) => i !== index);
+        // Calculate new index based on removal
+        setCurrentFixIndex((prevIndex) => {
+          if (index < prevIndex) {
+            // Removed fix was before current, move back one
+            return Math.max(0, prevIndex - 1);
+          } else if (index === prevIndex) {
+            // Removed fix was current, stay at same position (next fix moves up)
+            // But if we're at or beyond the end, move to last item
+            const remainingCount = updated.length;
+            return prevIndex >= remainingCount ? Math.max(0, remainingCount - 1) : prevIndex;
+          }
+          // Removed fix was after current, no change needed
+          return prevIndex;
+        });
+        return updated;
+      });
+      setSwipingFix(null);
+    }, 400); // Match animation duration
+  }, []);
+
 
   const fetchAnalyses = async (domain: string) => {
     if (!domain) return;
@@ -885,19 +1085,33 @@ const DomainAnalyses: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Action Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleUrlClick(item.url);
-                      }}
-                      className="w-full px-4 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100"
-                      style={{ backgroundColor: '#0052CC' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
-                    >
-                      View Fixes
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUrlClick(item.url);
+                        }}
+                        className="flex-1 px-4 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100"
+                        style={{ backgroundColor: '#0052CC' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
+                      >
+                        View Fixes
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenSuggestedFixesModal(item.url);
+                        }}
+                        className="flex-1 px-4 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100"
+                        style={{ backgroundColor: '#10b981' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                      >
+                        View Suggested
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -964,18 +1178,32 @@ const DomainAnalyses: React.FC = () => {
                           <span className="text-base font-semibold text-red-600">{item.deletedFixCount}</span>
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUrlClick(item.url);
-                            }}
-                            className="px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105"
-                            style={{ backgroundColor: '#0052CC' }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
-                          >
-                            View Fixes
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUrlClick(item.url);
+                              }}
+                              className="px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105"
+                              style={{ backgroundColor: '#0052CC' }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
+                            >
+                              View Fixes
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenSuggestedFixesModal(item.url);
+                              }}
+                              className="px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105"
+                              style={{ backgroundColor: '#10b981' }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                            >
+                              View Suggested
+                            </button>
+                          </div>
                         </td>
                       </tr>
                           );
@@ -2180,6 +2408,442 @@ const DomainAnalyses: React.FC = () => {
                 : 'Enable'}
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Suggested Fixes Modal */}
+      <Modal
+        isOpen={suggestedFixesModal.isOpen}
+        ariaLabelledBy="suggested-fixes-modal-title"
+        ariaDescribedBy="suggested-fixes-modal-description"
+      >
+        <div className="p-4">
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={handleCloseSuggestedFixesModal}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              aria-label="Close modal"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {modalSuggestedFixesLoading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              {/* Animated AI Brain Icon */}
+              <motion.div
+                className="relative mb-8"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                {/* Rotating outer ring */}
+                <motion.div
+                  className="absolute inset-0 rounded-2xl border-4 border-blue-500"
+                  animate={{ rotate: 360 }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'linear',
+                  }}
+                />
+                
+                {/* Main AI Icon with smooth pulse */}
+                <motion.div
+                  className="relative w-24 h-24 bg-blue-500 rounded-2xl flex items-center justify-center shadow-2xl"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                    boxShadow: [
+                      '0 20px 25px -5px rgba(59, 130, 246, 0.3), 0 10px 10px -5px rgba(59, 130, 246, 0.2)',
+                      '0 25px 30px -5px rgba(59, 130, 246, 0.4), 0 15px 15px -5px rgba(59, 130, 246, 0.3)',
+                      '0 20px 25px -5px rgba(59, 130, 246, 0.3), 0 10px 10px -5px rgba(59, 130, 246, 0.2)',
+                    ],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                >
+                  <motion.svg
+                    className="w-12 h-12 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    animate={{ rotate: [0, 360] }}
+                    transition={{
+                      duration: 8,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </motion.svg>
+                </motion.div>
+
+                {/* Orbiting particles */}
+                {[...Array(8)].map((_, i) => {
+                  const angle = (i * Math.PI * 2) / 8;
+                  const radius = 60;
+                  return (
+                    <motion.div
+                      key={i}
+                      className="absolute w-3 h-3 bg-blue-400 rounded-full"
+                      initial={{ opacity: 0 }}
+                      animate={{
+                        opacity: [0, 1, 0.8, 1, 0],
+                        x: [
+                          Math.cos(angle) * radius,
+                          Math.cos(angle + Math.PI) * radius,
+                          Math.cos(angle) * radius,
+                        ],
+                        y: [
+                          Math.sin(angle) * radius,
+                          Math.sin(angle + Math.PI) * radius,
+                          Math.sin(angle) * radius,
+                        ],
+                        scale: [0.5, 1, 0.8, 1, 0.5],
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        delay: i * 0.15,
+                        ease: 'easeInOut',
+                      }}
+                    />
+                  );
+                })}
+              </motion.div>
+
+              <motion.h3
+                className="text-2xl font-bold text-gray-900 mb-3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                Generating AI Suggestions
+              </motion.h3>
+              <motion.p
+                className="text-gray-600 text-center max-w-md mb-6"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                Our AI is analyzing the page and generating accessibility fix suggestions. This may take a few moments...
+              </motion.p>
+
+              {/* Animated progress bar with shimmer effect */}
+              <motion.div
+                className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden relative"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                {/* Solid blue progress bar */}
+                <motion.div
+                  className="h-full bg-blue-500 rounded-full"
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                />
+                
+                {/* Shimmer effect */}
+                <motion.div
+                  className="absolute inset-0 bg-white opacity-30"
+                  animate={{
+                    x: ['-100%', '100%'],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                  style={{
+                    width: '30%',
+                    transform: 'skewX(-20deg)',
+                  }}
+                />
+              </motion.div>
+
+              {/* Improved pulsing dots with wave effect */}
+              <motion.div
+                className="flex items-center gap-2 mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-3 h-3 bg-blue-500 rounded-full"
+                    animate={{
+                      scale: [1, 1.8, 1],
+                      opacity: [0.4, 1, 0.4],
+                      y: [0, -8, 0],
+                    }}
+                    transition={{
+                      duration: 1.2,
+                      repeat: Infinity,
+                      delay: i * 0.15,
+                      ease: [0.4, 0, 0.6, 1],
+                    }}
+                  />
+                ))}
+              </motion.div>
+            </div>
+          ) : modalSuggestedFixesError ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="mb-4 p-4 rounded-lg bg-red-50 text-red-700 text-center">
+                <p className="font-semibold mb-2">Error loading suggestions</p>
+                <p className="text-sm">{modalSuggestedFixesError}</p>
+              </div>
+              <button
+                onClick={handleCloseSuggestedFixesModal}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          ) : modalSuggestedFixes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="text-center max-w-md"
+              >
+                {/* Animated Success Icon with Glow Effect */}
+                <motion.div
+                  className="relative mb-8 flex items-center justify-center"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ 
+                    duration: 0.6, 
+                    delay: 0.2,
+                    type: 'spring',
+                    stiffness: 200,
+                    damping: 15
+                  }}
+                >
+                  {/* Outer glow rings */}
+                  <motion.div
+                    className="absolute w-32 h-32 bg-green-200 rounded-full opacity-30"
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.3, 0.1, 0.3],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                  />
+                  <motion.div
+                    className="absolute w-24 h-24 bg-green-300 rounded-full opacity-40"
+                    animate={{
+                      scale: [1, 1.15, 1],
+                      opacity: [0.4, 0.2, 0.4],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                      delay: 0.3,
+                    }}
+                  />
+                  
+                  {/* Main icon container */}
+                  <div className="relative z-10 w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-lg">
+                    <motion.svg
+                      className="w-12 h-12 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ duration: 0.8, delay: 0.4 }}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </motion.svg>
+                  </div>
+                </motion.div>
+
+                {/* Title with fade-in */}
+                <motion.h3
+                  className="text-3xl font-bold text-gray-900 mb-3"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                >
+                  No Fixes Found
+                </motion.h3>
+
+                {/* Subtitle with fade-in */}
+                <motion.p
+                  className="text-lg text-gray-600 leading-relaxed"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                >
+                  All fixes are already implemented
+                </motion.p>
+
+                {/* Decorative elements */}
+                <motion.div
+                  className="mt-8 flex items-center justify-center gap-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.9 }}
+                >
+                  {[...Array(3)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-2 h-2 bg-green-400 rounded-full"
+                      animate={{
+                        scale: [1, 1.3, 1],
+                        opacity: [0.5, 1, 0.5],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                        ease: 'easeInOut',
+                      }}
+                    />
+                  ))}
+                </motion.div>
+              </motion.div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Card Container */}
+              <div className="relative min-h-[400px] flex items-center justify-center overflow-hidden">
+                <AnimatePresence>
+                  {modalSuggestedFixes[currentFixIndex] && (
+                    <motion.div
+                      key={`fix-${modalSuggestedFixes[currentFixIndex]?.selector}-${modalSuggestedFixes[currentFixIndex]?.issue_type}-${currentFixIndex}`}
+                      initial={{ opacity: 0, scale: 0.8, y: 50 }}
+                      animate={
+                        swipingFix && swipingFix.index === currentFixIndex
+                          ? {
+                              x: swipingFix.direction === 'right' ? 1000 : -1000,
+                              opacity: 0,
+                              rotate: swipingFix.direction === 'right' ? 15 : -15,
+                            }
+                          : { opacity: 1, scale: 1, y: 0, x: 0, rotate: 0 }
+                      }
+                      exit={{ opacity: 0, scale: 0.8, y: -50 }}
+                      transition={{ 
+                        duration: 0.4,
+                        ease: 'easeInOut'
+                      }}
+                      className="w-full"
+                    >
+                      <SuggestedFixCard
+                        fix={modalSuggestedFixes[currentFixIndex]}
+                        url={suggestedFixesModal.url ?? ''}
+                        onAccept={() => {
+                          const fix = modalSuggestedFixes[currentFixIndex];
+                          const index = currentFixIndex;
+                          handleModalAcceptFix(fix, index);
+                        }}
+                        onReject={() => {
+                          const index = currentFixIndex;
+                          handleModalRejectFix(index);
+                        }}
+                        isUpdating={
+                          acceptingFixKey ===
+                          `modal-suggested-${currentFixIndex}-${modalSuggestedFixes[currentFixIndex]?.selector}-${modalSuggestedFixes[currentFixIndex]?.issue_type}`
+                        }
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Single Pair of Action Buttons */}
+              <motion.div
+                className="flex items-center justify-center gap-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <button
+                  onClick={() => {
+                    if (!modalSuggestedFixes[currentFixIndex]) return;
+                    const index = currentFixIndex;
+                    handleModalRejectFix(index);
+                  }}
+                  disabled={
+                    acceptingFixKey ===
+                    `modal-suggested-${currentFixIndex}-${modalSuggestedFixes[currentFixIndex]?.selector}-${modalSuggestedFixes[currentFixIndex]?.issue_type}`
+                  }
+                  className="px-6 py-3 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Reject
+                </button>
+                <button
+                  onClick={() => {
+                    if (!modalSuggestedFixes[currentFixIndex]) return;
+                    const fix = modalSuggestedFixes[currentFixIndex];
+                    const index = currentFixIndex;
+                    handleModalAcceptFix(fix, index);
+                  }}
+                  disabled={
+                    acceptingFixKey ===
+                    `modal-suggested-${currentFixIndex}-${modalSuggestedFixes[currentFixIndex]?.selector}-${modalSuggestedFixes[currentFixIndex]?.issue_type}`
+                  }
+                  className="px-6 py-3 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Accept
+                </button>
+              </motion.div>
+
+              {/* Progress Dots */}
+              {modalSuggestedFixes.length > 1 && (
+                <motion.div
+                  className="flex items-center justify-center gap-2 pt-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  {modalSuggestedFixes.map((fix, idx) => (
+                    <button
+                      key={`dot-${fix.selector}-${fix.issue_type}-${idx}`}
+                      onClick={() => {
+                        if (idx >= 0 && idx < modalSuggestedFixes.length) {
+                          setCurrentFixIndex(idx);
+                        }
+                      }}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === currentFixIndex
+                          ? 'bg-blue-600 w-8'
+                          : 'bg-gray-300 hover:bg-gray-400 w-2'
+                      }`}
+                      aria-label={`Go to fix ${idx + 1} of ${modalSuggestedFixes.length}`}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </div>
+          )}
         </div>
       </Modal>
     </div>
