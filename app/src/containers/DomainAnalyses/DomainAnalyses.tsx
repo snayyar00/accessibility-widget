@@ -1085,14 +1085,14 @@ const DomainAnalyses: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
+                    {/* Action Buttons - Column layout for sm (≤768px) */}
+                    <div className="flex flex-col sm:flex-col gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleUrlClick(item.url);
                         }}
-                        className="flex-1 px-4 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-white text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100 whitespace-nowrap"
                         style={{ backgroundColor: '#0052CC' }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0041A3'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
@@ -1104,7 +1104,7 @@ const DomainAnalyses: React.FC = () => {
                           e.stopPropagation();
                           handleOpenSuggestedFixesModal(item.url);
                         }}
-                        className="flex-1 px-4 py-3 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-white text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100 whitespace-nowrap"
                         style={{ backgroundColor: '#10b981' }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
@@ -2007,7 +2007,7 @@ const DomainAnalyses: React.FC = () => {
               >
                 Fixes
               </button>
-              <button
+              {/* <button
                 onClick={() => setSliderTab('page-html')}
                 className={`px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${
                   sliderTab === 'page-html'
@@ -2017,7 +2017,7 @@ const DomainAnalyses: React.FC = () => {
                 style={sliderTab === 'page-html' ? { borderColor: '#0052CC', color: '#0052CC' } : {}}
               >
                 Page HTML
-              </button>
+              </button> */}
             </div>
 
             {/* Filter Buttons - only when Fixes tab */}
@@ -2431,34 +2431,49 @@ const DomainAnalyses: React.FC = () => {
           </div>
 
           {modalSuggestedFixesLoading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              {/* Animated AI Brain Icon */}
+            <div className="flex flex-col items-center justify-center py-20 px-6">
+              {/* Central Scanner Icon */}
               <motion.div
                 className="relative mb-8"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                {/* Rotating outer ring */}
+                {/* Scanning rings */}
+                {[0, 1, 2].map((ring) => (
+                  <motion.div
+                    key={ring}
+                    className="absolute inset-0 rounded-full"
+                    animate={{
+                      scale: [1, 1.3 + ring * 0.2, 1],
+                      opacity: [0.6, 0.2, 0.6],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      delay: ring * 0.3,
+                      ease: 'easeInOut',
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-full border-2 border-blue-400"
+                      style={{
+                        borderStyle: ring === 0 ? 'solid' : 'dashed',
+                        ...(ring === 1 && { borderDasharray: '8 4' }),
+                        ...(ring === 2 && { borderDasharray: '4 8' }),
+                      }}
+                    />
+                  </motion.div>
+                ))}
+
+                {/* Main Scanner Icon */}
                 <motion.div
-                  className="absolute inset-0 rounded-2xl border-4 border-blue-500"
-                  animate={{ rotate: 360 }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  }}
-                />
-                
-                {/* Main AI Icon with smooth pulse */}
-                <motion.div
-                  className="relative w-24 h-24 bg-blue-500 rounded-2xl flex items-center justify-center shadow-2xl"
+                  className="relative w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-2xl"
                   animate={{
-                    scale: [1, 1.05, 1],
                     boxShadow: [
-                      '0 20px 25px -5px rgba(59, 130, 246, 0.3), 0 10px 10px -5px rgba(59, 130, 246, 0.2)',
-                      '0 25px 30px -5px rgba(59, 130, 246, 0.4), 0 15px 15px -5px rgba(59, 130, 246, 0.3)',
-                      '0 20px 25px -5px rgba(59, 130, 246, 0.3), 0 10px 10px -5px rgba(59, 130, 246, 0.2)',
+                      '0 20px 25px -5px rgba(59, 130, 246, 0.4), 0 10px 10px -5px rgba(59, 130, 246, 0.2)',
+                      '0 25px 35px -5px rgba(59, 130, 246, 0.5), 0 15px 15px -5px rgba(59, 130, 246, 0.3)',
+                      '0 20px 25px -5px rgba(59, 130, 246, 0.4), 0 10px 10px -5px rgba(59, 130, 246, 0.2)',
                     ],
                   }}
                   transition={{
@@ -2468,134 +2483,146 @@ const DomainAnalyses: React.FC = () => {
                   }}
                 >
                   <motion.svg
-                    className="w-12 h-12 text-white"
+                    className="w-10 h-10 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    animate={{ rotate: [0, 360] }}
-                    transition={{
-                      duration: 8,
-                      repeat: Infinity,
-                      ease: 'linear',
-                    }}
+                    strokeWidth={2}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
                   </motion.svg>
                 </motion.div>
 
-                {/* Orbiting particles */}
-                {[...Array(8)].map((_, i) => {
-                  const angle = (i * Math.PI * 2) / 8;
-                  const radius = 60;
+                {/* Data particles being extracted */}
+                {[...Array(6)].map((_, i) => {
+                  const angle = (i * Math.PI * 2) / 6;
+                  const radius = 50;
                   return (
                     <motion.div
                       key={i}
-                      className="absolute w-3 h-3 bg-blue-400 rounded-full"
-                      initial={{ opacity: 0 }}
+                      className="absolute w-2 h-2 bg-blue-400 rounded-full"
+                      initial={{ opacity: 0, scale: 0 }}
                       animate={{
-                        opacity: [0, 1, 0.8, 1, 0],
+                        opacity: [0, 1, 0],
+                        scale: [0, 1, 0],
                         x: [
+                          Math.cos(angle) * 0,
                           Math.cos(angle) * radius,
-                          Math.cos(angle + Math.PI) * radius,
-                          Math.cos(angle) * radius,
+                          Math.cos(angle) * radius * 1.5,
                         ],
                         y: [
+                          Math.sin(angle) * 0,
                           Math.sin(angle) * radius,
-                          Math.sin(angle + Math.PI) * radius,
-                          Math.sin(angle) * radius,
+                          Math.sin(angle) * radius * 1.5,
                         ],
-                        scale: [0.5, 1, 0.8, 1, 0.5],
                       }}
                       transition={{
-                        duration: 3,
+                        duration: 2,
                         repeat: Infinity,
-                        delay: i * 0.15,
-                        ease: 'easeInOut',
+                        delay: i * 0.2,
+                        ease: 'easeOut',
                       }}
                     />
                   );
                 })}
               </motion.div>
 
+              {/* Title and Description */}
               <motion.h3
                 className="text-2xl font-bold text-gray-900 mb-3"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                Generating AI Suggestions
+                Scanning & Analyzing Page
               </motion.h3>
               <motion.p
-                className="text-gray-600 text-center max-w-md mb-6"
+                className="text-gray-600 text-center max-w-md mb-8"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                Our AI is analyzing the page and generating accessibility fix suggestions. This may take a few moments...
+                Our AI is scraping the HTML, analyzing accessibility issues, and generating fix suggestions...
               </motion.p>
 
-              {/* Animated progress bar with shimmer effect */}
-              <motion.div
-                className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden relative"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                {/* Solid blue progress bar */}
-                <motion.div
-                  className="h-full bg-blue-500 rounded-full"
-                  initial={{ width: '0%' }}
-                  animate={{ width: '100%' }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                />
-                
-                {/* Shimmer effect */}
-                <motion.div
-                  className="absolute inset-0 bg-white opacity-30"
-                  animate={{
-                    x: ['-100%', '100%'],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                  style={{
-                    width: '30%',
-                    transform: 'skewX(-20deg)',
-                  }}
-                />
-              </motion.div>
+              {/* Progress Indicators */}
+              <div className="w-full max-w-md space-y-4">
+                {/* Scanning Steps */}
+                <div className="space-y-2">
+                  {['Extracting HTML elements', 'Analyzing accessibility patterns', 'Generating fix suggestions'].map((step, i) => (
+                    <motion.div
+                      key={step}
+                      className="flex items-center gap-3"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + i * 0.2 }}
+                    >
+                      <motion.div
+                        className="w-2 h-2 bg-blue-500 rounded-full"
+                        animate={{
+                          scale: [1, 1.5, 1],
+                          opacity: [0.5, 1, 0.5],
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          delay: i * 0.5,
+                        }}
+                      />
+                      <span className="text-sm text-gray-600">{step}</span>
+                      <motion.span
+                        className="ml-auto text-xs text-blue-500"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{
+                          duration: 1.5,
+                          repeat: Infinity,
+                          delay: i * 0.5,
+                        }}
+                      >
+                        {i === 0 ? '...' : i === 1 ? '...' : '...'}
+                      </motion.span>
+                    </motion.div>
+                  ))}
+                </div>
 
-              {/* Improved pulsing dots with wave effect */}
-              <motion.div
-                className="flex items-center gap-2 mt-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                {[0, 1, 2].map((i) => (
+                {/* Progress Bar */}
+                <motion.div
+                  className="w-full h-2 bg-gray-200 rounded-full overflow-hidden relative mt-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                >
                   <motion.div
-                    key={i}
-                    className="w-3 h-3 bg-blue-500 rounded-full"
-                    animate={{
-                      scale: [1, 1.8, 1],
-                      opacity: [0.4, 1, 0.4],
-                      y: [0, -8, 0],
-                    }}
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
+                    initial={{ width: '0%' }}
+                    animate={{ width: ['0%', '100%'] }}
                     transition={{
-                      duration: 1.2,
+                      duration: 3,
                       repeat: Infinity,
-                      delay: i * 0.15,
-                      ease: [0.4, 0, 0.6, 1],
+                      ease: 'easeInOut',
                     }}
                   />
-                ))}
-              </motion.div>
+                  <motion.div
+                    className="absolute inset-0 bg-white opacity-40"
+                    animate={{
+                      x: ['-100%', '100%'],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: 'linear',
+                    }}
+                    style={{
+                      width: '40%',
+                      transform: 'skewX(-25deg)',
+                    }}
+                  />
+                </motion.div>
+              </div>
             </div>
           ) : modalSuggestedFixesError ? (
             <div className="flex flex-col items-center justify-center py-16">
