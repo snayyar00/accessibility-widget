@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { CircularProgress } from '@mui/material';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import Select from 'react-select';
 import Modal from '@/components/Common/Modal';
 import './DomainAnalyses.css';
 import FixCard from './FixCard';
+import SuggestedFixCard, { type SuggestedFix } from './SuggestedFixCard';
 
 interface OptionType {
   value: string;
@@ -54,6 +55,20 @@ const DomainAnalyses: React.FC = () => {
   // Slider state for fixes view
   const [isSliderOpen, setIsSliderOpen] = useState(false);
   const [sliderUrl, setSliderUrl] = useState<string | null>(null);
+  // Slider tabs: 'fixes' | 'page-html'
+  const [sliderTab, setSliderTab] = useState<'fixes' | 'page-html'>('fixes');
+  // Page HTML from page_cache (view fixes)
+  const [pageHtml, setPageHtml] = useState<{
+    url: string | null;
+    html: string | null;
+    loading: boolean;
+    error: string | null;
+  }>({ url: null, html: null, loading: false, error: null });
+  const [pageHtmlView, setPageHtmlView] = useState<'preview' | 'source' | 'suggested-fixes'>('preview');
+  const [suggestedFixes, setSuggestedFixes] = useState<SuggestedFix[]>([]);
+  const [suggestedFixesLoading, setSuggestedFixesLoading] = useState(false);
+  const [suggestedFixesError, setSuggestedFixesError] = useState<string | null>(null);
+  const [acceptingFixKey, setAcceptingFixKey] = useState<string | null>(null);
   // Search state for URL list
   const [urlSearchQuery, setUrlSearchQuery] = useState<string>('');
   const [confirmModal, setConfirmModal] = useState<{
@@ -118,6 +133,134 @@ const DomainAnalyses: React.FC = () => {
     return () => {
       isMounted.current = false;
     };
+  }, []);
+
+  const fetchPageHtml = useCallback(async (url: string, urlHash?: string | null) => {
+    setPageHtml((prev) => ({ ...prev, url, html: null, loading: true, error: null }));
+    const params = new URLSearchParams({ url });
+    if (urlHash && urlHash.trim()) params.set('url_hash', urlHash.trim());
+    const apiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/page-html?${params.toString()}`;
+    const token = getAuthenticationCookie();
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const data = await response.json();
+      if (!isMounted.current) return;
+      if (!response.ok) {
+        setPageHtml({
+          url,
+          html: null,
+          loading: false,
+          error: data?.message || data?.error || `Request failed: ${response.status}`,
+        });
+        return;
+      }
+      setPageHtml({ url, html: data.html ?? null, loading: false, error: null });
+    } catch (err) {
+      if (!isMounted.current) return;
+      setPageHtml({
+        url,
+        html: null,
+        loading: false,
+        error: err instanceof Error ? err.message : 'Failed to load page HTML',
+      });
+    }
+  }, []);
+
+  const sliderAnalysis = useMemo(() => {
+    if (!sliderUrl) return null;
+    return analyses.find((a) => (a.url || a.domain || '') === sliderUrl) ?? null;
+  }, [analyses, sliderUrl]);
+
+  useEffect(() => {
+    if (sliderTab !== 'page-html' || !sliderUrl) return;
+    if (pageHtml.url === sliderUrl && (pageHtml.html != null || pageHtml.loading || pageHtml.error)) return;
+    fetchPageHtml(sliderUrl, sliderAnalysis?.url_hash ?? null);
+  }, [sliderTab, sliderUrl, sliderAnalysis?.url_hash, fetchPageHtml]);
+
+  useEffect(() => {
+    if (!sliderUrl) return;
+    setSuggestedFixes([]);
+    setSuggestedFixesError(null);
+    setAcceptingFixKey(null);
+  }, [sliderUrl]);
+
+  const existingFixesForSuggested = useMemo(() => {
+    if (!sliderAnalysis) return [];
+    try {
+      const parsed = JSON.parse(sliderAnalysis.result_json);
+      return Array.isArray(parsed?.analysis?.fixes) ? parsed.analysis.fixes : [];
+    } catch {
+      return [];
+    }
+  }, [sliderAnalysis]);
+
+  const fetchSuggestedFixes = useCallback(async () => {
+    if (!sliderUrl || !pageHtml.html || !sliderAnalysis) return;
+    setSuggestedFixesLoading(true);
+    setSuggestedFixesError(null);
+    const apiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/suggested-fixes`;
+    const token = getAuthenticationCookie();
+    try {
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          url: sliderUrl,
+          html: pageHtml.html,
+          existingFixes: existingFixesForSuggested,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message ?? data?.error ?? 'Failed to fetch suggestions');
+      setSuggestedFixes(Array.isArray(data.suggestedFixes) ? data.suggestedFixes : []);
+    } catch (e) {
+      setSuggestedFixesError(e instanceof Error ? e.message : 'Failed to fetch suggested fixes');
+      setSuggestedFixes([]);
+    } finally {
+      setSuggestedFixesLoading(false);
+    }
+  }, [sliderUrl, pageHtml.html, sliderAnalysis, existingFixesForSuggested]);
+
+  const handleAcceptSuggestedFix = useCallback(
+    async (fix: SuggestedFix, index: number) => {
+      if (!sliderAnalysis) return;
+      const key = `suggested-${index}-${fix.selector}-${fix.issue_type}`;
+      setAcceptingFixKey(key);
+      const apiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/add-fix`;
+      const token = getAuthenticationCookie();
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ analysisId: sliderAnalysis.id, fix }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.message ?? data?.error ?? 'Failed to add fix');
+        setAnalyses((prev) => prev.map((a) => (a.id === sliderAnalysis.id ? data : a)));
+        setSuggestedFixes((prev) => prev.filter((_, i) => i !== index));
+      } catch (e) {
+        alert(e instanceof Error ? e.message : 'Failed to add fix');
+      } finally {
+        setAcceptingFixKey(null);
+      }
+    },
+    [sliderAnalysis]
+  );
+
+  const handleRejectSuggestedFix = useCallback((index: number) => {
+    setSuggestedFixes((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const fetchAnalyses = async (domain: string) => {
@@ -255,6 +398,13 @@ const DomainAnalyses: React.FC = () => {
     setIsSliderOpen(false);
     setSliderUrl(null);
     setSelectedPage('all');
+    setSliderTab('fixes');
+    setPageHtml({ url: null, html: null, loading: false, error: null });
+    setPageHtmlView('preview');
+    setSuggestedFixes([]);
+    setSuggestedFixesLoading(false);
+    setSuggestedFixesError(null);
+    setAcceptingFixKey(null);
   };
 
   const handleBackToUrlList = () => {
@@ -1616,7 +1766,34 @@ const DomainAnalyses: React.FC = () => {
               </button>
             </div>
 
-            {/* Filter Buttons */}
+            {/* Slider Tabs: Fixes | Page HTML */}
+            <div className="flex-shrink-0 flex border-b bg-gray-50" style={{ borderColor: '#e5e7eb' }}>
+              <button
+                onClick={() => setSliderTab('fixes')}
+                className={`px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                  sliderTab === 'fixes'
+                    ? 'text-gray-900 border-current'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-100'
+                }`}
+                style={sliderTab === 'fixes' ? { borderColor: '#0052CC', color: '#0052CC' } : {}}
+              >
+                Fixes
+              </button>
+              <button
+                onClick={() => setSliderTab('page-html')}
+                className={`px-4 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                  sliderTab === 'page-html'
+                    ? 'text-gray-900 border-current'
+                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-100'
+                }`}
+                style={sliderTab === 'page-html' ? { borderColor: '#0052CC', color: '#0052CC' } : {}}
+              >
+                Page HTML
+              </button>
+            </div>
+
+            {/* Filter Buttons - only when Fixes tab */}
+            {sliderTab === 'fixes' && (
             <div className="flex-shrink-0 border-b" style={{ backgroundColor: '#f9fafb', borderColor: '#e5e7eb' }}>
               <div className="px-4 sm:px-5 py-3.5">
                 {/* Status Filters Row */}
@@ -1752,10 +1929,129 @@ const DomainAnalyses: React.FC = () => {
                 )}
               </div>
             </div>
+            )}
 
             {/* Slider Content */}
             <div className="flex-1 overflow-y-auto p-6">
-              {loader ? (
+              {sliderTab === 'page-html' ? (
+                /* Page HTML tab */
+                <>
+                  {pageHtml.loading ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <CircularProgress size={40} />
+                      <p className="text-gray-500 mt-4 text-sm">Loading page HTML…</p>
+                    </div>
+                  ) : pageHtml.error ? (
+                    <div className="flex flex-col items-center justify-center py-16 px-4">
+                      <p className="text-red-600 text-center mb-4">{pageHtml.error}</p>
+                      <button
+                        type="button"
+                        onClick={() => sliderUrl && fetchPageHtml(sliderUrl, sliderAnalysis?.url_hash ?? null)}
+                        className="px-4 py-2 text-white rounded-lg transition-colors font-medium"
+                        style={{ backgroundColor: '#0052CC' }}
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : pageHtml.html != null ? (
+                    <div className="flex flex-col h-full min-h-0">
+                      <div className="flex-shrink-0 flex items-center gap-2 mb-3">
+                        <button
+                          type="button"
+                          onClick={() => setPageHtmlView('preview')}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                            pageHtmlView === 'preview' ? 'text-white' : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
+                          }`}
+                          style={pageHtmlView === 'preview' ? { backgroundColor: '#0052CC' } : {}}
+                        >
+                          Preview
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPageHtmlView('source')}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                            pageHtmlView === 'source' ? 'text-white' : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
+                          }`}
+                          style={pageHtmlView === 'source' ? { backgroundColor: '#0052CC' } : {}}
+                        >
+                          Source
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPageHtmlView('suggested-fixes')}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                            pageHtmlView === 'suggested-fixes' ? 'text-white' : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
+                          }`}
+                          style={pageHtmlView === 'suggested-fixes' ? { backgroundColor: '#0052CC' } : {}}
+                        >
+                          Suggested Fixes
+                        </button>
+                      </div>
+                      <div className="flex-1 min-h-0 rounded-lg border border-gray-200 overflow-hidden bg-white">
+                        {pageHtmlView === 'suggested-fixes' ? (
+                          <div className="w-full h-full min-h-[400px] p-4 overflow-y-auto">
+                            {!sliderAnalysis ? (
+                              <p className="text-gray-500 text-sm">No analysis for this URL. View fixes first.</p>
+                            ) : (
+                              <>
+                                <div className="flex items-center justify-between gap-4 mb-4">
+                                  <p className="text-sm text-gray-600">
+                                    Get AI-suggested accessibility fixes for this page. Existing fixes are sent so duplicates are avoided.
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={fetchSuggestedFixes}
+                                    disabled={suggestedFixesLoading}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium text-white shrink-0 disabled:opacity-50"
+                                    style={{ backgroundColor: '#0052CC' }}
+                                  >
+                                    {suggestedFixesLoading ? 'Loading…' : 'Get suggestions'}
+                                  </button>
+                                </div>
+                                {suggestedFixesError && (
+                                  <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm">{suggestedFixesError}</div>
+                                )}
+                                {suggestedFixes.length === 0 && !suggestedFixesLoading && (
+                                  <p className="text-gray-500 text-sm">
+                                    {suggestedFixesError ? 'Try again.' : 'Click “Get suggestions” to fetch AI-generated fixes.'}
+                                  </p>
+                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {suggestedFixes.map((fix, idx) => (
+                                    <SuggestedFixCard
+                                      key={`${fix.selector}-${fix.issue_type}-${idx}`}
+                                      fix={fix}
+                                      url={sliderUrl ?? ''}
+                                      onAccept={() => handleAcceptSuggestedFix(fix, idx)}
+                                      onReject={() => handleRejectSuggestedFix(idx)}
+                                      isUpdating={acceptingFixKey === `suggested-${idx}-${fix.selector}-${fix.issue_type}`}
+                                    />
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ) : pageHtmlView === 'preview' ? (
+                          <iframe
+                            title="Page preview"
+                            srcDoc={pageHtml.html}
+                            sandbox="allow-same-origin"
+                            className="w-full h-full min-h-[400px] border-0"
+                          />
+                        ) : (
+                          <pre className="w-full h-full min-h-[400px] p-4 overflow-auto text-xs font-mono text-gray-800 whitespace-pre-wrap break-all bg-gray-50">
+                            {pageHtml.html}
+                          </pre>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+                      <p className="text-sm">No HTML available for this URL.</p>
+                    </div>
+                  )}
+                </>
+              ) : loader ? (
                 <div className="flex justify-center py-12">
                   <CircularProgress size={40} />
                 </div>
