@@ -154,8 +154,8 @@ export default function Installation({ domain }: any) {
         onStepChange={handleTourStepChange}
       />
 
-      <div>
-        <div className="w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
+      <div className="min-w-0">
+        <div className="w-full mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8 min-w-0">
           {/* Installation Page Heading */}
           <div className="mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">
@@ -164,7 +164,7 @@ export default function Installation({ domain }: any) {
           </div>
 
           {/* Code Container */}
-          <div className="w-full installation-welcome-banner">
+          <div className="w-full installation-welcome-banner min-w-0">
             <CodeContainer
               codeString={codeString}
               shouldOpenCustomization={shouldOpenCustomization}
