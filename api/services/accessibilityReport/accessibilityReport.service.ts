@@ -1,7 +1,8 @@
-import { Browserbase } from '@browserbasehq/sdk'
+import { Scrapeless } from '@scrapeless-ai/sdk'
 import fs from 'fs'
 import path from 'path'
 import puppeteer from 'puppeteer-core'
+import { getScrapelessScreenshotService } from '../scrapeless-screenshot.service'
 
 import { getAccessibilityInformationPally } from '../../helpers/accessibility.helper'
 import { formatUrlForScan, getRetryUrls } from '../../utils/domain.utils'
@@ -273,7 +274,7 @@ function mergeIssuesToOutput(issues: any[]): {
 }
 
 /**
- * Takes a screenshot of a given URL using Browserbase and puppeteer-core
+ * Takes a screenshot of a given URL using SCRAPELESS and puppeteer-core
  * @param url - The URL to take a screenshot of
  * @param options - Optional configuration for the screenshot
  * @returns Promise<string> - Base64 encoded screenshot data
@@ -335,22 +336,30 @@ export async function takeScreenshot(
   try {
     console.log(`📸 Starting screenshot capture for URL: ${url}`)
 
-    // Initialize Browserbase
-    const bb = new Browserbase({
-      apiKey: process.env.BROWSERBASE_API_KEY,
-    })
-
-    // Create a new session
-    session = await bb.sessions.create({
-      projectId: process.env.BROWSERBASE_PROJECT_ID!,
-      proxies: true,
-    })
-
     console.log('🔗 Connecting to remote browser...')
 
-    // Connect to the browser using puppeteer
+    // Validate API key before attempting connection
+    const apiKey = process.env.SCRAPELESS_API_KEY
+    if (!apiKey) {
+      throw new Error('SCRAPELESS_API_KEY environment variable is not set')
+    }
+    if (apiKey.trim() === '') {
+      throw new Error('SCRAPELESS_API_KEY environment variable is empty')
+    }
+
+    // Initialize SCRAPELESS client and create browser session
+    const client = new Scrapeless({
+      apiKey: apiKey,
+    })
+
+    const { browserWSEndpoint } = await client.browser.create({
+      sessionName: `screenshot-${Date.now()}`,
+      sessionTTL: 300, // 5 minutes
+    })
+
+    // Connect to the browser using Puppeteer
     browser = await puppeteer.connect({
-      browserWSEndpoint: session.connectUrl,
+      browserWSEndpoint: browserWSEndpoint,
     })
 
     // Get the first page or create a new one
@@ -379,11 +388,29 @@ export async function takeScreenshot(
 
     console.log(`🌐 Navigating to: ${url}`)
 
-    // Navigate to the URL with timeout
-    await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 30000,
-    })
+    // Navigate to the URL with increased timeout and more lenient wait strategy
+    try {
+      await page.goto(url, {
+        waitUntil: 'domcontentloaded', // More lenient than networkidle2
+        timeout: 60000, // Increased from 30000 to 60000 (60 seconds)
+      })
+    } catch (navError) {
+      // If navigation fails, try with load event as fallback
+      console.warn(`⚠️ Initial navigation failed, retrying with 'load' strategy...`)
+      try {
+        await page.goto(url, {
+          waitUntil: 'load',
+          timeout: 60000,
+        })
+      } catch (retryError) {
+        // If still fails, try with no wait strategy
+        console.warn(`⚠️ Load strategy failed, trying with minimal wait...`)
+        await page.goto(url, {
+          waitUntil: 'commit',
+          timeout: 60000,
+        })
+      }
+    }
 
     // Check for accessibility widget scripts
     console.log('🔍 Checking for accessibility widget scripts...')
@@ -401,7 +428,7 @@ export async function takeScreenshot(
     console.log('📷 Taking screenshot using CDP...')
 
     // Create a CDP session for faster screenshots
-    const client = await page.createCDPSession()
+    const cdpClient = await page.createCDPSession()
 
     // Remove DOM-based banners/modals
     const getModalSelectors = () => {
@@ -415,7 +442,7 @@ export async function takeScreenshot(
       }
     }, getModalSelectors())
     // Capture the screenshot using CDP
-    const { data } = await client.send('Page.captureScreenshot', {
+    const { data } = await cdpClient.send('Page.captureScreenshot', {
       format,
       quality: format === 'jpeg' ? quality : undefined,
       fullPage,
@@ -506,9 +533,6 @@ async function takeScreenshotWithWidgetDetection(
   const baseDelay = 1000
   const delay = Math.min(baseDelay * Math.pow(1.5, retryCount), 8000)
 
-  let browser: any = null
-  let session: any = null
-
   try {
     console.log(`📸 Taking screenshot with widget detection (attempt ${retryCount + 1}/${maxRetries + 1})...`)
 
@@ -519,41 +543,17 @@ async function takeScreenshotWithWidgetDetection(
       await new Promise((resolve) => setTimeout(resolve, jitter))
     }
 
-    // Initialize Browserbase
-    const bb = new Browserbase({
-      apiKey: process.env.BROWSERBASE_API_KEY,
-    })
+    // Use Web Unlocker API for screenshot AND widget detection (with ISP proxy support)
+    console.log('🔍 Using SCRAPELESS for screenshot and widget detection...')
+    const screenshotService = getScrapelessScreenshotService()
+    const result = await screenshotService.captureScreenshotWithWidgetDetection(domain)
 
-    // Create a new session
-    session = await bb.sessions.create({
-      projectId: process.env.BROWSERBASE_PROJECT_ID,
-    })
+    if (!result || !result.screenshot) {
+      throw new Error('Failed to capture screenshot')
+    }
 
-    console.log('🔗 Connecting to remote browser...')
-
-    // Connect to the browser using puppeteer
-    browser = await puppeteer.connect({
-      browserWSEndpoint: session.connectUrl,
-    })
-
-    // Get the first page or create a new one
-    const pages = await browser.pages()
-    const page = pages[0] || (await browser.newPage())
-
-    // Set viewport size
-    await page.setViewport({ width: 1920, height: 1080 })
-
-    console.log(`🌐 Navigating to: ${domain}`)
-
-    // Navigate to the URL with timeout
-    await page.goto(domain, {
-      waitUntil: 'networkidle2',
-      timeout: 30000,
-    })
-
-    // Check for accessibility widget scripts
-    console.log('🔍 Checking for accessibility widget scripts...')
-    const widgetDetection = await detectAccessibilityWidget(page)
+    const widgetDetection = result.widgetDetection
+    const screenshotBase64 = result.screenshot
 
     if (widgetDetection.found) {
       console.log('✅ Found accessibility widget scripts:')
@@ -564,26 +564,40 @@ async function takeScreenshotWithWidgetDetection(
       console.log('ℹ️  No accessibility widget scripts found on this page')
     }
 
-    console.log('📷 Taking screenshot using CDP...')
-
-    // Create a CDP session for faster screenshots
-    const client = await page.createCDPSession()
-
-    // Capture the screenshot using CDP
-    const { data } = await client.send('Page.captureScreenshot', {
-      format: 'jpeg',
-      quality: 80,
-      fullPage: true,
-    })
-
     console.log('✅ Screenshot captured successfully')
 
+    // Ensure screenshot has data URI prefix
+    const screenshotDataUri = screenshotBase64.startsWith('data:') 
+      ? screenshotBase64 
+      : `data:image/png;base64,${screenshotBase64}`
+
     return {
-      screenshot: `data:image/jpeg;base64,${data}`,
+      screenshot: screenshotDataUri,
       widgetDetection,
     }
   } catch (error) {
-    console.error(`❌ Screenshot attempt ${retryCount + 1} failed:`, error)
+    // Extract detailed error information
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace'
+    const errorType = error?.constructor?.name || typeof error
+    const errorDetails = error instanceof Error ? {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    } : error
+
+    console.error(`❌ Screenshot attempt ${retryCount + 1} failed:`)
+    console.error(`   Error Type: ${errorType}`)
+    console.error(`   Error Message: ${errorMessage}`)
+    console.error(`   Error Details:`, errorDetails)
+    if (errorStack && errorStack !== 'No stack trace') {
+      console.error(`   Stack Trace:`, errorStack)
+    }
+
+    // Check if it's an API key issue
+    if (errorMessage.includes('API') || errorMessage.includes('apiKey') || errorMessage.includes('authentication')) {
+      console.error(`   ⚠️ Possible API key issue. Check SCRAPELESS_API_KEY environment variable.`)
+    }
 
     if (retryCount < maxRetries) {
       console.log(`🔄 Retrying screenshot in ${Math.round(delay)}ms... (attempt ${retryCount + 2}/${maxRetries + 1})`)
@@ -595,16 +609,6 @@ async function takeScreenshotWithWidgetDetection(
     console.error('⚠️ All screenshot attempts failed, continuing with accessibility scan')
     console.log(`📊 Total retry attempts: ${maxRetries + 1} (including initial attempt)`)
     return null
-  } finally {
-    // Clean up resources
-    try {
-      if (browser) {
-        console.log('🔌 Closing browser connection...')
-        await browser.close()
-      }
-    } catch (cleanupError) {
-      console.error('⚠️ Error during cleanup:', cleanupError)
-    }
   }
 }
 // Internal function that does the actual work (without queue)
@@ -621,7 +625,7 @@ export const _fetchAccessibilityReportInternal = async (url: string, useCache?: 
       console.log('Formatted URL for scan:', formattedUrl)
 
       // Run both operations in parallel
-      const [accessibilityResult, BrowserbaseResult] = await Promise.all([getAccessibilityInformationPally(formattedUrl, useCache, fullSiteScan), takeScreenshotWithWidgetDetection(formattedUrl)])
+      const [accessibilityResult, ScrapelessResult] = await Promise.all([getAccessibilityInformationPally(formattedUrl, useCache, fullSiteScan), takeScreenshotWithWidgetDetection(formattedUrl)])
 
       let result: ResultWithOriginal = accessibilityResult
 
@@ -643,12 +647,12 @@ export const _fetchAccessibilityReportInternal = async (url: string, useCache?: 
         throw new Error('Failed to fetch accessibility report for all URL variations')
       }
 
-      if (BrowserbaseResult) {
-        result.siteImg = BrowserbaseResult.screenshot
+      if (ScrapelessResult) {
+        result.siteImg = ScrapelessResult.screenshot
         // Convert widgetDetection to string format
-        if (BrowserbaseResult.widgetDetection.found) {
+        if (ScrapelessResult.widgetDetection.found) {
           // Check if any script is from webability.io domain
-          const hasWebAbilityScript = BrowserbaseResult.widgetDetection.scripts.some((script) => script.url.includes('webability.io'))
+          const hasWebAbilityScript = ScrapelessResult.widgetDetection.scripts.some((script) => script.url.includes('webability.io'))
           result.scriptCheckResult = hasWebAbilityScript ? 'Web Ability' : 'true'
         } else {
           result.scriptCheckResult = 'false'
