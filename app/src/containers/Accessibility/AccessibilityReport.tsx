@@ -1349,6 +1349,12 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                       const timeAgo = (() => {
                         const now = new Date();
                         const diffInMs = now.getTime() - dateObj.getTime();
+                        
+                        // Handle future dates (due to time sync issues) by treating as "Just now"
+                        if (diffInMs < 0) {
+                          return 'Just now';
+                        }
+                        
                         const diffInMinutes = Math.floor(
                           diffInMs / (1000 * 60),
                         );
