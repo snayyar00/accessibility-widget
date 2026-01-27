@@ -72,10 +72,17 @@ function generateISPProxyURL(proxy: ISPProxy): string {
   const host = isIPv6 ? `[${proxy.ip}]` : proxy.ip
   return `http://${proxy.username}:${proxy.password}@${host}:${proxy.port}`
 }
+interface QueueTask {
+  url: string
+  resolve: (value: any) => void
+  reject: (error: Error) => void
+  withWidgetDetection: boolean
+}
+
 export class ScrapelessScreenshotService {
   private apiKey: string
   private ispProxies: Map<string, ISPProxy>
-  private requestQueue: Array<{ url: string; resolve: (value: any) => void; reject: (error: Error) => void }>
+  private requestQueue: Array<QueueTask>
   private isProcessing: boolean
   private processedCount: number
   private preventedCalls: number
@@ -122,7 +129,7 @@ export class ScrapelessScreenshotService {
 
     try {
       const html = await this.getHTMLWithWebUnlocker(
-        url,
+        normalizedUrl,
         hasISPForPreferred,
         hasISPForPreferred ? null : preferredCountry,
         hasISPForPreferred ? this.ispProxies.get(preferredCountry) : undefined,
@@ -137,7 +144,7 @@ export class ScrapelessScreenshotService {
 
     if (preferredCountry === 'DE' && this.ispProxies.has('US')) {
       try {
-        const html = await this.getHTMLWithWebUnlocker(url, true, null, this.ispProxies.get('US'))
+        const html = await this.getHTMLWithWebUnlocker(normalizedUrl, true, null, this.ispProxies.get('US'))
         if (html) return html
       } catch (error: any) {
         const errorMsg = error?.message || ''
@@ -148,7 +155,7 @@ export class ScrapelessScreenshotService {
     }
 
     try {
-      return await this.getHTMLWithWebUnlocker(url, false, null)
+      return await this.getHTMLWithWebUnlocker(normalizedUrl, false, null)
     } catch (error: any) {
       return null
     }
@@ -222,10 +229,15 @@ export class ScrapelessScreenshotService {
             throw new Error(`SCRAPELESS API error (code ${responseCode}): ${errorMsg}`)
           }
         } catch (parseError: any) {
+          // If JSON parsing fails or API error was thrown, re-throw to outer catch block
+          if (parseError.message && parseError.message.includes('SCRAPELESS API error')) {
+            throw parseError
+          }
+          // If it's a JSON parse error, continue to return raw HTML response below
         }
       }
       
-      return htmlResponse && htmlResponse.length > 100 ? htmlResponse : null
+      return htmlResponse || null
     } catch (error: any) {
       return null
     }
@@ -402,7 +414,7 @@ export class ScrapelessScreenshotService {
         }
 
         if (typeof screenshotData === 'string' && screenshotData.startsWith('data:image')) {
-          screenshotData = screenshotData.split(',', 1)[1]
+          screenshotData = screenshotData.split(',')[1]
         }
 
         if (typeof screenshotData === 'string') {
@@ -543,6 +555,7 @@ export class ScrapelessScreenshotService {
 
       this.requestQueue.push({
         url: normalizedUrl,
+        withWidgetDetection: true,
         resolve: (result) => {
           if (result) {
             resolve(result as any)
@@ -553,68 +566,64 @@ export class ScrapelessScreenshotService {
         reject,
       })
 
+      // Start processing if not already processing
+      // The processQueue method handles setting isProcessing flag internally to prevent race conditions
       if (!this.isProcessing) {
-        this.processQueueWithWidgetDetection().catch((error) => {
+        this.processQueue().catch((error) => {
           console.error('Queue processor error:', error)
+          this.isProcessing = false
         })
       }
     })
   }
 
-  // Processes queued screenshot+widget detection requests sequentially with rate limiting
-  private async processQueueWithWidgetDetection(): Promise<void> {
-    if (this.isProcessing) {
-      return
-    }
-
-    this.isProcessing = true
-
-    while (this.requestQueue.length > 0) {
-      const request = this.requestQueue.shift()
-      if (!request) break
-
-      try {
-        if (this.processedCount > 0) {
-          await new Promise((resolve) => setTimeout(resolve, this.minInterval))
-        }
-
-        const result = await this.captureSingleWithWidgetDetection(request.url)
-        this.processedCount++
-        request.resolve(result as any)
-      } catch (error) {
-        request.reject(error instanceof Error ? error : new Error(String(error)))
-      }
-    }
-
-    this.isProcessing = false
-  }
-
-  // Processes queued screenshot-only requests sequentially with rate limiting
+  // Processes queued requests sequentially with rate limiting, routing to appropriate handler based on task type
   private async processQueue(): Promise<void> {
+    // Double-check pattern: if already processing, exit (prevents race conditions)
     if (this.isProcessing) {
       return
     }
 
+    // Mark as processing before starting the loop
     this.isProcessing = true
 
-    while (this.requestQueue.length > 0) {
-      const request = this.requestQueue.shift()
-      if (!request) break
+    try {
+      while (this.requestQueue.length > 0) {
+        const request = this.requestQueue.shift()
+        if (!request) break
 
-      try {
-        if (this.processedCount > 0) {
-          await new Promise((resolve) => setTimeout(resolve, this.minInterval))
+        try {
+          if (this.processedCount > 0) {
+            await new Promise((resolve) => setTimeout(resolve, this.minInterval))
+          }
+
+          let result: any
+          if (request.withWidgetDetection) {
+            result = await this.captureSingleWithWidgetDetection(request.url)
+          } else {
+            result = await this.captureSingle(request.url)
+          }
+          
+          this.processedCount++
+          request.resolve(result)
+        } catch (error) {
+          request.reject(error instanceof Error ? error : new Error(String(error)))
         }
-
-        const result = await this.captureSingle(request.url)
-        this.processedCount++
-        request.resolve(result)
-      } catch (error) {
-        request.reject(error instanceof Error ? error : new Error(String(error)))
+      }
+    } finally {
+      // Always reset processing flag, even if an error occurs
+      this.isProcessing = false
+      
+      // If there are more items in queue after processing, start processing again
+      // This handles the case where new items were added while processing
+      if (this.requestQueue.length > 0) {
+        this.isProcessing = true
+        this.processQueue().catch((error) => {
+          console.error('Queue processor error (recursive):', error)
+          this.isProcessing = false
+        })
       }
     }
-
-    this.isProcessing = false
   }
 
   // Public method to capture screenshot only, queues requests for sequential processing
@@ -629,11 +638,14 @@ export class ScrapelessScreenshotService {
         return
       }
 
-      this.requestQueue.push({ url: normalizedUrl, resolve, reject })
+      this.requestQueue.push({ url: normalizedUrl, withWidgetDetection: false, resolve, reject })
 
+      // Start processing if not already processing
+      // The processQueue method handles setting isProcessing flag internally to prevent race conditions
       if (!this.isProcessing) {
         this.processQueue().catch((error) => {
           console.error('Queue processor error:', error)
+          this.isProcessing = false
         })
       }
     })

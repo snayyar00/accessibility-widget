@@ -132,8 +132,8 @@ function analyzeHTMLForTechStack(html: string, url: string): any {
     categorizedTechnologies,
     categories: categorizedTechnologies.map((cat) => cat.category),
     confidence,
-    platform: platform !== 'Unknown' ? platform : undefined,
-    platformType: platformType !== 'Unknown' ? platformType : undefined,
+    platform: platform,
+    platformType: platformType,
     accessibilityContext: {
       platform: platform !== 'Unknown' ? platform : 'Unknown',
       platform_type: platformType !== 'Unknown' ? platformType : 'Unknown',
@@ -178,7 +178,7 @@ function normalizeURL(url: string): string {
   // Validate URL format
   try {
     const urlObj = new URL(url)
-    return urlObj.toString()
+    return urlObj.toString().replace(/\/$/, '')
   } catch (error) {
     throw new Error(`Invalid URL format: ${url}`)
   }
@@ -309,7 +309,9 @@ async function fetchTechStackFromExternalAPI(url: string) {
 
     const transformedData = transformResponse(rawData.data as Record<string, unknown>)
 
-    const cacheKey = url
+    // Normalize URL for consistent cache key (same as primary function)
+    const normalizedUrl = normalizeURL(url)
+    const cacheKey = normalizedUrl
     cache.set(cacheKey, {
       data: transformedData,
       timestamp: Date.now(),

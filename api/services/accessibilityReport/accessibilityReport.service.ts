@@ -331,7 +331,6 @@ export async function takeScreenshot(
   const { format = 'jpeg', quality = 80, fullPage = false, width = 1920, height = 1080 } = options
 
   let browser: any = null
-  let session: any = null
 
   try {
     console.log(`📸 Starting screenshot capture for URL: ${url}`)
@@ -651,8 +650,17 @@ export const _fetchAccessibilityReportInternal = async (url: string, useCache?: 
         result.siteImg = ScrapelessResult.screenshot
         // Convert widgetDetection to string format
         if (ScrapelessResult.widgetDetection.found) {
-          // Check if any script is from webability.io domain
-          const hasWebAbilityScript = ScrapelessResult.widgetDetection.scripts.some((script) => script.url.includes('webability.io'))
+          // Check if any script is from webability.io domain (exact host or subdomain)
+          const hasWebAbilityScript = ScrapelessResult.widgetDetection.scripts.some((script) => {
+            try {
+              const parsed = new URL(script.url)
+              const hostname = parsed.hostname.toLowerCase()
+              return hostname === 'webability.io' || hostname.endsWith('.webability.io')
+            } catch {
+              // If URL is invalid, treat it as not matching
+              return false
+            }
+          })
           result.scriptCheckResult = hasWebAbilityScript ? 'Web Ability' : 'true'
         } else {
           result.scriptCheckResult = 'false'

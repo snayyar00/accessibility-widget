@@ -278,7 +278,7 @@ export class BrowserbaseService {
 
       if (!html || html.length < 100) {
         console.error('[SCRAPELESS] No HTML content found')
-        console.error('[SCRAPELESS] Response preview:', html.substring(0, 200))
+        console.error('[SCRAPELESS] Response preview:', html ? html.substring(0, 200) : 'null or undefined')
         throw new Error('No HTML content found in response')
       }
 
