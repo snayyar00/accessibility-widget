@@ -69,6 +69,7 @@ const languages = [
   { code: 'hi', name: 'हिन्दी', englishName: 'Hindi' },
   { code: 'hr', name: 'Hrvatski', englishName: 'Croatian' },
   { code: 'hu', name: 'Magyar', englishName: 'Hungarian' },
+  { code: 'is', name: 'Íslenska', englishName: 'Icelandic' },
   { code: 'id', name: 'Bahasa Indonesia', englishName: 'Indonesian' },
   { code: 'it', name: 'Italiano', englishName: 'Italian' },
   { code: 'ja', name: '日本語', englishName: 'Japanese' },
