@@ -1,4 +1,4 @@
-import { Browserbase } from '@browserbasehq/sdk'
+import { Scrapeless } from '@scrapeless-ai/sdk'
 import puppeteer from 'puppeteer-core'
 
 export interface ScrapeResult {
@@ -11,210 +11,237 @@ export interface ScrapeResult {
   }
 }
 
+/**
+ * ISP Proxy Configuration
+ */
+interface ISPProxy {
+  ip: string
+  port: number
+  username: string
+  password: string
+  country: string
+}
+
+/**
+ * Load ISP proxies from environment variables
+ */
+function loadISPProxiesFromEnv(): Map<string, ISPProxy> {
+  const proxies = new Map<string, ISPProxy>()
+
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith('ISP_PROXY_')) {
+      const country = key.replace('ISP_PROXY_', '').toUpperCase()
+      const parts = value?.split(':')
+
+      if (parts && parts.length === 4) {
+        const [ip, port, username, password] = parts
+        const portNum = parseInt(port, 10)
+
+        if (!isNaN(portNum) && ip && username && password) {
+          proxies.set(country, {
+            ip,
+            port: portNum,
+            username,
+            password,
+            country,
+          })
+        }
+      }
+    }
+  }
+
+  return proxies
+}
+
+/**
+ * Determine preferred country based on URL TLD
+ */
+function getPreferredCountryFromURL(url: string): string {
+  try {
+    const urlObj = new URL(url)
+    const hostname = urlObj.hostname.toLowerCase()
+
+    // Check for .de domain
+    if (hostname.endsWith('.de') || hostname.includes('.de.')) {
+      return 'DE'
+    }
+
+    // Check for US domains
+    if (
+      hostname.endsWith('.com') ||
+      hostname.endsWith('.org') ||
+      hostname.endsWith('.net') ||
+      hostname.endsWith('.us') ||
+      hostname.endsWith('.edu') ||
+      hostname.endsWith('.gov') ||
+      hostname.endsWith('.io')
+    ) {
+      return 'US'
+    }
+
+    // Default to US
+    return 'US'
+  } catch {
+    return 'US'
+  }
+}
+
+/**
+ * Generate ISP proxy URL
+ */
+function generateISPProxyURL(proxy: ISPProxy): string {
+  // Handle IPv6 addresses
+  const isIPv6 = proxy.ip.includes(':')
+  const host = isIPv6 ? `[${proxy.ip}]` : proxy.ip
+  return `http://${proxy.username}:${proxy.password}@${host}:${proxy.port}`
+}
+
+/**
+ * Normalize and validate URL
+ */
+function normalizeURL(url: string): string {
+  if (!url) {
+    throw new Error('URL is required')
+  }
+
+  // Remove whitespace
+  url = url.trim()
+
+  // Add protocol if missing
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`
+  }
+
+  // Validate URL format
+  try {
+    const urlObj = new URL(url)
+    return urlObj.toString()
+  } catch (error) {
+    throw new Error(`Invalid URL format: ${url}`)
+  }
+}
+
 export class BrowserbaseService {
   private apiKey: string
-  private projectId: string
-  private browserbase: Browserbase
+  private client: Scrapeless
+  private ispProxies: Map<string, ISPProxy>
 
   constructor() {
-    this.apiKey = process.env.BROWSERBASE_API_KEY || ''
-    this.projectId = process.env.BROWSERBASE_PROJECT_ID || ''
-    // console.log('[BROWSERBASE] Initializing service...')
-    // console.log('[BROWSERBASE] API Key found:', !!this.apiKey)
-    // console.log('[BROWSERBASE] Project ID found:', !!this.projectId)
-    // console.log('[BROWSERBASE] API Key preview:', this.apiKey ? this.apiKey.substring(0, 10) + '...' : 'No API key')
-    // console.log('[BROWSERBASE] Project ID:', this.projectId)
+    this.apiKey = process.env.SCRAPELESS_API_KEY || ''
 
     if (!this.apiKey) {
-      console.error('[BROWSERBASE] No API key found in environment variables')
-      throw new Error('BROWSERBASE_API_KEY environment variable is required')
-    }
-    if (!this.projectId) {
-      console.error('[BROWSERBASE] No project ID found in environment variables')
-      throw new Error('BROWSERBASE_PROJECT_ID environment variable is required')
+      console.error('[SCRAPELESS] No API key found in environment variables')
+      throw new Error('SCRAPELESS_API_KEY environment variable is required')
     }
 
-    // Initialize Browserbase SDK
-    this.browserbase = new Browserbase({
+    // Initialize SCRAPELESS client
+    this.client = new Scrapeless({
       apiKey: this.apiKey,
     })
 
-    //  console.log('[BROWSERBASE] Service initialized successfully with SDK')
+    // Load ISP proxies
+    this.ispProxies = loadISPProxiesFromEnv()
+    
+    if (this.ispProxies.size > 0) {
+      console.log(`[SCRAPELESS] Loaded ${this.ispProxies.size} ISP proxies: [${Array.from(this.ispProxies.keys()).join(', ')}]`)
+    }
   }
 
   async scrapeUrl(url: string): Promise<ScrapeResult> {
-    let sessionId: string | null = null
+    // Normalize URL first
+    const normalizedUrl = normalizeURL(url)
+    const preferredCountry = getPreferredCountryFromURL(normalizedUrl)
+    const hasISPForPreferred = this.ispProxies.has(preferredCountry)
+
+    // Try with ISP proxy first, then residential, then default
+    let browser: any = null
+    let lastError: Error | null = null
+
+    // Strategy 1: Try preferred country (ISP or residential)
+    if (hasISPForPreferred || preferredCountry) {
+      try {
+        console.log(`[SCRAPELESS] Trying with ${hasISPForPreferred ? `ISP (${preferredCountry})` : `residential (${preferredCountry})`} proxy...`)
+        return await this.scrapeWithProxy(normalizedUrl, hasISPForPreferred, hasISPForPreferred ? null : preferredCountry, hasISPForPreferred ? this.ispProxies.get(preferredCountry) : undefined)
+      } catch (error: any) {
+        const errorMsg = error?.message || ''
+        if (errorMsg.includes('Insufficient balance')) {
+          throw error
+        }
+        lastError = error
+        console.warn(`[SCRAPELESS] ${hasISPForPreferred ? `ISP (${preferredCountry})` : `Residential (${preferredCountry})`} attempt failed, falling back...`)
+      }
+    }
+
+    // Strategy 2: If DE failed, try US ISP proxy
+    if (preferredCountry === 'DE' && this.ispProxies.has('US')) {
+      try {
+        console.log('[SCRAPELESS] Trying with ISP (US) fallback...')
+        return await this.scrapeWithProxy(normalizedUrl, true, null, this.ispProxies.get('US'))
+      } catch (error: any) {
+        const errorMsg = error?.message || ''
+        if (errorMsg.includes('Insufficient balance')) {
+          throw error
+        }
+        lastError = error
+        console.warn('[SCRAPELESS] ISP (US) attempt failed, falling back...')
+      }
+    }
+
+    // Strategy 3: Fallback to default (no proxy)
+    try {
+      console.log('[SCRAPELESS] Trying with default (no proxy)...')
+      return await this.scrapeWithProxy(normalizedUrl, false, null)
+    } catch (error: any) {
+      const errorMsg = error?.message || ''
+      if (errorMsg.includes('Insufficient balance')) {
+        throw error
+      }
+      lastError = error
+      console.error('[SCRAPELESS] All proxy strategies failed')
+      throw lastError || error
+    }
+  }
+
+  private async scrapeWithProxy(
+    url: string,
+    useISPProxy: boolean,
+    proxyCountry: string | null,
+    ispProxy?: ISPProxy,
+  ): Promise<ScrapeResult> {
+    let browser: any = null
 
     try {
-      // console.log(`[BROWSERBASE] Scraping URL: ${url}`)
-      // console.log(`[BROWSERBASE] Using API key: ${this.apiKey.substring(0, 10)}...`)
+      if (!this.apiKey || this.apiKey.trim() === '') {
+        throw new Error('SCRAPELESS_API_KEY is not set or is empty')
+      }
 
-      // Create a new session
-      //  console.log(`[BROWSERBASE] Creating new session...`)
-      const session = await this.browserbase.sessions.create({
-        projectId: this.projectId,
+      // Build proxy configuration
+      const proxyConfig: any = {}
+      if (useISPProxy && ispProxy) {
+        proxyConfig.url = generateISPProxyURL(ispProxy)
+        console.log(`[SCRAPELESS] Using ISP proxy for ${ispProxy.country}`)
+      } else if (proxyCountry) {
+        proxyConfig.country = proxyCountry
+        console.log(`[SCRAPELESS] Using residential proxy for country: ${proxyCountry}`)
+      }
+
+      // Create a browser session with SCRAPELESS
+      const { browserWSEndpoint } = await this.client.browser.create({
+        sessionName: `scrape-${Date.now()}`,
+        sessionTTL: 300, // 5 minutes
+        ...proxyConfig, // Include proxy configuration
       })
 
-      sessionId = session.id
-      // console.log(`[BROWSERBASE] Session created: ${sessionId}`)
-      // console.log(`[BROWSERBASE] Session object:`, JSON.stringify(session, null, 2))
-
-      // Check for various possible WebSocket endpoint properties
-      const sessionAny = session as any
-      let wsEndpoint = sessionAny.webSocketDebuggerUrl || sessionAny.browserWSEndpoint || sessionAny.wsUrl || sessionAny.websocketUrl || sessionAny.browserUrl || sessionAny.endpoint
-
-      // If no direct WebSocket endpoint, try to construct it from connectUrl
-      if (!wsEndpoint && sessionAny.connectUrl) {
-        const connectUrl = sessionAny.connectUrl
-        // console.log(`[BROWSERBASE] Found connectUrl: ${connectUrl}`)
-        // console.log(`[BROWSERBASE] connectUrl type:`, typeof connectUrl)
-
-        // Try different approaches to construct the WebSocket endpoint
-        if (connectUrl && typeof connectUrl === 'string') {
-          if (connectUrl.startsWith('wss://')) {
-            // Approach 1: Direct use of connectUrl
-            wsEndpoint = connectUrl
-            //  console.log(`[BROWSERBASE] Using connectUrl directly as WebSocket endpoint: ${wsEndpoint}`)
-          } else if (connectUrl.startsWith('ws://')) {
-            // Approach 2: Convert ws:// to wss://
-            wsEndpoint = connectUrl.replace('ws://', 'wss://')
-            //  console.log(`[BROWSERBASE] Converted ws:// to wss://: ${wsEndpoint}`)
-          } else {
-            // Approach 3: Try to construct from session ID
-            const sessionIdFromUrl = connectUrl.split('/').pop()
-            wsEndpoint = `wss://connect.browserbase.com/sessions/${sessionIdFromUrl}`
-            // console.log(`[BROWSERBASE] Constructed WebSocket endpoint from session ID: ${wsEndpoint}`)
-          }
-        }
-      }
-
-      // console.log(`[BROWSERBASE] Available session properties:`, Object.keys(session))
-      // console.log(`[BROWSERBASE] WebSocket endpoint found: ${wsEndpoint}`)
-
-      let finalWsEndpoint = wsEndpoint
-
-      if (!wsEndpoint) {
-        console.error(`[BROWSERBASE] No WebSocket endpoint found. Available properties:`, Object.keys(session))
-        //  console.log(`[BROWSERBASE] Full session object:`, session)
-
-        // Try to get the session details again after a short wait
-        //  console.log(`[BROWSERBASE] Waiting for session to be ready...`)
-        await new Promise((resolve) => setTimeout(resolve, 3000))
-
-        try {
-          const sessionDetails = await this.browserbase.sessions.retrieve(sessionId)
-          //   console.log(`[BROWSERBASE] Session details after wait:`, JSON.stringify(sessionDetails, null, 2))
-
-          const sessionDetailsAny = sessionDetails as any
-          let wsEndpointRetry = sessionDetailsAny.webSocketDebuggerUrl || sessionDetailsAny.browserWSEndpoint || sessionDetailsAny.wsUrl || sessionDetailsAny.websocketUrl || sessionDetailsAny.browserUrl || sessionDetailsAny.endpoint
-
-          // If no direct WebSocket endpoint, try to construct it from connectUrl
-          if (!wsEndpointRetry && sessionDetailsAny.connectUrl) {
-            const connectUrl = sessionDetailsAny.connectUrl
-            //   console.log(`[BROWSERBASE] Found connectUrl in retry: ${connectUrl}`)
-
-            if (connectUrl && typeof connectUrl === 'string') {
-              if (connectUrl.startsWith('wss://')) {
-                wsEndpointRetry = connectUrl
-                //   console.log(`[BROWSERBASE] Using connectUrl directly in retry: ${wsEndpointRetry}`)
-              } else if (connectUrl.startsWith('ws://')) {
-                wsEndpointRetry = connectUrl.replace('ws://', 'wss://')
-                //   console.log(`[BROWSERBASE] Converted ws:// to wss:// in retry: ${wsEndpointRetry}`)
-              } else {
-                const sessionIdFromUrl = connectUrl.split('/').pop()
-                wsEndpointRetry = `wss://connect.browserbase.com/sessions/${sessionIdFromUrl}`
-                //  console.log(`[BROWSERBASE] Constructed WebSocket endpoint in retry: ${wsEndpointRetry}`)
-              }
-            }
-          }
-
-          if (wsEndpointRetry) {
-            //   console.log(`[BROWSERBASE] WebSocket endpoint found after retry: ${wsEndpointRetry}`)
-            finalWsEndpoint = wsEndpointRetry
-          } else {
-            throw new Error('No WebSocket endpoint found even after retry. Available properties: ' + Object.keys(sessionDetails).join(', '))
-          }
-        } catch (retryError) {
-          console.error(`[BROWSERBASE] Retry failed:`, retryError)
-
-          // Final fallback: try to get session details via REST API
-          //  console.log(`[BROWSERBASE] Trying REST API fallback to get session details...`)
-          try {
-            const restResponse = await fetch(`https://api.browserbase.com/v1/sessions/${sessionId}`, {
-              method: 'GET',
-              headers: {
-                'x-bb-api-key': this.apiKey,
-              },
-            })
-
-            if (restResponse.ok) {
-              const restSessionData = await restResponse.json()
-              //   console.log(`[BROWSERBASE] REST API session data:`, JSON.stringify(restSessionData, null, 2))
-
-              const restSessionDataAny = restSessionData as any
-              let restWsEndpoint = restSessionDataAny.webSocketDebuggerUrl || restSessionDataAny.browserWSEndpoint || restSessionDataAny.wsUrl || restSessionDataAny.websocketUrl || restSessionDataAny.browserUrl || restSessionDataAny.endpoint
-
-              // If no direct WebSocket endpoint, try to construct it from connectUrl
-              if (!restWsEndpoint && restSessionDataAny.connectUrl) {
-                const connectUrl = restSessionDataAny.connectUrl
-                //  console.log(`[BROWSERBASE] Found connectUrl in REST API: ${connectUrl}`)
-
-                if (connectUrl && typeof connectUrl === 'string') {
-                  if (connectUrl.startsWith('wss://')) {
-                    restWsEndpoint = connectUrl
-                    //    console.log(`[BROWSERBASE] Using connectUrl directly via REST API: ${restWsEndpoint}`)
-                  } else if (connectUrl.startsWith('ws://')) {
-                    restWsEndpoint = connectUrl.replace('ws://', 'wss://')
-                    //   console.log(`[BROWSERBASE] Converted ws:// to wss:// via REST API: ${restWsEndpoint}`)
-                  } else {
-                    const sessionIdFromUrl = connectUrl.split('/').pop()
-                    restWsEndpoint = `wss://connect.browserbase.com/sessions/${sessionIdFromUrl}`
-                    //  console.log(`[BROWSERBASE] Constructed WebSocket endpoint via REST API: ${restWsEndpoint}`)
-                  }
-                }
-              }
-
-              if (restWsEndpoint) {
-                //  console.log(`[BROWSERBASE] WebSocket endpoint found via REST API: ${restWsEndpoint}`)
-                finalWsEndpoint = restWsEndpoint
-              } else {
-                throw new Error('No WebSocket endpoint found via REST API either. Available properties: ' + Object.keys(restSessionData).join(', '))
-              }
-            } else {
-              throw new Error(`REST API failed: ${restResponse.status} - ${await restResponse.text()}`)
-            }
-          } catch (restError) {
-            throw new Error('No WebSocket endpoint found in session response. Available properties: ' + Object.keys(session).join(', ') + '. Retry error: ' + retryError + '. REST API error: ' + restError)
-          }
-        }
-      }
-
-      // Connect Puppeteer to the session
-      // console.log(`[BROWSERBASE] Connecting Puppeteer to session...`)
-      // console.log(`[BROWSERBASE] Using WebSocket endpoint: ${finalWsEndpoint}`)
-
-      let browser
-      try {
-        browser = await puppeteer.connect({
-          browserWSEndpoint: finalWsEndpoint,
-        })
-        //  console.log(`[BROWSERBASE] Successfully connected to browser via Puppeteer`)
-      } catch (puppeteerError) {
-        console.error(`[BROWSERBASE] Puppeteer connection failed:`, puppeteerError)
-        console.error(`[BROWSERBASE] Puppeteer error type:`, typeof puppeteerError)
-        console.error(`[BROWSERBASE] Puppeteer error details:`, JSON.stringify(puppeteerError, null, 2))
-
-        const errorMessage = puppeteerError instanceof Error ? puppeteerError.message : typeof puppeteerError === 'object' ? JSON.stringify(puppeteerError) : String(puppeteerError)
-
-        throw new Error(`Failed to connect to browser via Puppeteer: ${errorMessage}`)
-      }
+      // Connect to the browser using Puppeteer
+      browser = await puppeteer.connect({
+        browserWSEndpoint: browserWSEndpoint,
+      })
 
       let page
       try {
         page = await browser.newPage()
-        // console.log(`[BROWSERBASE] Successfully created new page`)
       } catch (pageError) {
-        console.error(`[BROWSERBASE] Failed to create new page:`, pageError)
+        console.error(`[SCRAPELESS] Failed to create new page:`, pageError)
         throw new Error(`Failed to create new page: ${pageError instanceof Error ? pageError.message : String(pageError)}`)
       }
 
@@ -222,23 +249,20 @@ export class BrowserbaseService {
       try {
         await page.setViewport({ width: 1920, height: 1080 })
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-        // console.log(`[BROWSERBASE] Successfully set viewport and user agent`)
       } catch (configError) {
-        console.error(`[BROWSERBASE] Failed to configure page:`, configError)
+        console.error(`[SCRAPELESS] Failed to configure page:`, configError)
         throw new Error(`Failed to configure page: ${configError instanceof Error ? configError.message : String(configError)}`)
       }
 
       // Navigate to the URL
-      // console.log(`[BROWSERBASE] Navigating to: ${url}`)
       let response
       try {
         response = await page.goto(url, {
-          waitUntil: 'domcontentloaded', // Changed from 'networkidle2' to 'domcontentloaded'
-          timeout: 60000, // Increased from 30000 to 60000 (60 seconds)
+          waitUntil: 'domcontentloaded',
+          timeout: 60000, // 60 seconds
         })
-        //  console.log(`[BROWSERBASE] Navigation completed`)
       } catch (navError) {
-        console.error(`[BROWSERBASE] Navigation failed:`, navError)
+        console.error(`[SCRAPELESS] Navigation failed:`, navError)
         throw new Error(`Failed to navigate to URL: ${navError instanceof Error ? navError.message : String(navError)}`)
       }
 
@@ -246,40 +270,27 @@ export class BrowserbaseService {
         throw new Error('Failed to navigate to URL - no response received')
       }
 
-      //console.log(`[BROWSERBASE] Navigation successful, status: ${response.status()}`)
-
       // Wait a bit for any dynamic content to load
       await new Promise((resolve) => setTimeout(resolve, 2000))
 
       // Get the rendered HTML content
-      //console.log(`[BROWSERBASE] Extracting HTML content...`)
       const html = await page.content()
-      //console.log(`[BROWSERBASE] HTML content length: ${html.length}`)
 
       if (!html || html.length < 100) {
-        console.error('[BROWSERBASE] No HTML content found')
-        console.error('[BROWSERBASE] Response preview:', html.substring(0, 200))
+        console.error('[SCRAPELESS] No HTML content found')
+        console.error('[SCRAPELESS] Response preview:', html ? html.substring(0, 200) : 'null or undefined')
         throw new Error('No HTML content found in response')
       }
 
       // Extract metadata using Puppeteer
       const title = await page.title()
-      const description = await page.$eval('meta[name="description"]', (el) => el.getAttribute('content')).catch(() => '')
-
-      // console.log(`[BROWSERBASE] Successfully scraped ${url} using Browserbase SDK`)
-      //console.log(`[BROWSERBASE] Page title: "${title}"`)
-      //console.log(`[BROWSERBASE] Page description: "${description}"`)
+      const description = await page.$eval('meta[name="description"]', (el: any) => el.getAttribute('content')).catch(() => '')
 
       // Close the page and browser
       await page.close()
       await browser.close()
 
-      // Update session status to release it
-      // console.log(`[BROWSERBASE] Releasing session...`)
-      await this.browserbase.sessions.update(sessionId, {
-        projectId: this.projectId,
-        status: 'REQUEST_RELEASE',
-      })
+      console.log(`[SCRAPELESS] Successfully scraped ${url} using ${useISPProxy && ispProxy ? `ISP (${ispProxy.country})` : proxyCountry ? `residential (${proxyCountry})` : 'default'} proxy`)
 
       const result = {
         html,
@@ -291,34 +302,19 @@ export class BrowserbaseService {
         },
       }
 
-      // console.log(`[BROWSERBASE] Final result:`, {
-      //   htmlLength: result.html.length,
-      //   metadata: result.metadata,
-      //   hasTitle: !!result.metadata.title,
-      //   hasDescription: !!result.metadata.description,
-      // })
-
       return result
     } catch (error) {
-      console.error('Browserbase scrape error:', error)
-      console.error('Error type:', typeof error)
-      console.error('Error constructor:', error?.constructor?.name)
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
-
-      // Clean up session if it was created
-      if (sessionId) {
+      // Clean up browser if it was created
+      if (browser) {
         try {
-          //   console.log(`[BROWSERBASE] Cleaning up session: ${sessionId}`)
-          // Note: Session cleanup is handled by the session.close() call above
+          await browser.close()
         } catch (cleanupError) {
-          console.warn(`[BROWSERBASE] Failed to cleanup session: ${cleanupError}`)
+          console.warn(`[SCRAPELESS] Failed to cleanup browser: ${cleanupError}`)
         }
       }
 
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      const errorDetails = error instanceof Error ? error.stack : 'No stack trace available'
-
-      throw new Error(`Failed to scrape website: ${errorMessage}. Details: ${errorDetails}`)
+      // Re-throw error to be handled by fallback strategy
+      throw error
     }
   }
 
@@ -334,11 +330,11 @@ export class BrowserbaseService {
 
   async scrapeMarkdown(url: string): Promise<string> {
     try {
-      //  console.log(`[BROWSERBASE] Starting markdown scrape for: ${url}`)
+      //  console.log(`[SCRAPELESS] Starting markdown scrape for: ${url}`)
       const result = await this.scrapeUrl(url)
       const html = result.html
 
-      //  console.log(`[BROWSERBASE] Converting HTML to markdown, HTML length: ${html.length}`)
+      //  console.log(`[SCRAPELESS] Converting HTML to markdown, HTML length: ${html.length}`)
 
       // Simple HTML to markdown conversion
       const markdown = html
@@ -364,23 +360,23 @@ export class BrowserbaseService {
         .replace(/\n\s*\n\s*\n/g, '\n\n')
         .trim()
 
-      // console.log(`[BROWSERBASE] Markdown conversion completed, markdown length: ${markdown.length}`)
-      // console.log(`[BROWSERBASE] Markdown preview (first 200 chars):`, markdown.substring(0, 200))
+      // console.log(`[SCRAPELESS] Markdown conversion completed, markdown length: ${markdown.length}`)
+      // console.log(`[SCRAPELESS] Markdown preview (first 200 chars):`, markdown.substring(0, 200))
 
       return markdown
     } catch (error) {
-      console.error('Browserbase markdown scrape error:', error)
+      console.error('SCRAPELESS markdown scrape error:', error)
       throw new Error(`Failed to scrape markdown: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
   async checkFileExists(url: string): Promise<{ exists: boolean; content?: string; statusCode?: number }> {
     try {
-      //    console.log(`[BROWSERBASE] Checking if file exists: ${url}`)
+      //    console.log(`[SCRAPELESS] Checking if file exists: ${url}`)
       const result = await this.scrapeUrl(url)
       const exists = result.metadata.statusCode === 200
 
-      // console.log(`[BROWSERBASE] File check result:`, {
+      // console.log(`[SCRAPELESS] File check result:`, {
       //   url,
       //   exists,
       //   statusCode: result.metadata.statusCode,
@@ -393,7 +389,7 @@ export class BrowserbaseService {
         statusCode: result.metadata.statusCode,
       }
     } catch (error) {
-      //  console.log(`[BROWSERBASE] File check failed for ${url}:`, error)
+      //  console.log(`[SCRAPELESS] File check failed for ${url}:`, error)
       return {
         exists: false,
         statusCode: 404,
@@ -407,7 +403,7 @@ let serviceInstance: BrowserbaseService | null = null
 
 export function getBrowserbaseService(): BrowserbaseService {
   if (!serviceInstance) {
-    //  console.log('[BROWSERBASE] Creating new service instance...')
+    //  console.log('[SCRAPELESS] Creating new service instance...')
     serviceInstance = new BrowserbaseService()
   }
   return serviceInstance
