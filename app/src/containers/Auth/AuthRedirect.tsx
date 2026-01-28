@@ -11,8 +11,15 @@ const AuthRedirect: React.FC = () => {
     const token = params.get('token');
 
     if (token) {
-      setAuthenticationCookie(token);
-      window.location.replace('/');
+      // Basic token validation: JWT tokens are base64url encoded and have 3 parts separated by dots
+      const tokenParts = token.split('.');
+      if (tokenParts.length === 3 && token.length > 50 && token.length < 2000) {
+        setAuthenticationCookie(token);
+        window.location.replace('/');
+      } else {
+        // Invalid token format, redirect to sign in
+        history.replace('/auth/signin');
+      }
     } else {
       history.replace('/auth/signin');
     }
