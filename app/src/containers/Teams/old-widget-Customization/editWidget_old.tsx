@@ -1,5 +1,4 @@
 import type React from 'react';
-import AccessibilityMenu from './MenuPreview_old';
 import CustomizeWidget from './CustomizeWidget_old';
 import { useEffect, useState, useRef } from 'react';
 import { CircularProgress } from '@mui/material';
@@ -722,77 +721,44 @@ const AccessibilityWidgetPage: React.FC<any> = ({
         customStyles={defaultTourStyles}
       />
 
-      <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto max-w-7xl">
-          <header className="customize-widget-header mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
+      <div>
+        {/* Site Selector Header - matches new widget layout */}
+        <div className="px-6 py-4 customize-widget-header">
+          <div className="flex flex-col sm:flex-col md:flex-row items-start sm:items-start md:items-center justify-between gap-3 sm:gap-3 md:gap-0">
+            <h1 className="text-2xl font-bold text-gray-900">
               {selectedSite != SITE_SELECTOR_TEXT
-                ? selectedSite + "'s Widget Customization"
+                ? selectedSite + "'s Old Widget Customization"
                 : 'Select a Domain to Customize from the Side Bar'}
             </h1>
-          </header>
-
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div className="widget-preview-section rounded-lg bg-white p-6 shadow-md">
-              <h2 className="mb-4 text-xl font-semibold text-gray-800">
-                Widget Preview
-              </h2>
-              <div className="border border-gray-100 p-4 rounded-md">
-                <AccessibilityMenu
-                  selectedFont={selectedFont}
-                  colors={colors}
-                  toggles={toggles}
-                />
-              </div>
-            </div>
-            <div className="widget-customization-section rounded-lg bg-white p-6 shadow-md">
-              <div className="flex justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Choose your settings
-                </h2>
-                {selectedSite != '' && selectedSite != SITE_SELECTOR_TEXT && (
-                  <button
-                    onClick={() => setIsCopyModalOpen(true)}
-                    disabled={buttonDisable}
-                    className="w-fit px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center gap-2"
-                  >
-                    <Settings size={16} />
-                    Copy Customization
-                  </button>
-                )}
-              </div>
-
-              <div className="border border-gray-100 p-4 rounded-md">
-                <CustomizeWidget
-                  toggles={toggles}
-                  setToggles={setToggles}
-                  colors={colors}
-                  setColors={setColors}
-                  font={fonts}
-                  selectedFont={selectedFont}
-                  setSelectedFont={setSelectedFont}
-                  DefaultColors={DefaultColors}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="save-reset-buttons mt-8 flex flex-col justify-center w-full space-y-4">
-            <button
-              onClick={handleSave}
-              disabled={buttonDisable}
-              className="w-full px-4 py-2 border border-transparent rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Save
-            </button>
-            <button
-              disabled={buttonDisable}
-              onClick={resetAll}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Reset
-            </button>
+            {selectedSite != '' && selectedSite != SITE_SELECTOR_TEXT && (
+              <button
+                onClick={() => setIsCopyModalOpen(true)}
+                disabled={buttonDisable}
+                className="px-4 py-2 border border-transparent rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] flex items-center gap-2 w-full sm:w-auto md:w-auto copy-customization-button"
+                style={{ backgroundColor: '#0052CC' }}
+              >
+                <Settings size={16} />
+                Copy Customization
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Main Content - CustomizeWidget contains full layout like new widget */}
+        <CustomizeWidget
+          toggles={toggles}
+          setToggles={setToggles}
+          colors={colors}
+          setColors={setColors}
+          font={fonts}
+          selectedFont={selectedFont}
+          setSelectedFont={setSelectedFont}
+          DefaultColors={DefaultColors}
+          onSave={handleSave}
+          onReset={resetAll}
+          buttonDisable={buttonDisable}
+          selectedSite={selectedSite}
+        />
       </div>
 
       <CopyCustomizationModal
