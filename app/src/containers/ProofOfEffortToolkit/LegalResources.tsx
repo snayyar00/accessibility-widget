@@ -267,7 +267,7 @@ const LegalResources: React.FC = () => {
 
   return (
     <div 
-      className="mb-12 p-6 rounded-xl border-2 shadow-sm transition-all duration-300 hover:shadow-md w-full"
+      className="poe-legal-resources-section mb-12 p-6 rounded-xl border-2 shadow-sm transition-all duration-300 hover:shadow-md w-full"
       style={{ 
         backgroundColor: baseColors.blueSection,
         borderColor: baseColors.cardBorderPurple,
@@ -275,7 +275,7 @@ const LegalResources: React.FC = () => {
     >
       <div className="w-full">
         {/* Tabs */}
-        <div className="mb-8 border-b" style={{ borderColor: baseColors.cardBorderPurple }}>
+        <div className="poe-legal-resources-tabs mb-8 border-b" style={{ borderColor: baseColors.cardBorderPurple }}>
           <div className="flex space-x-8">
             <button
               onClick={() => setActiveLegalTab('response-documents')}
