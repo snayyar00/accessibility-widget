@@ -727,7 +727,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           <div className="flex flex-col sm:flex-col md:flex-row items-start sm:items-start md:items-center justify-between gap-3 sm:gap-3 md:gap-0">
             <h1 className="text-2xl font-bold text-gray-900">
               {selectedSite != SITE_SELECTOR_TEXT
-                ? selectedSite + "'s Widget Customization"
+                ? selectedSite + "'s Old Widget Customization"
                 : 'Select a Domain to Customize from the Side Bar'}
             </h1>
             {selectedSite != '' && selectedSite != SITE_SELECTOR_TEXT && (
