@@ -723,7 +723,15 @@ const AccessibilityMenu: React.FC<AccessibilityMenuProps> = ({
           </button>
         </div>
 
-        {organization?.logo_url ? (
+        {colors.logoImage && colors.logoImage.length > 0 ? (
+          <img
+            width={198}
+            height={47}
+            src={colors.logoImage}
+            alt="Widget Logo"
+            style={{ maxWidth: '198px', maxHeight: '47px', objectFit: 'contain' }}
+          />
+        ) : organization?.logo_url ? (
           <img
             width={198}
             height={47}
