@@ -24,6 +24,15 @@ interface WhatsNewModalProps {
 
 const newsData: NewsItem[] = [
   {
+    id: '0',
+    type: 'App',
+    date: '2026.01.26',
+    title: 'AI Powered Auto Fixes',
+    description:
+      'Discover additional accessibility improvements with our new AI powered auto fixes feature! Get intelligent recommendations for your pages, review them one-by-one, and accept or reject fixes with ease.',
+    link: '/domain-analyses',
+  },
+  {
     id: '1',
     type: 'App',
     date: '2025.11.20',
