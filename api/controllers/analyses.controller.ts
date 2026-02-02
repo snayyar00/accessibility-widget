@@ -6,6 +6,7 @@ import {
   updateFixAction,
 } from '../repository/analyses.repository'
 import { getPageHtmlByUrl } from '../repository/pageCache.repository'
+import { getScannerIssuesForPageUrl } from '../services/suggestedFixes/scannerIssuesForUrl.service'
 import { getSuggestedFixes } from '../services/suggestedFixes/suggestedFixes.service'
 import { normalizeDomain } from '../utils/domain.utils'
 
@@ -105,10 +106,11 @@ export async function getPageHtml(req: Request, res: Response) {
 
 export async function postSuggestedFixes(req: Request, res: Response) {
   try {
-    const { url, html, existingFixes } = req.body as {
+    const { url, html, existingFixes, domain: domainFromBody } = req.body as {
       url?: string
       html?: string
       existingFixes?: unknown[]
+      domain?: string
     }
 
     if (!url || typeof url !== 'string') {
@@ -118,10 +120,13 @@ export async function postSuggestedFixes(req: Request, res: Response) {
       return res.status(400).json({ error: 'html is required' })
     }
     const fixes = Array.isArray(existingFixes) ? existingFixes : []
+    const domain = typeof domainFromBody === 'string' && domainFromBody.trim() ? domainFromBody.trim() : normalizeDomain(url)
+    const scannerReportIssues = await getScannerIssuesForPageUrl(url.trim(), domain)
     const suggestedFixes = await getSuggestedFixes({
       url: url.trim(),
       html: html.trim(),
       existingFixes: fixes,
+      scannerReportIssues: scannerReportIssues.length > 0 ? scannerReportIssues : undefined,
     })
     res.status(200).json({ suggestedFixes })
   } catch (error) {
