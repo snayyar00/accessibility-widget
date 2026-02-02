@@ -120,7 +120,10 @@ export async function postSuggestedFixes(req: Request, res: Response) {
       return res.status(400).json({ error: 'html is required' })
     }
     const fixes = Array.isArray(existingFixes) ? existingFixes : []
-    const domain = typeof domainFromBody === 'string' && domainFromBody.trim() ? domainFromBody.trim() : normalizeDomain(url)
+    const domain =
+      typeof domainFromBody === 'string' && domainFromBody.trim()
+        ? normalizeDomain(domainFromBody.trim())
+        : normalizeDomain(url)
     const scannerReportIssues = await getScannerIssuesForPageUrl(url.trim(), domain)
     const suggestedFixes = await getSuggestedFixes({
       url: url.trim(),

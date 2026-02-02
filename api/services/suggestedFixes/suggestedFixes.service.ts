@@ -186,8 +186,14 @@ CRITICAL RULES - READ CAREFULLY:
 - wcag and wcag_criteria: same value (e.g. "4.1.2").
 - category: REQUIRED. Exactly one of: "animations" | "buttons" | "aria" | "duplicate_ids" | "focus" | "headings" | "tables" | "forms" | "links" | "icons" | "images" | "keyboard" | "media".`
 
+  const sanitizedIssues = hasScannerIssues
+    ? scannerReportIssues.map((issue) => {
+        const { pages_affected: _pa, ...rest } = issue as ScannerReportIssueInput & { pages_affected?: unknown }
+        return rest
+      })
+    : []
   const scannerIssuesSection = hasScannerIssues
-    ? `\n\nSCANNER REPORT ISSUES for this page (Affected Pages includes this URL) — use these with the HTML to find suggested fixes:\n\`\`\`json\n${JSON.stringify(scannerReportIssues, null, 2)}\n\`\`\`\n`
+    ? `\n\nSCANNER REPORT ISSUES for this page (Affected Pages includes this URL) — use these with the HTML to find suggested fixes:\n\`\`\`json\n${JSON.stringify(sanitizedIssues, null, 2)}\n\`\`\`\n`
     : ''
 
   const userPrompt = `URL: ${url}
