@@ -64,10 +64,27 @@ const SUGGESTED_FIXES_FUNCTION_SCHEMA = {
   },
 }
 
+/** Scanner issue for this page (Affected Pages includes the URL). Passed to GPT with HTML. */
+export interface ScannerReportIssueInput {
+  source?: 'axe' | 'htmlcs'
+  severity?: 'error' | 'warning' | 'notice'
+  message?: string
+  code?: string
+  context?: string | string[]
+  selectors?: string | string[]
+  description?: string
+  recommended_action?: string
+  help?: string
+  impact?: string
+  wcag_code?: string
+}
+
 export interface GetSuggestedFixesInput {
   url: string
   html: string
   existingFixes: AutoFixItem[]
+  /** Scanner report issues where Affected Pages includes this URL. GPT uses these with HTML to suggest fixes. */
+  scannerReportIssues?: ScannerReportIssueInput[]
 }
 
 /**
@@ -76,7 +93,7 @@ export interface GetSuggestedFixesInput {
  * Returns fix objects in the same format as result_json.analysis.fixes.
  */
 export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<AutoFixItem[]> {
-  const { url, html, existingFixes } = input
+  const { url, html, existingFixes, scannerReportIssues = [] } = input
 
   // Input validation
   if (!url || typeof url !== 'string' || url.trim().length === 0) {
@@ -124,13 +141,19 @@ export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<
   "category": "aria"
 }`
 
+  const hasScannerIssues = Array.isArray(scannerReportIssues) && scannerReportIssues.length > 0
+  if (hasScannerIssues) {
+    console.log(`[SuggestedFixes] Including ${scannerReportIssues.length} scanner report issues (Affected Pages includes this URL) for GPT`)
+  }
+
   const systemPrompt = `You are an accessibility expert. You will receive:
 1. A page URL
 2. The raw HTML of that page
 3. A list of EXISTING SELECTORS that already have fixes (you must NOT suggest fixes for these)
 4. The full existing auto-fixes JSON for reference
+${hasScannerIssues ? '5. SCANNER REPORT ISSUES for this page (accessibility scanner found these on Affected Pages that include this URL) — use these together with the HTML to prioritize and suggest fixes.' : ''}
 
-Your task: Find ADDITIONAL accessibility issues and suggest fixes ONLY for elements NOT in the existing selectors list. Return them in the EXACT same JSON format as below.
+Your task: Find ADDITIONAL accessibility issues and suggest fixes ONLY for elements NOT in the existing selectors list. Use both the HTML and any scanner report issues provided to identify real issues. Return them in the EXACT same JSON format as below.
 
 REQUIRED FORMAT — each fix object MUST have exactly these fields in this order:
 selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category
@@ -163,12 +186,16 @@ CRITICAL RULES - READ CAREFULLY:
 - wcag and wcag_criteria: same value (e.g. "4.1.2").
 - category: REQUIRED. Exactly one of: "animations" | "buttons" | "aria" | "duplicate_ids" | "focus" | "headings" | "tables" | "forms" | "links" | "icons" | "images" | "keyboard" | "media".`
 
+  const scannerIssuesSection = hasScannerIssues
+    ? `\n\nSCANNER REPORT ISSUES for this page (Affected Pages includes this URL) — use these with the HTML to find suggested fixes:\n\`\`\`json\n${JSON.stringify(scannerReportIssues, null, 2)}\n\`\`\`\n`
+    : ''
+
   const userPrompt = `URL: ${url}
 ${existingSelectorsSummary}
-
+${scannerIssuesSection}
 STEP 1: Review the EXISTING SELECTORS list above. These elements already have fixes - DO NOT suggest fixes for them.
 
-STEP 2: Analyze the HTML below and find accessibility issues ONLY for elements NOT in the existing selectors list.
+STEP 2: Analyze the HTML below${hasScannerIssues ? ' and the scanner report issues above' : ''} and find accessibility issues ONLY for elements NOT in the existing selectors list.
 
 STEP 3: For each new issue found, verify its selector is NOT in the existing selectors list before including it.
 
