@@ -29,6 +29,7 @@
     "@imgproxy/imgproxy-node": "^1.1.0",
     "@scrapeless-ai/sdk": "^1.11.0",
     "@libsql/client": "^0.17.0",
+    "@scrapeless-ai/sdk": "^1.11.0",
     "@sentry/node": "^5.30.0",
     "@types/cors": "^2.8.19",
     "@types/jspdf": "^2.0.0",
