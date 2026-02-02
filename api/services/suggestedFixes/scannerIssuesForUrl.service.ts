@@ -2,10 +2,20 @@ import { getR2KeysByParams } from '../../repository/accessibilityReports.reposit
 import { fetchReportFromR2 } from '../../utils/r2Storage'
 import { normalizeDomain } from '../../utils/domain.utils'
 
-/** Normalize URL for comparison (trim, lowercase, strip trailing slash). */
+/** Normalize URL for comparison (trim, lowercase, strip query/fragments, strip trailing slash). Avoids regex on user input to prevent ReDoS. */
 function normalizeUrlForMatch(url: string): string {
   if (!url || typeof url !== 'string') return ''
-  return url.trim().toLowerCase().replace(/\/+$/, '')
+  const trimmed = url.trim().toLowerCase()
+  try {
+    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`)
+    let path = parsed.pathname
+    while (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1)
+    return `${parsed.origin}${path}`.toLowerCase()
+  } catch {
+    let s = trimmed
+    while (s.length > 1 && s.endsWith('/')) s = s.slice(0, -1)
+    return s
+  }
 }
 
 /** One scanner issue (axe or htmlcs) with optional pages_affected. */
