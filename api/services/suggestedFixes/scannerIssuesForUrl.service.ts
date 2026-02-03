@@ -2,10 +2,20 @@ import { getR2KeysByParams } from '../../repository/accessibilityReports.reposit
 import { fetchReportFromR2 } from '../../utils/r2Storage'
 import { normalizeDomain } from '../../utils/domain.utils'
 
-/** Normalize URL for comparison (trim, lowercase, strip trailing slash). */
+/** Normalize URL for comparison (trim, lowercase, strip query/fragments, strip trailing slash). Avoids regex on user input to prevent ReDoS. */
 function normalizeUrlForMatch(url: string): string {
   if (!url || typeof url !== 'string') return ''
-  return url.trim().toLowerCase().replace(/\/+$/, '')
+  const trimmed = url.trim().toLowerCase()
+  try {
+    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`)
+    let path = parsed.pathname
+    while (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1)
+    return `${parsed.origin}${path}`.toLowerCase()
+  } catch {
+    let s = trimmed
+    while (s.length > 1 && s.endsWith('/')) s = s.slice(0, -1)
+    return s
+  }
 }
 
 /** One scanner issue (axe or htmlcs) with optional pages_affected. */
@@ -44,12 +54,21 @@ export async function getScannerIssuesForPageUrl(
   }
 
   try {
-    const rows = await getR2KeysByParams({ url: domainToUse })
-    if (!rows || rows.length === 0) {
-      // No accessibility report for this domain — suggested fixes will use HTML only
-      console.log('[ScannerIssuesForUrl] No report found for domain:', domainToUse)
-      return []
+    // Try domain variants: reports may be stored as "academicoach.com" or "www.academicoach.com"
+    const domainVariants = [domainToUse]
+    if (domainToUse.startsWith('www.')) {
+      domainVariants.push(domainToUse.slice(4))
+    } else {
+      domainVariants.push(`www.${domainToUse}`)
     }
+
+    let rows: Awaited<ReturnType<typeof getR2KeysByParams>> = []
+    for (const variant of domainVariants) {
+      rows = await getR2KeysByParams({ url: variant })
+      if (rows && rows.length > 0) break
+    }
+
+    if (!rows || rows.length === 0) return []
 
     const latest = rows[0]
     const r2Key = latest?.r2_key

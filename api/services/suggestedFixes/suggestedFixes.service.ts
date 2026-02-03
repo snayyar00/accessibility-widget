@@ -1,5 +1,7 @@
 import OpenAI from 'openai'
 
+import { getScannerIssuesForPageUrl } from './scannerIssuesForUrl.service'
+
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error('OPENROUTER_API_KEY environment variable is required')
 }
@@ -18,7 +20,7 @@ export interface AutoFixItem {
   issue_type?: string
   wcag_criteria?: string
   wcag?: string
-  action?: 'update' | 'add'
+  action?: 'update' | 'add' | 'remove' | 'create'
   attributes?: Record<string, unknown>
   impact?: string
   description?: string
@@ -32,24 +34,24 @@ const SUGGESTED_FIXES_FUNCTION_SCHEMA = {
   type: 'function' as const,
   function: {
     name: 'suggest_accessibility_fixes',
-    description: 'Return additional accessibility fixes ONLY for selectors NOT already in the existing fixes list. Each fix must match the exact format: selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category. CRITICAL: Check the existing selectors list - do not suggest fixes for selectors that already exist.',
+    description: 'Return fixes for selectors NOT in existing list. Each fix: selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category.',
     parameters: {
       type: 'object',
       properties: {
         suggested_fixes: {
           type: 'array',
-          description: 'Array of fix objects. Each has exactly: selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category.',
+          description: 'Fix objects with required fields.',
           items: {
             type: 'object',
             properties: {
               selector: { type: 'string' },
               issue_type: { type: 'string' },
               wcag_criteria: { type: 'string' },
-              action: { type: 'string', enum: ['update', 'add'] },
-              attributes: { type: 'object', additionalProperties: true, description: 'MUST NOT be empty. Use {"alt":"..."}, {"role":null}, {"aria-expanded":"true"}, etc.' },
+              action: { type: 'string', enum: ['update', 'add', 'remove', 'create'] },
+              attributes: { type: 'object', additionalProperties: true, description: 'Non-empty. e.g. {"alt":"..."}, {"role":null}' },
               impact: { type: 'string', enum: ['minor', 'moderate', 'serious', 'critical'] },
               description: { type: 'string' },
-              current_value: { type: ['string', 'null'], description: 'Current attribute/value; null if not applicable' },
+              current_value: { type: ['string', 'null'] },
               confidence: { type: 'number' },
               wcag: { type: 'string' },
               suggested_fix: { type: 'string' },
@@ -62,6 +64,61 @@ const SUGGESTED_FIXES_FUNCTION_SCHEMA = {
       required: ['suggested_fixes'],
     },
   },
+}
+
+/** Build compact summary of existing fixes (count + selectors + sample of issue_types) instead of full JSON. */
+function buildExistingFixesSummary(existingFixes: AutoFixItem[]): string {
+  const selectors = existingFixes
+    .map((f) => f.selector)
+    .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+    .map((s) => s.trim())
+
+  const issueTypes = [...new Set(existingFixes.map((f) => f.issue_type).filter(Boolean) as string[])].slice(0, 8)
+
+  if (selectors.length === 0) {
+    return 'No existing fixes. You can suggest fixes for any element.'
+  }
+
+  const selectorList = selectors.map((s) => `  - "${s}"`).join('\n')
+  const issueTypesLine =
+    issueTypes.length > 0 ? `\nIssue types already addressed (sample): ${issueTypes.join(', ')}.` : ''
+  const result = `EXISTING FIXES SUMMARY (DO NOT suggest fixes for these selectors):
+Total: ${existingFixes.length} existing fix(es).
+Selectors:
+${selectorList}${issueTypesLine}`
+  return result
+}
+
+/** Shrink HTML for accessibility analysis: remove scripts/styles, extract body, collapse whitespace, truncate long content. */
+function shrinkHtmlForAccessibility(html: string): string {
+  let s = html
+
+  // Remove script, style, noscript blocks
+  s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+  s = s.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+  s = s.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, '')
+
+  // Extract body content if present (keeps structure, drops head)
+  const bodyMatch = s.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)
+  if (bodyMatch) {
+    s = bodyMatch[1]
+  }
+
+  // Remove all SVG elements (reduces token count; scanner issues still surface SVG a11y problems)
+  s = s.replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, '')
+  s = s.replace(/<svg\b[^>]*\/>/gi, '')
+
+  // Remove HTML comments
+  s = s.replace(/<!--[\s\S]*?-->/g, '')
+
+  // Collapse repeated whitespace (spaces, newlines, tabs) to single space
+  s = s.replace(/\s+/g, ' ').trim()
+
+  const maxLen = 30_000
+  if (s.length > maxLen) {
+    s = s.slice(0, maxLen) + '\n...[truncated]'
+  }
+  return s
 }
 
 /** Scanner issue for this page (Affected Pages includes the URL). Passed to GPT with HTML. */
@@ -83,8 +140,207 @@ export interface GetSuggestedFixesInput {
   url: string
   html: string
   existingFixes: AutoFixItem[]
-  /** Scanner report issues where Affected Pages includes this URL. GPT uses these with HTML to suggest fixes. */
+  /** Domain for scanner report lookup. When provided, scanner issues are fetched in parallel with prompt building. */
+  domain?: string
+  /** Pre-fetched scanner issues (used when domain not provided). */
   scannerReportIssues?: ScannerReportIssueInput[]
+}
+
+/**
+ * Comprehensive post-processing filter. Rejects fixes that violate accessibility best practices
+ * or our prompt rules. Every prompt rule MUST have a corresponding filter (models ignore rules).
+ */
+function applyAllFilters(f: AutoFixItem): boolean {
+  const attrs = f.attributes
+  if (!attrs || typeof attrs !== 'object' || Array.isArray(attrs) || Object.keys(attrs).length === 0) {
+    return false
+  }
+  const attrsObj = attrs as Record<string, unknown>
+  const sel = (f.selector ?? '').toLowerCase()
+  const issueType = String(f.issue_type ?? '').toLowerCase()
+  const altVal = attrsObj.alt
+
+  // --- FORBIDDEN: Inline styles / contrast fixes (require design analysis) ---
+  if (attrsObj.style != null || (typeof attrsObj.color === 'string' && attrsObj.color)) return false
+
+  // --- HEADINGS: Never add role="heading" or aria-level to h1-h6 ---
+  const targetsHeading = /\bh[1-6]\b/.test(sel)
+  if (targetsHeading && (attrsObj.role === 'heading' || attrsObj['aria-level'] != null)) return false
+
+  // --- HEADINGS: role="heading" on div/span/p requires aria-level; incomplete fix is invalid ---
+  const targetsNonHeading = /\b(div|span|p)\b/.test(sel)
+  if (
+    targetsNonHeading &&
+    attrsObj.role === 'heading' &&
+    (attrsObj['aria-level'] == null || attrsObj['aria-level'] === '')
+  )
+    return false
+
+  // --- SEMANTIC ELEMENTS: Don't add redundant aria-label (footer, main, header already announce) ---
+  const ariaLabelVal = attrsObj['aria-label']
+  if (typeof ariaLabelVal === 'string') {
+    const label = ariaLabelVal.trim().toLowerCase()
+    const redundantForElement = (elem: string, ...redundant: string[]) =>
+      sel.includes(elem) && redundant.some((r) => label === r || label.replace(/\s+/g, ' ') === r)
+    const redundantLabels = ['header', 'main content area', 'main', 'footer', 'banner']
+    if (
+      redundantForElement('footer', 'footer', 'contentinfo') ||
+      redundantForElement('main', 'main', 'main content', 'main content area') ||
+      redundantForElement('header', 'header', 'banner') ||
+      redundantForElement('nav', 'navigation', 'nav') ||
+      (sel.includes('div') && redundantLabels.some((r) => label === r || label.replace(/\s+/g, ' ') === r))
+    )
+      return false
+  }
+
+  // --- NAVIGATION: Don't add role="dialog" or aria-modal to nav overlay - it's a panel, not a modal ---
+  if (
+    attrsObj.role === 'dialog' &&
+    (sel.includes('wp-block-navigation__responsive') || sel.includes('navigation'))
+  )
+    return false
+  if (
+    attrsObj['aria-modal'] === true ||
+    attrsObj['aria-modal'] === 'true'
+  ) {
+    if (sel.includes('wp-block-navigation__responsive')) return false
+  }
+
+  // --- NAVIGATION: Don't add role="menu"/"menuitem" to link-based nav - use list semantics ---
+  if (
+    (attrsObj.role === 'menu' || attrsObj.role === 'menuitem') &&
+    sel.includes('wp-block-navigation')
+  )
+    return false
+
+  // --- REDUNDANT ROLES: role="link" on <a>, role="form" on <form>, role="button" on <button>, role="navigation" on nav ---
+  if ((sel.includes('a[') || sel.startsWith('a.')) && attrsObj.role === 'link') return false
+  if (sel.includes('form') && attrsObj.role === 'form') return false
+  if (sel.includes('button') && attrsObj.role === 'button') return false
+  if (sel.includes('nav') && attrsObj.role === 'navigation') return false
+
+  // --- ROLE: Don't remove role="group" or role="region" from div - they add valid semantics ---
+  const isRemovingRole =
+    attrsObj.role === '' || attrsObj.role === null || attrsObj.role === undefined
+  const currentRole = String(f.current_value ?? '').toLowerCase()
+  if (isRemovingRole && sel.includes('div') && /^(group|region)$/.test(currentRole)) return false
+
+  // --- ROLE="region": Requires aria-label; unnamed regions clutter screen reader navigation ---
+  if (
+    attrsObj.role === 'region' &&
+    (attrsObj['aria-label'] == null || String(attrsObj['aria-label']).trim() === '')
+  )
+    return false
+
+  // --- ROLE="text": Wrong for p, div, span ---
+  if (attrsObj.role === 'text') return false
+
+  // --- IMAGES: alt only on img/area/input[type=image] ---
+  if (attrsObj.alt != null) {
+    const targetsImgOrArea = /\bimg\b|\barea\b|\[type=['"]?image['"]?\]/.test(sel)
+    if (!targetsImgOrArea) return false
+    if (sel.includes('figure')) return false
+    if (sel.includes("img") && (sel.includes("alt=''") || sel.includes('alt=""'))) return false
+    if (typeof altVal === 'string' && /descriptive\s+text\s+for\s+(the\s+)?image/i.test(altVal))
+      return false
+  }
+
+  // --- IMAGES: missing_alt_text when alt already exists ---
+  if (attrsObj.alt != null && /missing_alt|alt_text|non_descriptive_alt/i.test(issueType)) {
+    // img[alt], img[alt='...'], img[alt="..."] = alt attribute exists (img[alt] doesn't specify value)
+    const hasAltInSelector =
+      /img\[alt\]/.test(sel) ||
+      (/img\[alt=['"]/.test(sel) && !/img\[alt=''\]|img\[alt=""\]/.test(sel))
+    const missingAltButHasValue =
+      /missing_alt/i.test(issueType) &&
+      typeof f.current_value === 'string' &&
+      f.current_value.trim().length > 2
+    if (hasAltInSelector || missingAltButHasValue) return false
+  }
+
+  // --- IMAGES: same-value alt update (no real change) ---
+  if (typeof altVal === 'string' && typeof f.current_value === 'string') {
+    const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ').replace(/["']/g, '')
+    if (norm(altVal) === norm(f.current_value)) return false
+  }
+
+  // --- LINKS: Never add target="_blank" (changes behavior) ---
+  if (attrsObj.target === '_blank') return false
+
+  // --- LINKS/BUTTONS: Never add aria-label when element has visible text (current_value) ---
+  const hasAriaLabel = attrsObj['aria-label'] != null
+  const hasVisibleText = typeof f.current_value === 'string' && f.current_value.trim().length > 1
+  const isLink = sel.includes('a[') || sel.startsWith('a.') || /^a\b/.test(sel)
+  const isButton = sel.includes('button')
+  if (hasAriaLabel && hasVisibleText && (isLink || isButton)) return false
+
+  // --- LINKS: Nav links (mailto, home, about, contact, news, footer) almost always have visible text ---
+  // Model often wrongly reports current_value="" for these; adding aria-label is usually redundant
+  if (hasAriaLabel && isLink && !hasVisibleText) {
+    const hrefMatch = sel.match(/href\s*=\s*['"]([^'"]+)['"]/i)
+    const href = (hrefMatch?.[1] ?? '').toLowerCase()
+    const isLikelyNavLink =
+      href.startsWith('mailto:') ||
+      /^https?:\/\/[^/]*\/?$/.test(href) || // home
+      /\/(chi-siamo|contatti|contact|news|about|about-us|chi_siamo)\b/i.test(href) ||
+      /\/(privacy-policy|cookie-policy|terms|terms-of-use|dichiarazione|impressum|legal)\b/i.test(href)
+    const isFooterLink = sel.includes('footer') && sel.includes('a')
+    if (isLikelyNavLink || isFooterLink) return false
+  }
+
+  // --- LISTS: Don't add aria-label to ul inside nav - parent nav already has aria-label ---
+  if (
+    hasAriaLabel &&
+    sel.includes('ul') &&
+    (sel.includes('wp-block-navigation') || sel.includes('nav'))
+  )
+    return false
+
+  // --- BUTTONS/NAV: Never remove or change aria-label (they need it) ---
+  if (hasAriaLabel && (isButton || sel.includes('nav'))) {
+    const ariaLabelVal = attrsObj['aria-label']
+    const isRemoving = ariaLabelVal === '' || ariaLabelVal === null || ariaLabelVal === undefined
+    const isGenericPlaceholder =
+      typeof ariaLabelVal === 'string' && /accessible\s+name|generic|placeholder/i.test(ariaLabelVal)
+    const isRedundantOnNav =
+      sel.includes('nav') && /redundant_aria_label|redundant.*label/i.test(issueType)
+    if (isRemoving || isGenericPlaceholder || isRedundantOnNav) return false
+  }
+
+  // --- IFRAME/IMG: Don't add aria-label when title exists (title provides name) ---
+  if (
+    hasAriaLabel &&
+    (sel.includes('iframe') || sel.includes('img')) &&
+    sel.includes('title=')
+  ) {
+    return false
+  }
+
+  // --- ARIA-HASPOPUP: Never on close buttons; never remove from menu buttons ---
+  if (attrsObj['aria-haspopup'] != null && /close|dismiss|chiudi/i.test(sel)) return false
+  if (
+    Object.keys(attrsObj).some((k) => k.toLowerCase() === 'aria-haspopup') &&
+    isButton &&
+    (attrsObj['aria-haspopup'] === '' ||
+      attrsObj['aria-haspopup'] === null ||
+      attrsObj['aria-haspopup'] === undefined)
+  )
+    return false
+
+  // --- ARIA-CONTROLS: Never on close buttons; never placeholder IDs ---
+  if (attrsObj['aria-controls'] != null && /close|dismiss|chiudi/i.test(sel)) return false
+  const ariaControlsVal = attrsObj['aria-controls']
+  if (typeof ariaControlsVal === 'string' && /^submenu-id$/i.test(ariaControlsVal.trim()))
+    return false
+
+  // --- ARIA-DESCRIBEDBY / ARIA-LABELLEDBY: Reject placeholder IDs ---
+  const ariaDescribedBy = attrsObj['aria-describedby']
+  const ariaLabelledBy = attrsObj['aria-labelledby']
+  const placeholderId = (v: unknown) =>
+    typeof v === 'string' && /^(element-id|target-id|label-id|placeholder)$/i.test(v.trim())
+  if (placeholderId(ariaDescribedBy) || placeholderId(ariaLabelledBy)) return false
+
+  return true
 }
 
 /**
@@ -93,7 +349,8 @@ export interface GetSuggestedFixesInput {
  * Returns fix objects in the same format as result_json.analysis.fixes.
  */
 export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<AutoFixItem[]> {
-  const { url, html, existingFixes, scannerReportIssues = [] } = input
+  const totalStart = Date.now()
+  const { url, html, existingFixes, domain, scannerReportIssues: scannerReportIssuesInput } = input
 
   // Input validation
   if (!url || typeof url !== 'string' || url.trim().length === 0) {
@@ -106,123 +363,108 @@ export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<
     throw new Error('existingFixes must be an array')
   }
 
-  const existingJson = JSON.stringify(existingFixes, null, 2)
-  const htmlSnippet = html.length > 80_000 ? html.slice(0, 80_000) + '\n\n...[truncated]' : html
+  // Start scanner fetch in parallel with prompt building (skips R2 when domain has no report)
+  const scannerPromise =
+    domain?.trim() && scannerReportIssuesInput === undefined
+      ? getScannerIssuesForPageUrl(url.trim(), domain.trim())
+      : Promise.resolve(scannerReportIssuesInput ?? [])
 
-  // Extract and format existing selectors for easy reference
-  const existingSelectorsList = existingFixes
-    .map((f) => f.selector)
-    .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
-    .map((s) => `  - "${s.trim()}"`)
-    .join('\n')
+  const existingFixesSummary = buildExistingFixesSummary(existingFixes)
+  const htmlSnippet = shrinkHtmlForAccessibility(html)
 
-  const existingSelectorsSummary = existingSelectorsList.length > 0
-    ? `\n\nEXISTING SELECTORS (DO NOT SUGGEST FIXES FOR THESE):\n${existingSelectorsList}\n\nTotal: ${existingFixes.length} existing fix(es).`
-    : '\n\nNo existing fixes. You can suggest fixes for any element.'
-
-  // Log existing selectors for debugging
-  if (existingFixes.length > 0) {
-    const selectorCount = existingFixes.filter((f) => f.selector && typeof f.selector === 'string').length
-    console.log(`[SuggestedFixes] Sending ${selectorCount} existing selectors to GPT to prevent duplicates`)
-  }
+  const scannerReportIssues = await scannerPromise
 
   const exactFormatExample = `{
-  "selector": "nav.transition-all.bg-transparent.duration-300.w-full",
+  "selector": "footer.text-gray-300",
   "issue_type": "redundant_aria_role",
   "wcag_criteria": "4.1.2",
-  "action": "update",
-  "attributes": { "role": null },
+  "action": "remove",
+  "attributes": { "role": "" },
   "impact": "minor",
-  "description": "Redundant role='navigation' on <nav> (implicit role)",
-  "current_value": "navigation",
+  "description": "Redundant role='contentinfo' on <footer> (implicit role)",
+  "current_value": "contentinfo",
   "confidence": 0.95,
   "wcag": "4.1.2",
-  "suggested_fix": "Remove redundant role='navigation' from <nav>",
+  "suggested_fix": "Remove redundant role from <footer>",
   "category": "aria"
 }`
 
   const hasScannerIssues = Array.isArray(scannerReportIssues) && scannerReportIssues.length > 0
-  if (hasScannerIssues) {
-    console.log(`[SuggestedFixes] Including ${scannerReportIssues.length} scanner report issues (Affected Pages includes this URL) for GPT`)
-  }
 
-  const systemPrompt = `You are an accessibility expert. You will receive:
-1. A page URL
-2. The raw HTML of that page
-3. A list of EXISTING SELECTORS that already have fixes (you must NOT suggest fixes for these)
-4. The full existing auto-fixes JSON for reference
-${hasScannerIssues ? '5. SCANNER REPORT ISSUES for this page (accessibility scanner found these on Affected Pages that include this URL) — use these together with the HTML to prioritize and suggest fixes.' : ''}
+  const systemPrompt = `You are an accessibility expert. Find ADDITIONAL issues and suggest fixes ONLY for elements NOT in the EXISTING SELECTORS list. Use the HTML${hasScannerIssues ? ' and scanner issues' : ''} to identify issues. Return at most 10 fixes.
 
-Your task: Find ADDITIONAL accessibility issues and suggest fixes ONLY for elements NOT in the existing selectors list. Use both the HTML and any scanner report issues provided to identify real issues. Return them in the EXACT same JSON format as below.
+REQUIRED FORMAT (each fix): selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category
 
-REQUIRED FORMAT — each fix object MUST have exactly these fields in this order:
-selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category
-
-Examples (follow this structure exactly):
+Example:
 ${exactFormatExample}
 
-CRITICAL RULES - READ CAREFULLY:
-- Return at most 20 suggested fixes to avoid truncation.
-- BEFORE suggesting ANY fix, check if its selector is in the EXISTING SELECTORS list provided.
-- If a selector already exists in the list, DO NOT suggest a fix for it - it's already been fixed.
-- ONLY suggest fixes for selectors that are NOT in the existing selectors list.
-- Match selectors EXACTLY - if "a[href=\"/#contact\"]" exists, do NOT suggest "a[href='/#contact']" or any variation.
-- The selector field is the PRIMARY identifier - if it matches an existing one, skip that element entirely.
-- action: "update" (attribute change/removal) or "add" (new element, e.g. skip link).
-- attributes: MUST NOT be empty {}. Always include the concrete attribute change:
-  - Remove attribute: { "role": null }, { "aria-hidden": null }, etc.
-  - Add/change attribute: { "alt": "descriptive text" }, { "aria-label": "..." }, { "autocomplete": "email" }, { "aria-expanded": "true" }, { "aria-haspopup": "menu" }, etc.
-  - Body prepend (skip link): { "prepend": "<a href=\\"#main-content\\" class=\\"skip-link\\">Skip to main content</a>" }.
-  - For alt fixes: use { "alt": "specific description" } with the exact suggested alt text. For decorative images use { "alt": "" }.
-  - For aria-expanded / aria-haspopup: use { "aria-expanded": "true" } or { "aria-haspopup": "menu" } etc. as appropriate.
-- impact: REQUIRED. Choose the appropriate severity level based on the issue:
-  * "critical": Blocks access completely (e.g., color contrast violations, keyboard traps, missing critical alt text for functional images)
-  * "serious": Significant barriers (e.g., missing labels, missing aria-labels, form errors, heading structure issues, missing skip links)
-  * "moderate": Noticeable issues (e.g., redundant ARIA roles, missing aria-haspopup/controls, non-descriptive alt text, duplicate IDs)
-  * "minor": Low impact, cosmetic issues (e.g., redundant screen reader text, redundant ARIA attributes on semantic elements)
-  IMPORTANT: Most issues should be "moderate" or "minor". Only use "serious" or "critical" for significant accessibility barriers.
-- current_value: the current attribute/value when relevant; use null if not applicable.
-- confidence: number 0–1 (e.g. 0.95).
-- wcag and wcag_criteria: same value (e.g. "4.1.2").
-- category: REQUIRED. Exactly one of: "animations" | "buttons" | "aria" | "duplicate_ids" | "focus" | "headings" | "tables" | "forms" | "links" | "icons" | "images" | "keyboard" | "media".`
+RULES (ALL enforced by post-processing; violations are rejected):
+- NEVER suggest fixes for selectors already in the existing list. Match selectors exactly.
+- UNIQUE FIXES: Each fix must have a unique combination of selector AND attributes.
+- HEADINGS: Do NOT add role="heading" or aria-level to h1-h6; they have implicit role. Only REMOVE redundant role.
+- REDUNDANT ROLES: Do NOT add role="link" to <a>, role="form" to <form>, role="button" to <button>, role="navigation" to <nav>; do NOT remove role="group" or role="region" from div.
+- ROLE: Do NOT add role="text" to p, div, span; do NOT add role="region" without aria-label.
+- ARIA-REF: Do NOT suggest aria-describedby or aria-labelledby with placeholder IDs; target ID must exist in HTML.
+- STYLE: Do NOT suggest inline style or color for contrast - requires design analysis.
+- IFRAME/IMG: Do NOT add aria-label to iframe/img that has title attribute.
+- NAV: Do NOT remove or change aria-label on nav; never use placeholder like "Accessible name".
+- BUTTONS: Do NOT remove aria-label from buttons; do NOT add aria-label to buttons with visible text; do NOT remove aria-haspopup (fix wrong value e.g. "dialog"→"menu"); do NOT add aria-haspopup/aria-controls to close/dismiss buttons.
+- LINKS: Do NOT add aria-label to links with visible text; do NOT add target="_blank"; nav links (mailto, home, about, contact) usually have text - verify before adding aria-label.
+- IMAGES: Do NOT add alt to img[alt='']; do NOT suggest missing_alt_text when alt exists; alt only on img/area/input[type=image]; no placeholder alt like "Descriptive text for the image".
+- SEMANTIC: Do NOT add role="heading" to div/span/p without aria-level (incomplete); do NOT add redundant aria-label to footer/main/header/nav or div (e.g. "Header", "Main content area").
+- NAVIGATION: Do NOT add role="dialog" or aria-modal to nav overlay (it's a panel, not a modal); do NOT add role="menu"/"menuitem" to link-based nav (use list semantics).
+- action: Use the correct action for each fix:
+  - "remove": Remove an attribute (redundant role, redundant aria). Use attributes: {"role":""} or {"role":null}.
+  - "update": Change/modify an existing attribute value (e.g. set alt, aria-label, aria-expanded, autocomplete).
+  - "add": Add attribute or content to existing element (e.g. aria-haspopup, aria-controls, prepend skip link).
+  - "create": Create new element (e.g. skip link). Use attributes: {"prepend":"<a href=\\"#main-content\\" class=\\"skip-link\\">Skip to main content</a>"}.
+- attributes: NEVER empty. Use {"role":""} or {"role":null} for remove; {"alt":"..."}, {"aria-label":"..."}, {"aria-expanded":"true"}, {"aria-haspopup":"menu"}, {"autocomplete":"email"} for update/add; {"prepend":"..."} for create.
+- impact: "critical" (blocks access), "serious" (major barriers), "moderate" (noticeable), "minor" (cosmetic). Prefer moderate/minor.
+- category: one of animations|buttons|aria|duplicate_ids|focus|headings|tables|forms|links|icons|images|keyboard|media.`
 
+  const slimScannerIssues = hasScannerIssues
+    ? scannerReportIssues.slice(0, 20).map((issue) => {
+        const sel = issue.selectors
+        const selectors = Array.isArray(sel) ? sel.slice(0, 2) : typeof sel === 'string' ? [sel] : []
+        return {
+          code: issue.code,
+          message: typeof issue.message === 'string' ? issue.message.slice(0, 300) : issue.message,
+          wcag_code: issue.wcag_code,
+          severity: issue.severity,
+          selectors,
+        }
+      })
+    : []
   const scannerIssuesSection = hasScannerIssues
-    ? `\n\nSCANNER REPORT ISSUES for this page (Affected Pages includes this URL) — use these with the HTML to find suggested fixes:\n\`\`\`json\n${JSON.stringify(scannerReportIssues, null, 2)}\n\`\`\`\n`
+    ? `\n\nSCANNER ISSUES (use with HTML to prioritize fixes):\n${JSON.stringify(slimScannerIssues)}\n`
     : ''
 
   const userPrompt = `URL: ${url}
-${existingSelectorsSummary}
+
+${existingFixesSummary}
 ${scannerIssuesSection}
-STEP 1: Review the EXISTING SELECTORS list above. These elements already have fixes - DO NOT suggest fixes for them.
-
-STEP 2: Analyze the HTML below${hasScannerIssues ? ' and the scanner report issues above' : ''} and find accessibility issues ONLY for elements NOT in the existing selectors list.
-
-STEP 3: For each new issue found, verify its selector is NOT in the existing selectors list before including it.
-
-Full existing fixes JSON (for reference only):
-${existingJson}
+Analyze the HTML below and suggest fixes (max 10) for elements NOT in the existing selectors list. Each fix must use the exact JSON structure; attributes must never be empty. Ensure each fix has a unique selector+attributes combination (no duplicates).
 
 Page HTML:
 \`\`\`html
 ${htmlSnippet}
-\`\`\`
+\`\`\``
 
-Return ONLY new suggested fixes (at most 10) for selectors NOT in the existing list. Each fix MUST use the exact same JSON structure as the examples. attributes must never be empty {}—always include the concrete attribute change (e.g. {"alt":"..."}, {"role":null}).
+  const primaryModel = 'openai/gpt-4o-mini'
+  const fallbackModel = 'google/gemini-2.5-flash'
 
-REMINDER: Cross-reference every suggested selector against the EXISTING SELECTORS list. If it matches, exclude it.`
-
-  // Model configuration - can be moved to env var if needed
-  const model = 'google/gemini-2.5-flash'
-
-  let fixes = await tryWithTools(model, systemPrompt, userPrompt)
-  if (fixes.length === 0) {
-    fixes = await tryWithoutTools(model, systemPrompt, userPrompt)
+  let result = await getSuggestedFixesFromModel(primaryModel, systemPrompt, userPrompt)
+  let fixes = result.fixes
+  if (result.hadError && fixes.length === 0) {
+    console.log('[SuggestedFixes] Primary had error, trying fallback', { fallbackModel })
+    result = await getSuggestedFixesFromModel(fallbackModel, systemPrompt, userPrompt)
+    fixes = result.fixes
+    if (fixes.length > 0) {
+      console.log('[SuggestedFixes] Fallback succeeded', { fallbackModel, count: fixes.length })
+    }
   }
-  // Empty array is valid - it means no new fixes were found
-  if (fixes.length === 0) {
-    console.log('[SuggestedFixes] GPT returned empty array - no new fixes found')
-    return []
-  }
+  if (fixes.length === 0) return []
+
   const normalized = fixes.map(normalizeFix)
   
   // Filter out fixes that duplicate existing fixes by selector
@@ -231,38 +473,39 @@ REMINDER: Cross-reference every suggested selector against the EXISTING SELECTOR
     if (!sel || typeof sel !== 'string') return ''
     return sel.trim().toLowerCase().replace(/\s+/g, ' ')
   }
-  
+
   const existingSelectors = new Set(
     existingFixes
       .map((f) => normalizeSelector(f.selector))
       .filter((s) => s.length > 0)
   )
-  
+
   const withoutDuplicates = normalized.filter((f) => {
     const normalizedSel = normalizeSelector(f.selector)
-    if (normalizedSel.length === 0) {
-      // If no selector, we can't check for duplicates, so include it
-      return true
-    }
-    const isDuplicate = existingSelectors.has(normalizedSel)
-    if (isDuplicate) {
-      console.log(`[SuggestedFixes] Filtered out duplicate fix with selector: "${f.selector}"`)
-    }
-    return !isDuplicate
+    if (normalizedSel.length === 0) return true
+    return !existingSelectors.has(normalizedSel)
   })
-  
-  if (withoutDuplicates.length < normalized.length) {
-    console.warn(`[SuggestedFixes] Filtered out ${normalized.length - withoutDuplicates.length} duplicate fixes (by selector)`)
-  }
-  
-  // Filter out fixes that still have empty attributes after inference
-  const withAttributes = withoutDuplicates.filter((f) => {
-    const attrs = f.attributes
-    return attrs && typeof attrs === 'object' && !Array.isArray(attrs) && Object.keys(attrs).length > 0
+
+  // Deduplicate by selector+attributes (no two fixes with same selector and same attributes)
+  const seenSelectorAttrs = new Set<string>()
+  const withoutSelectorAttrDuplicates = withoutDuplicates.filter((f) => {
+    const sel = normalizeSelector(f.selector)
+    const attrsKey = JSON.stringify(f.attributes ?? {})
+    const key = `${sel}::${attrsKey}`
+    if (seenSelectorAttrs.has(key)) return false
+    seenSelectorAttrs.add(key)
+    return true
   })
-  if (withAttributes.length < withoutDuplicates.length) {
-    console.warn(`[SuggestedFixes] Filtered out ${withoutDuplicates.length - withAttributes.length} fixes with empty attributes`)
-  }
+
+  const withAttributes = withoutSelectorAttrDuplicates.filter((f) =>
+    applyAllFilters(f)
+  )
+
+  console.log('[SuggestedFixes] Completed', {
+    url,
+    ms: Date.now() - totalStart,
+    finalCount: withAttributes.length,
+  })
   return withAttributes
 }
 
@@ -477,7 +720,10 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
   const raw = f.category?.trim() || inferCategory(f.issue_type)
   const category = isValidCategory(raw) ? raw : inferCategory(f.issue_type)
   const rawAction = (f as { action?: string }).action
-  const action = rawAction === 'add' ? 'add' : rawAction === 'remove' ? 'update' : (f.action ?? 'update')
+  const validActions = ['update', 'add', 'remove', 'create'] as const
+  const action = validActions.includes(rawAction as (typeof validActions)[number])
+    ? (rawAction as (typeof validActions)[number])
+    : (f.action ?? 'update')
   const wcag = f.wcag ?? f.wcag_criteria ?? ''
   const wcag_criteria = f.wcag_criteria ?? wcag
   let attrs = f.attributes ?? {}
@@ -497,11 +743,8 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
     const inferredImpact = inferImpact(f)
     // Only override if GPT's impact seems too high (e.g., "serious" for redundant ARIA)
     if (impact === 'serious' && (inferredImpact === 'minor' || inferredImpact === 'moderate')) {
-      console.log(`[SuggestedFixes] Correcting impact from "serious" to "${inferredImpact}" for issue_type: ${f.issue_type}`)
       impact = inferredImpact
     } else if (impact === 'critical' && inferredImpact !== 'critical') {
-      // Only keep "critical" if it's actually critical
-      console.log(`[SuggestedFixes] Correcting impact from "critical" to "${inferredImpact}" for issue_type: ${f.issue_type}`)
       impact = inferredImpact
     }
   }
@@ -550,7 +793,13 @@ function getMessageContent(msg: { content?: unknown } | null): string {
   return ''
 }
 
-async function tryWithTools(model: string, systemPrompt: string, userPrompt: string): Promise<AutoFixItem[]> {
+type ModelResult = { fixes: AutoFixItem[]; hadError: boolean }
+
+async function getSuggestedFixesFromModel(
+  model: string,
+  systemPrompt: string,
+  userPrompt: string
+): Promise<ModelResult> {
   try {
     const completion = await openai.chat.completions.create({
       model,
@@ -560,8 +809,8 @@ async function tryWithTools(model: string, systemPrompt: string, userPrompt: str
       ],
       tools: [SUGGESTED_FIXES_FUNCTION_SCHEMA],
       tool_choice: { type: 'function', function: { name: 'suggest_accessibility_fixes' } },
-      temperature: 0.2,
-      max_tokens: 16384,
+      temperature: 0.1,
+      max_tokens: 1500,
     })
 
     const msg = completion.choices[0]?.message
@@ -570,82 +819,40 @@ async function tryWithTools(model: string, systemPrompt: string, userPrompt: str
     if (toolCall?.function?.arguments) {
       try {
         const parsed = JSON.parse(toolCall.function.arguments) as { suggested_fixes?: AutoFixItem[] }
-        return Array.isArray(parsed.suggested_fixes) ? parsed.suggested_fixes : []
+        const fixes = Array.isArray(parsed.suggested_fixes) ? parsed.suggested_fixes : []
+        return { fixes, hadError: false }
       } catch (e) {
         console.error('[SuggestedFixes] Failed to parse tool call arguments:', {
           error: e instanceof Error ? e.message : String(e),
           argumentsPreview: toolCall.function.arguments?.slice(0, 200),
         })
-        return []
+        return { fixes: [], hadError: true }
       }
     }
 
     const content = getMessageContent(msg ?? null)
-    if (content) return parseFixesFromContent(content)
-
-    console.warn('[SuggestedFixes] Tools request: no tool call, no content', {
-      finishReason: completion.choices[0]?.finish_reason,
-      contentType: Array.isArray(msg?.content) ? 'array' : typeof msg?.content,
-      contentLen: Array.isArray(msg?.content) ? (msg.content as unknown[]).length : (typeof msg?.content === 'string' ? msg?.content.length : 0),
-    })
-    return []
-  } catch (e) {
-    console.error('[SuggestedFixes] Error in tryWithTools:', {
-      error: e instanceof Error ? e.message : String(e),
-      stack: e instanceof Error ? e.stack : undefined,
-    })
-    return []
-  }
-}
-
-async function tryWithoutTools(model: string, systemPrompt: string, userPrompt: string): Promise<AutoFixItem[]> {
-  const jsonOnlySystem = `${systemPrompt}
-
-CRITICAL: Respond with ONLY a valid JSON object. No markdown, no code fences, no explanation.
-Use this exact shape: {"suggested_fixes": [ ... ]}. Every item MUST have exactly these fields. attributes MUST NOT be empty {}—always include the concrete change (e.g. {"alt":"..."}, {"role":null}). category MUST be one of: animations, buttons, aria, duplicate_ids, focus, headings, tables, forms, links, icons, images, keyboard, media. Use null for current_value when not applicable. Same structure as the example in the system prompt.`
-
-  const userMsg = `${userPrompt}\n\nOutput ONLY the JSON object {"suggested_fixes": [...]}.`
-
-  const baseParams = {
-    model,
-    messages: [
-      { role: 'system' as const, content: jsonOnlySystem },
-      { role: 'user' as const, content: userMsg },
-    ],
-    temperature: 0.2,
-    max_tokens: 16384,
-  }
-
-  let completion: Awaited<ReturnType<typeof openai.chat.completions.create>>
-  try {
-    completion = await openai.chat.completions.create({
-      ...baseParams,
-      response_format: { type: 'json_object' as const },
-    })
-  } catch (e) {
-    const err = e instanceof Error ? e.message : String(e)
-    if (/response_format|json_object|not supported/i.test(err)) {
-      completion = await openai.chat.completions.create(baseParams)
-    } else {
-      throw e
+    if (content) {
+      const fixes = parseFixesFromContent(content)
+      return { fixes, hadError: false }
     }
-  }
 
-  const content = getMessageContent(completion.choices[0]?.message ?? null)
-  if (!content) {
-    console.warn('[SuggestedFixes] JSON-only request: empty content', {
-      finishReason: completion.choices[0]?.finish_reason,
+    const finishReason = completion.choices[0]?.finish_reason
+    if (String(finishReason) === 'error') {
+      const errMsg = msg && typeof msg === 'object' && 'content' in msg ? (msg as { content?: unknown }).content : null
+      console.error('[SuggestedFixes] API returned finish_reason=error', {
+        finishReason,
+        model,
+        errorContent: typeof errMsg === 'string' ? errMsg?.slice(0, 500) : errMsg,
+      })
+      return { fixes: [], hadError: true }
+    }
+    return { fixes: [], hadError: true }
+  } catch (e) {
+    console.error('[SuggestedFixes] Model call failed', {
+      error: e instanceof Error ? e.message : String(e),
     })
-    return []
+    return { fixes: [], hadError: true }
   }
-  const fixes = parseFixesFromContent(content)
-  // Empty array is valid - it means GPT found no new fixes
-  if (fixes.length === 0 && content.includes('"suggested_fixes"')) {
-    console.log('[SuggestedFixes] GPT returned empty suggested_fixes array - no new fixes found')
-  } else if (fixes.length === 0) {
-    console.warn('[SuggestedFixes] JSON-only request: unparseable content', { contentPreview: content.slice(0, 400) })
-  }
-  return fixes
 }
 
 function parseFixesFromContent(content: string): AutoFixItem[] {

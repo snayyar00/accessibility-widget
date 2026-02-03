@@ -582,10 +582,10 @@ const DomainAnalyses: React.FC = () => {
     const list = Array.from(urlMap.values());
     const getPathDepth = (urlStr: string): number => {
       try {
-        const pathname = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`).pathname;
-        return pathname.split('/').filter(Boolean).length;
+        const url = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
+        return url.pathname.split('/').filter(Boolean).length;
       } catch {
-        return urlStr.split('/').filter(Boolean).length;
+        return 0;
       }
     };
     return list.sort((a, b) => {

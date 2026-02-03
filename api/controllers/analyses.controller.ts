@@ -6,7 +6,6 @@ import {
   updateFixAction,
 } from '../repository/analyses.repository'
 import { getPageHtmlByUrl } from '../repository/pageCache.repository'
-import { getScannerIssuesForPageUrl } from '../services/suggestedFixes/scannerIssuesForUrl.service'
 import { getSuggestedFixes } from '../services/suggestedFixes/suggestedFixes.service'
 import { normalizeDomain } from '../utils/domain.utils'
 
@@ -19,7 +18,6 @@ export async function getDomainAnalyses(req: Request, res: Response) {
     }
 
     const domain = normalizeDomain(url)
-    console.log('[DomainAnalyses] Fetching analyses for domain:', domain)
     const analyses = await getAnalysesByDomain(domain)
 
     res.status(200).json(analyses)
@@ -53,7 +51,6 @@ export async function updateAnalysisFixAction(req: Request, res: Response) {
       return res.status(400).json({ error: "action must be 'update' or 'deleted'" })
     }
 
-    console.log('[DomainAnalyses] Updating fix action:', { analysisId, fixIndex, action })
     const updatedAnalysis = await updateFixAction(analysisId, fixIndex, action)
 
     res.status(200).json(updatedAnalysis)
@@ -80,10 +77,13 @@ export async function getPageHtml(req: Request, res: Response) {
       return res.status(400).json({ error: 'URL parameter is required' })
     }
 
+    const pageHtmlStart = Date.now()
     const html = await getPageHtmlByUrl({
-      url: url.trim(),
+      url: (url as string).trim(),
       urlHash: typeof urlHash === 'string' ? urlHash : null,
     })
+
+    console.log('[PageHtml] Completed', { url: (url as string).trim(), ms: Date.now() - pageHtmlStart, found: html != null })
     if (html == null) {
       return res.status(404).json({
         error: 'Page HTML not found',
@@ -120,13 +120,15 @@ export async function postSuggestedFixes(req: Request, res: Response) {
       return res.status(400).json({ error: 'html is required' })
     }
     const fixes = Array.isArray(existingFixes) ? existingFixes : []
-    const domain = typeof domainFromBody === 'string' && domainFromBody.trim() ? domainFromBody.trim() : normalizeDomain(url)
-    const scannerReportIssues = await getScannerIssuesForPageUrl(url.trim(), domain)
+    const domain =
+      typeof domainFromBody === 'string' && domainFromBody.trim()
+        ? normalizeDomain(domainFromBody.trim())
+        : normalizeDomain(url)
     const suggestedFixes = await getSuggestedFixes({
       url: url.trim(),
       html: html.trim(),
       existingFixes: fixes,
-      scannerReportIssues: scannerReportIssues.length > 0 ? scannerReportIssues : undefined,
+      domain,
     })
     res.status(200).json({ suggestedFixes })
   } catch (error) {
