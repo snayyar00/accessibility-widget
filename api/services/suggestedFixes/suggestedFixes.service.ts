@@ -1,5 +1,7 @@
 import OpenAI from 'openai'
 
+import { getScannerIssuesForPageUrl } from './scannerIssuesForUrl.service'
+
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error('OPENROUTER_API_KEY environment variable is required')
 }
@@ -18,7 +20,7 @@ export interface AutoFixItem {
   issue_type?: string
   wcag_criteria?: string
   wcag?: string
-  action?: 'update' | 'add'
+  action?: 'update' | 'add' | 'remove' | 'create'
   attributes?: Record<string, unknown>
   impact?: string
   description?: string
@@ -32,24 +34,24 @@ const SUGGESTED_FIXES_FUNCTION_SCHEMA = {
   type: 'function' as const,
   function: {
     name: 'suggest_accessibility_fixes',
-    description: 'Return additional accessibility fixes ONLY for selectors NOT already in the existing fixes list. Each fix must match the exact format: selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category. CRITICAL: Check the existing selectors list - do not suggest fixes for selectors that already exist.',
+    description: 'Return fixes for selectors NOT in existing list. Each fix: selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category.',
     parameters: {
       type: 'object',
       properties: {
         suggested_fixes: {
           type: 'array',
-          description: 'Array of fix objects. Each has exactly: selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category.',
+          description: 'Fix objects with required fields.',
           items: {
             type: 'object',
             properties: {
               selector: { type: 'string' },
               issue_type: { type: 'string' },
               wcag_criteria: { type: 'string' },
-              action: { type: 'string', enum: ['update', 'add'] },
-              attributes: { type: 'object', additionalProperties: true, description: 'MUST NOT be empty. Use {"alt":"..."}, {"role":null}, {"aria-expanded":"true"}, etc.' },
+              action: { type: 'string', enum: ['update', 'add', 'remove', 'create'] },
+              attributes: { type: 'object', additionalProperties: true, description: 'Non-empty. e.g. {"alt":"..."}, {"role":null}' },
               impact: { type: 'string', enum: ['minor', 'moderate', 'serious', 'critical'] },
               description: { type: 'string' },
-              current_value: { type: ['string', 'null'], description: 'Current attribute/value; null if not applicable' },
+              current_value: { type: ['string', 'null'] },
               confidence: { type: 'number' },
               wcag: { type: 'string' },
               suggested_fix: { type: 'string' },
@@ -62,6 +64,61 @@ const SUGGESTED_FIXES_FUNCTION_SCHEMA = {
       required: ['suggested_fixes'],
     },
   },
+}
+
+/** Build compact summary of existing fixes (count + selectors + sample of issue_types) instead of full JSON. */
+function buildExistingFixesSummary(existingFixes: AutoFixItem[]): string {
+  const selectors = existingFixes
+    .map((f) => f.selector)
+    .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+    .map((s) => s.trim())
+
+  const issueTypes = [...new Set(existingFixes.map((f) => f.issue_type).filter(Boolean) as string[])].slice(0, 8)
+
+  if (selectors.length === 0) {
+    return 'No existing fixes. You can suggest fixes for any element.'
+  }
+
+  const selectorList = selectors.map((s) => `  - "${s}"`).join('\n')
+  const issueTypesLine =
+    issueTypes.length > 0 ? `\nIssue types already addressed (sample): ${issueTypes.join(', ')}.` : ''
+  const result = `EXISTING FIXES SUMMARY (DO NOT suggest fixes for these selectors):
+Total: ${existingFixes.length} existing fix(es).
+Selectors:
+${selectorList}${issueTypesLine}`
+  return result
+}
+
+/** Shrink HTML for accessibility analysis: remove scripts/styles, extract body, collapse whitespace, truncate long content. */
+function shrinkHtmlForAccessibility(html: string): string {
+  let s = html
+
+  // Remove script, style, noscript blocks
+  s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+  s = s.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+  s = s.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, '')
+
+  // Extract body content if present (keeps structure, drops head)
+  const bodyMatch = s.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)
+  if (bodyMatch) {
+    s = bodyMatch[1]
+  }
+
+  // Remove all SVG elements (reduces token count; scanner issues still surface SVG a11y problems)
+  s = s.replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, '')
+  s = s.replace(/<svg\b[^>]*\/>/gi, '')
+
+  // Remove HTML comments
+  s = s.replace(/<!--[\s\S]*?-->/g, '')
+
+  // Collapse repeated whitespace (spaces, newlines, tabs) to single space
+  s = s.replace(/\s+/g, ' ').trim()
+
+  const maxLen = 30_000
+  if (s.length > maxLen) {
+    s = s.slice(0, maxLen) + '\n...[truncated]'
+  }
+  return s
 }
 
 /** Scanner issue for this page (Affected Pages includes the URL). Passed to GPT with HTML. */
@@ -83,7 +140,9 @@ export interface GetSuggestedFixesInput {
   url: string
   html: string
   existingFixes: AutoFixItem[]
-  /** Scanner report issues where Affected Pages includes this URL. GPT uses these with HTML to suggest fixes. */
+  /** Domain for scanner report lookup. When provided, scanner issues are fetched in parallel with prompt building. */
+  domain?: string
+  /** Pre-fetched scanner issues (used when domain not provided). */
   scannerReportIssues?: ScannerReportIssueInput[]
 }
 
@@ -93,7 +152,8 @@ export interface GetSuggestedFixesInput {
  * Returns fix objects in the same format as result_json.analysis.fixes.
  */
 export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<AutoFixItem[]> {
-  const { url, html, existingFixes, scannerReportIssues = [] } = input
+  const totalStart = Date.now()
+  const { url, html, existingFixes, domain, scannerReportIssues: scannerReportIssuesInput } = input
 
   // Input validation
   if (!url || typeof url !== 'string' || url.trim().length === 0) {
@@ -106,129 +166,95 @@ export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<
     throw new Error('existingFixes must be an array')
   }
 
-  const existingJson = JSON.stringify(existingFixes, null, 2)
-  const htmlSnippet = html.length > 80_000 ? html.slice(0, 80_000) + '\n\n...[truncated]' : html
+  // Start scanner fetch in parallel with prompt building (skips R2 when domain has no report)
+  const scannerPromise =
+    domain?.trim() && scannerReportIssuesInput === undefined
+      ? getScannerIssuesForPageUrl(url.trim(), domain.trim())
+      : Promise.resolve(scannerReportIssuesInput ?? [])
 
-  // Extract and format existing selectors for easy reference
-  const existingSelectorsList = existingFixes
-    .map((f) => f.selector)
-    .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
-    .map((s) => `  - "${s.trim()}"`)
-    .join('\n')
+  const existingFixesSummary = buildExistingFixesSummary(existingFixes)
+  const htmlSnippet = shrinkHtmlForAccessibility(html)
 
-  const existingSelectorsSummary = existingSelectorsList.length > 0
-    ? `\n\nEXISTING SELECTORS (DO NOT SUGGEST FIXES FOR THESE):\n${existingSelectorsList}\n\nTotal: ${existingFixes.length} existing fix(es).`
-    : '\n\nNo existing fixes. You can suggest fixes for any element.'
-
-  // Log existing selectors for debugging
-  if (existingFixes.length > 0) {
-    const selectorCount = existingFixes.filter((f) => f.selector && typeof f.selector === 'string').length
-    console.log(`[SuggestedFixes] Sending ${selectorCount} existing selectors to GPT to prevent duplicates`)
-  }
+  const scannerReportIssues = await scannerPromise
 
   const exactFormatExample = `{
-  "selector": "nav.transition-all.bg-transparent.duration-300.w-full",
+  "selector": "footer.text-gray-300",
   "issue_type": "redundant_aria_role",
   "wcag_criteria": "4.1.2",
-  "action": "update",
-  "attributes": { "role": null },
+  "action": "remove",
+  "attributes": { "role": "" },
   "impact": "minor",
-  "description": "Redundant role='navigation' on <nav> (implicit role)",
-  "current_value": "navigation",
+  "description": "Redundant role='contentinfo' on <footer> (implicit role)",
+  "current_value": "contentinfo",
   "confidence": 0.95,
   "wcag": "4.1.2",
-  "suggested_fix": "Remove redundant role='navigation' from <nav>",
+  "suggested_fix": "Remove redundant role from <footer>",
   "category": "aria"
 }`
 
   const hasScannerIssues = Array.isArray(scannerReportIssues) && scannerReportIssues.length > 0
-  if (hasScannerIssues) {
-    console.log(`[SuggestedFixes] Including ${scannerReportIssues.length} scanner report issues (Affected Pages includes this URL) for GPT`)
-  }
 
-  const systemPrompt = `You are an accessibility expert. You will receive:
-1. A page URL
-2. The raw HTML of that page
-3. A list of EXISTING SELECTORS that already have fixes (you must NOT suggest fixes for these)
-4. The full existing auto-fixes JSON for reference
-${hasScannerIssues ? '5. SCANNER REPORT ISSUES for this page (accessibility scanner found these on Affected Pages that include this URL) — use these together with the HTML to prioritize and suggest fixes.' : ''}
+  const systemPrompt = `You are an accessibility expert. Find ADDITIONAL issues and suggest fixes ONLY for elements NOT in the EXISTING SELECTORS list. Use the HTML${hasScannerIssues ? ' and scanner issues' : ''} to identify issues. Return at most 10 fixes.
 
-Your task: Find ADDITIONAL accessibility issues and suggest fixes ONLY for elements NOT in the existing selectors list. Use both the HTML and any scanner report issues provided to identify real issues. Return them in the EXACT same JSON format as below.
+REQUIRED FORMAT (each fix): selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category
 
-REQUIRED FORMAT — each fix object MUST have exactly these fields in this order:
-selector, issue_type, wcag_criteria, action, attributes, impact, description, current_value, confidence, wcag, suggested_fix, category
-
-Examples (follow this structure exactly):
+Example:
 ${exactFormatExample}
 
-CRITICAL RULES - READ CAREFULLY:
-- Return at most 20 suggested fixes to avoid truncation.
-- BEFORE suggesting ANY fix, check if its selector is in the EXISTING SELECTORS list provided.
-- If a selector already exists in the list, DO NOT suggest a fix for it - it's already been fixed.
-- ONLY suggest fixes for selectors that are NOT in the existing selectors list.
-- Match selectors EXACTLY - if "a[href=\"/#contact\"]" exists, do NOT suggest "a[href='/#contact']" or any variation.
-- The selector field is the PRIMARY identifier - if it matches an existing one, skip that element entirely.
-- action: "update" (attribute change/removal) or "add" (new element, e.g. skip link).
-- attributes: MUST NOT be empty {}. Always include the concrete attribute change:
-  - Remove attribute: { "role": null }, { "aria-hidden": null }, etc.
-  - Add/change attribute: { "alt": "descriptive text" }, { "aria-label": "..." }, { "autocomplete": "email" }, { "aria-expanded": "true" }, { "aria-haspopup": "menu" }, etc.
-  - Body prepend (skip link): { "prepend": "<a href=\\"#main-content\\" class=\\"skip-link\\">Skip to main content</a>" }.
-  - For alt fixes: use { "alt": "specific description" } with the exact suggested alt text. For decorative images use { "alt": "" }.
-  - For aria-expanded / aria-haspopup: use { "aria-expanded": "true" } or { "aria-haspopup": "menu" } etc. as appropriate.
-- impact: REQUIRED. Choose the appropriate severity level based on the issue:
-  * "critical": Blocks access completely (e.g., color contrast violations, keyboard traps, missing critical alt text for functional images)
-  * "serious": Significant barriers (e.g., missing labels, missing aria-labels, form errors, heading structure issues, missing skip links)
-  * "moderate": Noticeable issues (e.g., redundant ARIA roles, missing aria-haspopup/controls, non-descriptive alt text, duplicate IDs)
-  * "minor": Low impact, cosmetic issues (e.g., redundant screen reader text, redundant ARIA attributes on semantic elements)
-  IMPORTANT: Most issues should be "moderate" or "minor". Only use "serious" or "critical" for significant accessibility barriers.
-- current_value: the current attribute/value when relevant; use null if not applicable.
-- confidence: number 0–1 (e.g. 0.95).
-- wcag and wcag_criteria: same value (e.g. "4.1.2").
-- category: REQUIRED. Exactly one of: "animations" | "buttons" | "aria" | "duplicate_ids" | "focus" | "headings" | "tables" | "forms" | "links" | "icons" | "images" | "keyboard" | "media".`
+RULES:
+- NEVER suggest fixes for selectors already in the existing list. Match selectors exactly.
+- action: Use the correct action for each fix:
+  - "remove": Remove an attribute (redundant role, redundant aria). Use attributes: {"role":""} or {"role":null}.
+  - "update": Change/modify an existing attribute value (e.g. set alt, aria-label, aria-expanded, autocomplete).
+  - "add": Add attribute or content to existing element (e.g. aria-haspopup, aria-controls, prepend skip link).
+  - "create": Create new element (e.g. skip link). Use attributes: {"prepend":"<a href=\\"#main-content\\" class=\\"skip-link\\">Skip to main content</a>"}.
+- attributes: NEVER empty. Use {"role":""} or {"role":null} for remove; {"alt":"..."}, {"aria-label":"..."}, {"aria-expanded":"true"}, {"aria-haspopup":"menu"}, {"autocomplete":"email"} for update/add; {"prepend":"..."} for create.
+- impact: "critical" (blocks access), "serious" (major barriers), "moderate" (noticeable), "minor" (cosmetic). Prefer moderate/minor.
+- category: one of animations|buttons|aria|duplicate_ids|focus|headings|tables|forms|links|icons|images|keyboard|media.`
 
-  const sanitizedIssues = hasScannerIssues
-    ? scannerReportIssues.map((issue) => {
-        const { pages_affected: _pa, ...rest } = issue as ScannerReportIssueInput & { pages_affected?: unknown }
-        return rest
+  const slimScannerIssues = hasScannerIssues
+    ? scannerReportIssues.slice(0, 20).map((issue) => {
+        const sel = issue.selectors
+        const selectors = Array.isArray(sel) ? sel.slice(0, 2) : typeof sel === 'string' ? [sel] : []
+        return {
+          code: issue.code,
+          message: typeof issue.message === 'string' ? issue.message.slice(0, 300) : issue.message,
+          wcag_code: issue.wcag_code,
+          severity: issue.severity,
+          selectors,
+        }
       })
     : []
   const scannerIssuesSection = hasScannerIssues
-    ? `\n\nSCANNER REPORT ISSUES for this page (Affected Pages includes this URL) — use these with the HTML to find suggested fixes:\n\`\`\`json\n${JSON.stringify(sanitizedIssues, null, 2)}\n\`\`\`\n`
+    ? `\n\nSCANNER ISSUES (use with HTML to prioritize fixes):\n${JSON.stringify(slimScannerIssues)}\n`
     : ''
 
   const userPrompt = `URL: ${url}
-${existingSelectorsSummary}
+
+${existingFixesSummary}
 ${scannerIssuesSection}
-STEP 1: Review the EXISTING SELECTORS list above. These elements already have fixes - DO NOT suggest fixes for them.
-
-STEP 2: Analyze the HTML below${hasScannerIssues ? ' and the scanner report issues above' : ''} and find accessibility issues ONLY for elements NOT in the existing selectors list.
-
-STEP 3: For each new issue found, verify its selector is NOT in the existing selectors list before including it.
-
-Full existing fixes JSON (for reference only):
-${existingJson}
+Analyze the HTML below and suggest fixes (max 10) for elements NOT in the existing selectors list. Each fix must use the exact JSON structure; attributes must never be empty.
 
 Page HTML:
 \`\`\`html
 ${htmlSnippet}
-\`\`\`
+\`\`\``
 
-Return ONLY new suggested fixes (at most 10) for selectors NOT in the existing list. Each fix MUST use the exact same JSON structure as the examples. attributes must never be empty {}—always include the concrete attribute change (e.g. {"alt":"..."}, {"role":null}).
+  const primaryModel = 'openai/gpt-4o-mini'
+  const fallbackModel = 'google/gemini-2.5-flash'
 
-REMINDER: Cross-reference every suggested selector against the EXISTING SELECTORS list. If it matches, exclude it.`
-
-  // Model configuration - can be moved to env var if needed
-  const model = 'google/gemini-2.5-flash'
-
-  let fixes = await tryWithTools(model, systemPrompt, userPrompt)
-  if (fixes.length === 0) {
-    fixes = await tryWithoutTools(model, systemPrompt, userPrompt)
+  let result = await getSuggestedFixesFromModel(primaryModel, systemPrompt, userPrompt)
+  let fixes = result.fixes
+  if (result.hadError && fixes.length === 0) {
+    console.log('[SuggestedFixes] Primary had error, trying fallback', { fallbackModel })
+    result = await getSuggestedFixesFromModel(fallbackModel, systemPrompt, userPrompt)
+    fixes = result.fixes
+    if (fixes.length > 0) {
+      console.log('[SuggestedFixes] Fallback succeeded', { fallbackModel, count: fixes.length })
+    }
   }
-  // Empty array is valid - it means no new fixes were found
-  if (fixes.length === 0) {
-    console.log('[SuggestedFixes] GPT returned empty array - no new fixes found')
-    return []
-  }
+  if (fixes.length === 0) return []
+
   const normalized = fixes.map(normalizeFix)
   
   // Filter out fixes that duplicate existing fixes by selector
@@ -237,38 +263,25 @@ REMINDER: Cross-reference every suggested selector against the EXISTING SELECTOR
     if (!sel || typeof sel !== 'string') return ''
     return sel.trim().toLowerCase().replace(/\s+/g, ' ')
   }
-  
+
   const existingSelectors = new Set(
     existingFixes
       .map((f) => normalizeSelector(f.selector))
       .filter((s) => s.length > 0)
   )
-  
+
   const withoutDuplicates = normalized.filter((f) => {
     const normalizedSel = normalizeSelector(f.selector)
-    if (normalizedSel.length === 0) {
-      // If no selector, we can't check for duplicates, so include it
-      return true
-    }
-    const isDuplicate = existingSelectors.has(normalizedSel)
-    if (isDuplicate) {
-      console.log(`[SuggestedFixes] Filtered out duplicate fix with selector: "${f.selector}"`)
-    }
-    return !isDuplicate
+    if (normalizedSel.length === 0) return true
+    return !existingSelectors.has(normalizedSel)
   })
-  
-  if (withoutDuplicates.length < normalized.length) {
-    console.warn(`[SuggestedFixes] Filtered out ${normalized.length - withoutDuplicates.length} duplicate fixes (by selector)`)
-  }
-  
-  // Filter out fixes that still have empty attributes after inference
+
   const withAttributes = withoutDuplicates.filter((f) => {
     const attrs = f.attributes
     return attrs && typeof attrs === 'object' && !Array.isArray(attrs) && Object.keys(attrs).length > 0
   })
-  if (withAttributes.length < withoutDuplicates.length) {
-    console.warn(`[SuggestedFixes] Filtered out ${withoutDuplicates.length - withAttributes.length} fixes with empty attributes`)
-  }
+
+  console.log('[SuggestedFixes] Completed', { url, ms: Date.now() - totalStart, finalCount: withAttributes.length })
   return withAttributes
 }
 
@@ -483,7 +496,10 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
   const raw = f.category?.trim() || inferCategory(f.issue_type)
   const category = isValidCategory(raw) ? raw : inferCategory(f.issue_type)
   const rawAction = (f as { action?: string }).action
-  const action = rawAction === 'add' ? 'add' : rawAction === 'remove' ? 'update' : (f.action ?? 'update')
+  const validActions = ['update', 'add', 'remove', 'create'] as const
+  const action = validActions.includes(rawAction as (typeof validActions)[number])
+    ? (rawAction as (typeof validActions)[number])
+    : (f.action ?? 'update')
   const wcag = f.wcag ?? f.wcag_criteria ?? ''
   const wcag_criteria = f.wcag_criteria ?? wcag
   let attrs = f.attributes ?? {}
@@ -503,11 +519,8 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
     const inferredImpact = inferImpact(f)
     // Only override if GPT's impact seems too high (e.g., "serious" for redundant ARIA)
     if (impact === 'serious' && (inferredImpact === 'minor' || inferredImpact === 'moderate')) {
-      console.log(`[SuggestedFixes] Correcting impact from "serious" to "${inferredImpact}" for issue_type: ${f.issue_type}`)
       impact = inferredImpact
     } else if (impact === 'critical' && inferredImpact !== 'critical') {
-      // Only keep "critical" if it's actually critical
-      console.log(`[SuggestedFixes] Correcting impact from "critical" to "${inferredImpact}" for issue_type: ${f.issue_type}`)
       impact = inferredImpact
     }
   }
@@ -556,7 +569,13 @@ function getMessageContent(msg: { content?: unknown } | null): string {
   return ''
 }
 
-async function tryWithTools(model: string, systemPrompt: string, userPrompt: string): Promise<AutoFixItem[]> {
+type ModelResult = { fixes: AutoFixItem[]; hadError: boolean }
+
+async function getSuggestedFixesFromModel(
+  model: string,
+  systemPrompt: string,
+  userPrompt: string
+): Promise<ModelResult> {
   try {
     const completion = await openai.chat.completions.create({
       model,
@@ -566,8 +585,8 @@ async function tryWithTools(model: string, systemPrompt: string, userPrompt: str
       ],
       tools: [SUGGESTED_FIXES_FUNCTION_SCHEMA],
       tool_choice: { type: 'function', function: { name: 'suggest_accessibility_fixes' } },
-      temperature: 0.2,
-      max_tokens: 16384,
+      temperature: 0.1,
+      max_tokens: 1500,
     })
 
     const msg = completion.choices[0]?.message
@@ -576,82 +595,40 @@ async function tryWithTools(model: string, systemPrompt: string, userPrompt: str
     if (toolCall?.function?.arguments) {
       try {
         const parsed = JSON.parse(toolCall.function.arguments) as { suggested_fixes?: AutoFixItem[] }
-        return Array.isArray(parsed.suggested_fixes) ? parsed.suggested_fixes : []
+        const fixes = Array.isArray(parsed.suggested_fixes) ? parsed.suggested_fixes : []
+        return { fixes, hadError: false }
       } catch (e) {
         console.error('[SuggestedFixes] Failed to parse tool call arguments:', {
           error: e instanceof Error ? e.message : String(e),
           argumentsPreview: toolCall.function.arguments?.slice(0, 200),
         })
-        return []
+        return { fixes: [], hadError: true }
       }
     }
 
     const content = getMessageContent(msg ?? null)
-    if (content) return parseFixesFromContent(content)
-
-    console.warn('[SuggestedFixes] Tools request: no tool call, no content', {
-      finishReason: completion.choices[0]?.finish_reason,
-      contentType: Array.isArray(msg?.content) ? 'array' : typeof msg?.content,
-      contentLen: Array.isArray(msg?.content) ? (msg.content as unknown[]).length : (typeof msg?.content === 'string' ? msg?.content.length : 0),
-    })
-    return []
-  } catch (e) {
-    console.error('[SuggestedFixes] Error in tryWithTools:', {
-      error: e instanceof Error ? e.message : String(e),
-      stack: e instanceof Error ? e.stack : undefined,
-    })
-    return []
-  }
-}
-
-async function tryWithoutTools(model: string, systemPrompt: string, userPrompt: string): Promise<AutoFixItem[]> {
-  const jsonOnlySystem = `${systemPrompt}
-
-CRITICAL: Respond with ONLY a valid JSON object. No markdown, no code fences, no explanation.
-Use this exact shape: {"suggested_fixes": [ ... ]}. Every item MUST have exactly these fields. attributes MUST NOT be empty {}—always include the concrete change (e.g. {"alt":"..."}, {"role":null}). category MUST be one of: animations, buttons, aria, duplicate_ids, focus, headings, tables, forms, links, icons, images, keyboard, media. Use null for current_value when not applicable. Same structure as the example in the system prompt.`
-
-  const userMsg = `${userPrompt}\n\nOutput ONLY the JSON object {"suggested_fixes": [...]}.`
-
-  const baseParams = {
-    model,
-    messages: [
-      { role: 'system' as const, content: jsonOnlySystem },
-      { role: 'user' as const, content: userMsg },
-    ],
-    temperature: 0.2,
-    max_tokens: 16384,
-  }
-
-  let completion: Awaited<ReturnType<typeof openai.chat.completions.create>>
-  try {
-    completion = await openai.chat.completions.create({
-      ...baseParams,
-      response_format: { type: 'json_object' as const },
-    })
-  } catch (e) {
-    const err = e instanceof Error ? e.message : String(e)
-    if (/response_format|json_object|not supported/i.test(err)) {
-      completion = await openai.chat.completions.create(baseParams)
-    } else {
-      throw e
+    if (content) {
+      const fixes = parseFixesFromContent(content)
+      return { fixes, hadError: false }
     }
-  }
 
-  const content = getMessageContent(completion.choices[0]?.message ?? null)
-  if (!content) {
-    console.warn('[SuggestedFixes] JSON-only request: empty content', {
-      finishReason: completion.choices[0]?.finish_reason,
+    const finishReason = completion.choices[0]?.finish_reason
+    if (String(finishReason) === 'error') {
+      const errMsg = msg && typeof msg === 'object' && 'content' in msg ? (msg as { content?: unknown }).content : null
+      console.error('[SuggestedFixes] API returned finish_reason=error', {
+        finishReason,
+        model,
+        errorContent: typeof errMsg === 'string' ? errMsg?.slice(0, 500) : errMsg,
+      })
+      return { fixes: [], hadError: true }
+    }
+    return { fixes: [], hadError: true }
+  } catch (e) {
+    console.error('[SuggestedFixes] Model call failed', {
+      error: e instanceof Error ? e.message : String(e),
     })
-    return []
+    return { fixes: [], hadError: true }
   }
-  const fixes = parseFixesFromContent(content)
-  // Empty array is valid - it means GPT found no new fixes
-  if (fixes.length === 0 && content.includes('"suggested_fixes"')) {
-    console.log('[SuggestedFixes] GPT returned empty suggested_fixes array - no new fixes found')
-  } else if (fixes.length === 0) {
-    console.warn('[SuggestedFixes] JSON-only request: unparseable content', { contentPreview: content.slice(0, 400) })
-  }
-  return fixes
 }
 
 function parseFixesFromContent(content: string): AutoFixItem[] {
