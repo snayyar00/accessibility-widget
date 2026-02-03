@@ -147,6 +147,203 @@ export interface GetSuggestedFixesInput {
 }
 
 /**
+ * Comprehensive post-processing filter. Rejects fixes that violate accessibility best practices
+ * or our prompt rules. Every prompt rule MUST have a corresponding filter (models ignore rules).
+ */
+function applyAllFilters(f: AutoFixItem): boolean {
+  const attrs = f.attributes
+  if (!attrs || typeof attrs !== 'object' || Array.isArray(attrs) || Object.keys(attrs).length === 0) {
+    return false
+  }
+  const attrsObj = attrs as Record<string, unknown>
+  const sel = (f.selector ?? '').toLowerCase()
+  const issueType = String(f.issue_type ?? '').toLowerCase()
+  const altVal = attrsObj.alt
+
+  // --- FORBIDDEN: Inline styles / contrast fixes (require design analysis) ---
+  if (attrsObj.style != null || (typeof attrsObj.color === 'string' && attrsObj.color)) return false
+
+  // --- HEADINGS: Never add role="heading" or aria-level to h1-h6 ---
+  const targetsHeading = /\bh[1-6]\b/.test(sel)
+  if (targetsHeading && (attrsObj.role === 'heading' || attrsObj['aria-level'] != null)) return false
+
+  // --- HEADINGS: role="heading" on div/span/p requires aria-level; incomplete fix is invalid ---
+  const targetsNonHeading = /\b(div|span|p)\b/.test(sel)
+  if (
+    targetsNonHeading &&
+    attrsObj.role === 'heading' &&
+    (attrsObj['aria-level'] == null || attrsObj['aria-level'] === '')
+  )
+    return false
+
+  // --- SEMANTIC ELEMENTS: Don't add redundant aria-label (footer, main, header already announce) ---
+  const ariaLabelVal = attrsObj['aria-label']
+  if (typeof ariaLabelVal === 'string') {
+    const label = ariaLabelVal.trim().toLowerCase()
+    const redundantForElement = (elem: string, ...redundant: string[]) =>
+      sel.includes(elem) && redundant.some((r) => label === r || label.replace(/\s+/g, ' ') === r)
+    const redundantLabels = ['header', 'main content area', 'main', 'footer', 'banner']
+    if (
+      redundantForElement('footer', 'footer', 'contentinfo') ||
+      redundantForElement('main', 'main', 'main content', 'main content area') ||
+      redundantForElement('header', 'header', 'banner') ||
+      redundantForElement('nav', 'navigation', 'nav') ||
+      (sel.includes('div') && redundantLabels.some((r) => label === r || label.replace(/\s+/g, ' ') === r))
+    )
+      return false
+  }
+
+  // --- NAVIGATION: Don't add role="dialog" or aria-modal to nav overlay - it's a panel, not a modal ---
+  if (
+    attrsObj.role === 'dialog' &&
+    (sel.includes('wp-block-navigation__responsive') || sel.includes('navigation'))
+  )
+    return false
+  if (
+    attrsObj['aria-modal'] === true ||
+    attrsObj['aria-modal'] === 'true'
+  ) {
+    if (sel.includes('wp-block-navigation__responsive')) return false
+  }
+
+  // --- NAVIGATION: Don't add role="menu"/"menuitem" to link-based nav - use list semantics ---
+  if (
+    (attrsObj.role === 'menu' || attrsObj.role === 'menuitem') &&
+    sel.includes('wp-block-navigation')
+  )
+    return false
+
+  // --- REDUNDANT ROLES: role="link" on <a>, role="form" on <form>, role="button" on <button>, role="navigation" on nav ---
+  if ((sel.includes('a[') || sel.startsWith('a.')) && attrsObj.role === 'link') return false
+  if (sel.includes('form') && attrsObj.role === 'form') return false
+  if (sel.includes('button') && attrsObj.role === 'button') return false
+  if (sel.includes('nav') && attrsObj.role === 'navigation') return false
+
+  // --- ROLE: Don't remove role="group" or role="region" from div - they add valid semantics ---
+  const isRemovingRole =
+    attrsObj.role === '' || attrsObj.role === null || attrsObj.role === undefined
+  const currentRole = String(f.current_value ?? '').toLowerCase()
+  if (isRemovingRole && sel.includes('div') && /^(group|region)$/.test(currentRole)) return false
+
+  // --- ROLE="region": Requires aria-label; unnamed regions clutter screen reader navigation ---
+  if (
+    attrsObj.role === 'region' &&
+    (attrsObj['aria-label'] == null || String(attrsObj['aria-label']).trim() === '')
+  )
+    return false
+
+  // --- ROLE="text": Wrong for p, div, span ---
+  if (attrsObj.role === 'text') return false
+
+  // --- IMAGES: alt only on img/area/input[type=image] ---
+  if (attrsObj.alt != null) {
+    const targetsImgOrArea = /\bimg\b|\barea\b|\[type=['"]?image['"]?\]/.test(sel)
+    if (!targetsImgOrArea) return false
+    if (sel.includes('figure')) return false
+    if (sel.includes("img") && (sel.includes("alt=''") || sel.includes('alt=""'))) return false
+    if (typeof altVal === 'string' && /descriptive\s+text\s+for\s+(the\s+)?image/i.test(altVal))
+      return false
+  }
+
+  // --- IMAGES: missing_alt_text when alt already exists ---
+  if (attrsObj.alt != null && /missing_alt|alt_text|non_descriptive_alt/i.test(issueType)) {
+    // img[alt], img[alt='...'], img[alt="..."] = alt attribute exists (img[alt] doesn't specify value)
+    const hasAltInSelector =
+      /img\[alt\]/.test(sel) ||
+      (/img\[alt=['"]/.test(sel) && !/img\[alt=''\]|img\[alt=""\]/.test(sel))
+    const missingAltButHasValue =
+      /missing_alt/i.test(issueType) &&
+      typeof f.current_value === 'string' &&
+      f.current_value.trim().length > 2
+    if (hasAltInSelector || missingAltButHasValue) return false
+  }
+
+  // --- IMAGES: same-value alt update (no real change) ---
+  if (typeof altVal === 'string' && typeof f.current_value === 'string') {
+    const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ').replace(/["']/g, '')
+    if (norm(altVal) === norm(f.current_value)) return false
+  }
+
+  // --- LINKS: Never add target="_blank" (changes behavior) ---
+  if (attrsObj.target === '_blank') return false
+
+  // --- LINKS/BUTTONS: Never add aria-label when element has visible text (current_value) ---
+  const hasAriaLabel = attrsObj['aria-label'] != null
+  const hasVisibleText = typeof f.current_value === 'string' && f.current_value.trim().length > 1
+  const isLink = sel.includes('a[') || sel.startsWith('a.') || /^a\b/.test(sel)
+  const isButton = sel.includes('button')
+  if (hasAriaLabel && hasVisibleText && (isLink || isButton)) return false
+
+  // --- LINKS: Nav links (mailto, home, about, contact, news, footer) almost always have visible text ---
+  // Model often wrongly reports current_value="" for these; adding aria-label is usually redundant
+  if (hasAriaLabel && isLink && !hasVisibleText) {
+    const hrefMatch = sel.match(/href\s*=\s*['"]([^'"]+)['"]/i)
+    const href = (hrefMatch?.[1] ?? '').toLowerCase()
+    const isLikelyNavLink =
+      href.startsWith('mailto:') ||
+      /^https?:\/\/[^/]*\/?$/.test(href) || // home
+      /\/(chi-siamo|contatti|contact|news|about|about-us|chi_siamo)\b/i.test(href) ||
+      /\/(privacy-policy|cookie-policy|terms|terms-of-use|dichiarazione|impressum|legal)\b/i.test(href)
+    const isFooterLink = sel.includes('footer') && sel.includes('a')
+    if (isLikelyNavLink || isFooterLink) return false
+  }
+
+  // --- LISTS: Don't add aria-label to ul inside nav - parent nav already has aria-label ---
+  if (
+    hasAriaLabel &&
+    sel.includes('ul') &&
+    (sel.includes('wp-block-navigation') || sel.includes('nav'))
+  )
+    return false
+
+  // --- BUTTONS/NAV: Never remove or change aria-label (they need it) ---
+  if (hasAriaLabel && (isButton || sel.includes('nav'))) {
+    const ariaLabelVal = attrsObj['aria-label']
+    const isRemoving = ariaLabelVal === '' || ariaLabelVal === null || ariaLabelVal === undefined
+    const isGenericPlaceholder =
+      typeof ariaLabelVal === 'string' && /accessible\s+name|generic|placeholder/i.test(ariaLabelVal)
+    const isRedundantOnNav =
+      sel.includes('nav') && /redundant_aria_label|redundant.*label/i.test(issueType)
+    if (isRemoving || isGenericPlaceholder || isRedundantOnNav) return false
+  }
+
+  // --- IFRAME/IMG: Don't add aria-label when title exists (title provides name) ---
+  if (
+    hasAriaLabel &&
+    (sel.includes('iframe') || sel.includes('img')) &&
+    sel.includes('title=')
+  ) {
+    return false
+  }
+
+  // --- ARIA-HASPOPUP: Never on close buttons; never remove from menu buttons ---
+  if (attrsObj['aria-haspopup'] != null && /close|dismiss|chiudi/i.test(sel)) return false
+  if (
+    Object.keys(attrsObj).some((k) => k.toLowerCase() === 'aria-haspopup') &&
+    isButton &&
+    (attrsObj['aria-haspopup'] === '' ||
+      attrsObj['aria-haspopup'] === null ||
+      attrsObj['aria-haspopup'] === undefined)
+  )
+    return false
+
+  // --- ARIA-CONTROLS: Never on close buttons; never placeholder IDs ---
+  if (attrsObj['aria-controls'] != null && /close|dismiss|chiudi/i.test(sel)) return false
+  const ariaControlsVal = attrsObj['aria-controls']
+  if (typeof ariaControlsVal === 'string' && /^submenu-id$/i.test(ariaControlsVal.trim()))
+    return false
+
+  // --- ARIA-DESCRIBEDBY / ARIA-LABELLEDBY: Reject placeholder IDs ---
+  const ariaDescribedBy = attrsObj['aria-describedby']
+  const ariaLabelledBy = attrsObj['aria-labelledby']
+  const placeholderId = (v: unknown) =>
+    typeof v === 'string' && /^(element-id|target-id|label-id|placeholder)$/i.test(v.trim())
+  if (placeholderId(ariaDescribedBy) || placeholderId(ariaLabelledBy)) return false
+
+  return true
+}
+
+/**
  * Call GPT to suggest additional accessibility fixes for the given HTML.
  * Excludes fixes that duplicate any already in existingFixes.
  * Returns fix objects in the same format as result_json.analysis.fixes.
@@ -201,8 +398,21 @@ REQUIRED FORMAT (each fix): selector, issue_type, wcag_criteria, action, attribu
 Example:
 ${exactFormatExample}
 
-RULES:
+RULES (ALL enforced by post-processing; violations are rejected):
 - NEVER suggest fixes for selectors already in the existing list. Match selectors exactly.
+- UNIQUE FIXES: Each fix must have a unique combination of selector AND attributes.
+- HEADINGS: Do NOT add role="heading" or aria-level to h1-h6; they have implicit role. Only REMOVE redundant role.
+- REDUNDANT ROLES: Do NOT add role="link" to <a>, role="form" to <form>, role="button" to <button>, role="navigation" to <nav>; do NOT remove role="group" or role="region" from div.
+- ROLE: Do NOT add role="text" to p, div, span; do NOT add role="region" without aria-label.
+- ARIA-REF: Do NOT suggest aria-describedby or aria-labelledby with placeholder IDs; target ID must exist in HTML.
+- STYLE: Do NOT suggest inline style or color for contrast - requires design analysis.
+- IFRAME/IMG: Do NOT add aria-label to iframe/img that has title attribute.
+- NAV: Do NOT remove or change aria-label on nav; never use placeholder like "Accessible name".
+- BUTTONS: Do NOT remove aria-label from buttons; do NOT add aria-label to buttons with visible text; do NOT remove aria-haspopup (fix wrong value e.g. "dialog"→"menu"); do NOT add aria-haspopup/aria-controls to close/dismiss buttons.
+- LINKS: Do NOT add aria-label to links with visible text; do NOT add target="_blank"; nav links (mailto, home, about, contact) usually have text - verify before adding aria-label.
+- IMAGES: Do NOT add alt to img[alt='']; do NOT suggest missing_alt_text when alt exists; alt only on img/area/input[type=image]; no placeholder alt like "Descriptive text for the image".
+- SEMANTIC: Do NOT add role="heading" to div/span/p without aria-level (incomplete); do NOT add redundant aria-label to footer/main/header/nav or div (e.g. "Header", "Main content area").
+- NAVIGATION: Do NOT add role="dialog" or aria-modal to nav overlay (it's a panel, not a modal); do NOT add role="menu"/"menuitem" to link-based nav (use list semantics).
 - action: Use the correct action for each fix:
   - "remove": Remove an attribute (redundant role, redundant aria). Use attributes: {"role":""} or {"role":null}.
   - "update": Change/modify an existing attribute value (e.g. set alt, aria-label, aria-expanded, autocomplete).
@@ -233,7 +443,7 @@ RULES:
 
 ${existingFixesSummary}
 ${scannerIssuesSection}
-Analyze the HTML below and suggest fixes (max 10) for elements NOT in the existing selectors list. Each fix must use the exact JSON structure; attributes must never be empty.
+Analyze the HTML below and suggest fixes (max 10) for elements NOT in the existing selectors list. Each fix must use the exact JSON structure; attributes must never be empty. Ensure each fix has a unique selector+attributes combination (no duplicates).
 
 Page HTML:
 \`\`\`html
@@ -276,12 +486,26 @@ ${htmlSnippet}
     return !existingSelectors.has(normalizedSel)
   })
 
-  const withAttributes = withoutDuplicates.filter((f) => {
-    const attrs = f.attributes
-    return attrs && typeof attrs === 'object' && !Array.isArray(attrs) && Object.keys(attrs).length > 0
+  // Deduplicate by selector+attributes (no two fixes with same selector and same attributes)
+  const seenSelectorAttrs = new Set<string>()
+  const withoutSelectorAttrDuplicates = withoutDuplicates.filter((f) => {
+    const sel = normalizeSelector(f.selector)
+    const attrsKey = JSON.stringify(f.attributes ?? {})
+    const key = `${sel}::${attrsKey}`
+    if (seenSelectorAttrs.has(key)) return false
+    seenSelectorAttrs.add(key)
+    return true
   })
 
-  console.log('[SuggestedFixes] Completed', { url, ms: Date.now() - totalStart, finalCount: withAttributes.length })
+  const withAttributes = withoutSelectorAttrDuplicates.filter((f) =>
+    applyAllFilters(f)
+  )
+
+  console.log('[SuggestedFixes] Completed', {
+    url,
+    ms: Date.now() - totalStart,
+    finalCount: withAttributes.length,
+  })
   return withAttributes
 }
 
