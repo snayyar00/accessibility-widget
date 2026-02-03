@@ -352,6 +352,8 @@ export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<
   const totalStart = Date.now()
   const { url, html, existingFixes, domain, scannerReportIssues: scannerReportIssuesInput } = input
 
+  console.log('[SuggestedFixes] Starting', { url, htmlLength: html?.length ?? 0, existingFixesCount: existingFixes?.length ?? 0 })
+
   // Input validation
   if (!url || typeof url !== 'string' || url.trim().length === 0) {
     throw new Error('url is required and must be a non-empty string')
@@ -453,6 +455,7 @@ ${htmlSnippet}
   const primaryModel = 'z-ai/glm-4.7'
   const fallbackModel = 'openai/gpt-4o-mini'
 
+  console.log('[SuggestedFixes] Starting GPT processing', { primaryModel, promptLength: systemPrompt.length + userPrompt.length })
   let result = await getSuggestedFixesFromModel(primaryModel, systemPrompt, userPrompt)
   let fixes = result.fixes
   if (result.hadError && fixes.length === 0) {
