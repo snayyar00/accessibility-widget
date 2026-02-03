@@ -54,12 +54,21 @@ export async function getScannerIssuesForPageUrl(
   }
 
   try {
-    const rows = await getR2KeysByParams({ url: domainToUse })
-    if (!rows || rows.length === 0) {
-      // No accessibility report for this domain — suggested fixes will use HTML only
-      console.log('[ScannerIssuesForUrl] No report found for domain:', domainToUse)
-      return []
+    // Try domain variants: reports may be stored as "academicoach.com" or "www.academicoach.com"
+    const domainVariants = [domainToUse]
+    if (domainToUse.startsWith('www.')) {
+      domainVariants.push(domainToUse.slice(4))
+    } else {
+      domainVariants.push(`www.${domainToUse}`)
     }
+
+    let rows: Awaited<ReturnType<typeof getR2KeysByParams>> = []
+    for (const variant of domainVariants) {
+      rows = await getR2KeysByParams({ url: variant })
+      if (rows && rows.length > 0) break
+    }
+
+    if (!rows || rows.length === 0) return []
 
     const latest = rows[0]
     const r2Key = latest?.r2_key

@@ -22,7 +22,6 @@ export async function getAnalysesByDomain(domain: string): Promise<Analysis[]> {
   const normalizedDomain = normalizeDomain(domain)
   
   try {
-    console.log('[AnalysesRepository] Querying Turso for domain:', normalizedDomain)
     const result = await tursoClient.execute({
       sql: `
         SELECT 
@@ -47,7 +46,6 @@ export async function getAnalysesByDomain(domain: string): Promise<Analysis[]> {
       args: [normalizedDomain],
     })
 
-    console.log('[AnalysesRepository] Found', result.rows.length, 'analyses')
     return result.rows.map((row) => ({
       id: row.id as string,
       url_hash: row.url_hash as string,
@@ -81,8 +79,6 @@ export async function updateFixAction(
 ): Promise<Analysis> {
   const startTime = Date.now()
   try {
-    console.log('[AnalysesRepository] Updating fix action:', { analysisId, fixIndex, action })
-
     // Get the current analysis and update in one transaction-like operation
     const getResult = await tursoClient.execute({
       sql: 'SELECT result_json FROM analyses WHERE id = ?',
@@ -173,8 +169,6 @@ export async function updateFixAction(
         synced_to_mysql: fullRow.synced_to_mysql as number,
       }
 
-      const duration = Date.now() - startTime
-      console.log(`[AnalysesRepository] Fix action updated successfully in ${duration}ms`)
       return finalAnalysis
     } else {
       throw new Error('Invalid fix index or analysis structure')
@@ -197,7 +191,7 @@ export type AddFixInput = {
   issue_type?: string
   wcag_criteria?: string
   wcag?: string
-  action?: 'update' | 'add'
+  action?: 'update' | 'add' | 'remove' | 'create'
   attributes?: Record<string, unknown>
   impact?: string
   description?: string
@@ -219,8 +213,6 @@ const BY_CATEGORY_KEYS = [
 export async function addFixToAnalysis(analysisId: string, fix: AddFixInput): Promise<Analysis> {
   const startTime = Date.now()
   try {
-    console.log('[AnalysesRepository] Adding fix to analysis:', { analysisId })
-
     const getResult = await tursoClient.execute({
       sql: 'SELECT result_json FROM analyses WHERE id = ?',
       args: [analysisId],
@@ -301,8 +293,6 @@ export async function addFixToAnalysis(analysisId: string, fix: AddFixInput): Pr
       synced_to_mysql: fullRow.synced_to_mysql as number,
     }
 
-    const duration = Date.now() - startTime
-    console.log(`[AnalysesRepository] Fix added successfully in ${duration}ms`)
     return finalAnalysis
   } catch (error) {
     const duration = Date.now() - startTime
