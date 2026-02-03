@@ -450,8 +450,8 @@ Page HTML:
 ${htmlSnippet}
 \`\`\``
 
-  const primaryModel = 'openai/gpt-4o-mini'
-  const fallbackModel = 'google/gemini-2.5-flash'
+  const primaryModel = 'z-ai/glm-4.7'
+  const fallbackModel = 'openai/gpt-4o-mini'
 
   let result = await getSuggestedFixesFromModel(primaryModel, systemPrompt, userPrompt)
   let fixes = result.fixes
