@@ -3,6 +3,10 @@ import { Request, Response } from 'express'
 import { sendMail } from '../services/email/email.service'
 import { emailValidation } from '../validations/email.validation'
 import compileEmailTemplate from '../helpers/compile-email-template'
+import {
+  getBulkEmailRecipientsByIds,
+  updateEmailSentByIds,
+} from '../repository/bulk_email_recipients.repository'
 
 interface SendBulkEmailRequest {
   recipients: string[]
@@ -72,7 +76,7 @@ export async function sendBulkEmail(req: Request, res: Response) {
     const fallbackLogoUrl = 'https://cdn.jsdelivr.net/gh/webability-io/assets/logo.png'
     const altFallbackUrl = 'https://via.placeholder.com/150x40/1565C0/FFFFFF?text=WebAbility'
 
-    // Compile the email template using MJML (compile once, reuse for all recipients)
+    // Compile the email template (no per-recipient names in this flow, use "there")
     const emailHtml = await compileEmailTemplate({
       fileName: 'bulkEmail.mjml',
       data: {
@@ -82,6 +86,7 @@ export async function sendBulkEmail(req: Request, res: Response) {
         fallbackLogoUrl: fallbackLogoUrl,
         altFallbackUrl: altFallbackUrl,
         year: new Date().getFullYear(),
+        recipientName: 'there',
       },
     })
 
@@ -134,6 +139,112 @@ export async function sendBulkEmail(req: Request, res: Response) {
       message: 'Internal server error',
       sentCount: 0,
       failedCount: recipients?.length || 0,
+    })
+  }
+}
+
+interface SendBulkEmailToRecipientsRequest {
+  recipientIds: number[]
+  subject: string
+  htmlContent: string
+}
+
+export async function sendBulkEmailToRecipients(req: Request, res: Response) {
+  const { recipientIds, subject, htmlContent }: SendBulkEmailToRecipientsRequest = req.body
+
+  try {
+    if (!recipientIds?.length || !subject?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'recipientIds and subject are required',
+        sentCount: 0,
+        failedCount: 0,
+      })
+    }
+
+    const recipients = await getBulkEmailRecipientsByIds(recipientIds)
+    if (recipients.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No recipients found for the given IDs',
+        sentCount: 0,
+        failedCount: 0,
+      })
+    }
+
+    const logoUrl = 'https://www.webability.io/images/logo.png'
+    const fallbackLogoUrl = 'https://cdn.jsdelivr.net/gh/webability-io/assets/logo.png'
+    const altFallbackUrl = 'https://via.placeholder.com/150x40/1565C0/FFFFFF?text=WebAbility'
+
+    const baseData = {
+      subject: subject.trim(),
+      content: (htmlContent ?? '').trim(),
+      logoUrl,
+      fallbackLogoUrl,
+      altFallbackUrl,
+      year: new Date().getFullYear(),
+    }
+
+    let sentCount = 0
+    const sentIds: number[] = []
+    let failedCount = 0
+    const failedEmails: string[] = []
+
+    for (const r of recipients) {
+      const id = r.id!
+      const email = r.email
+      const recipientName = (r.username && r.username.trim()) || 'there'
+      try {
+        const emailHtml = await compileEmailTemplate({
+          fileName: 'bulkEmail.mjml',
+          data: { ...baseData, recipientName },
+        })
+        const emailSent = await sendMail(email, subject.trim(), emailHtml)
+        if (emailSent) {
+          sentCount++
+          sentIds.push(id)
+        } else {
+          failedCount++
+          failedEmails.push(email)
+        }
+        if (sentCount + failedCount < recipients.length) {
+          await new Promise((resolve) => setTimeout(resolve, 100))
+        }
+      } catch (error) {
+        console.error(`Error sending email to ${email}:`, error)
+        failedCount++
+        failedEmails.push(email)
+      }
+    }
+
+    if (sentIds.length > 0) {
+      await updateEmailSentByIds(sentIds)
+    }
+
+    if (sentCount > 0) {
+      res.status(200).json({
+        success: true,
+        message: `Email sent successfully to ${sentCount} recipient(s)${failedCount > 0 ? `. ${failedCount} failed.` : ''}`,
+        sentCount,
+        failedCount,
+        failedEmails: failedEmails.length > 0 ? failedEmails : undefined,
+      })
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send emails to all selected recipients',
+        sentCount: 0,
+        failedCount: recipients.length,
+        failedEmails,
+      })
+    }
+  } catch (error) {
+    console.error('Error sending bulk email to recipients:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      sentCount: 0,
+      failedCount: recipientIds?.length || 0,
     })
   }
 }

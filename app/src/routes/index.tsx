@@ -14,6 +14,8 @@ import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
 import ServiceRequests from '@/containers/ServiceRequests';
 import BulkEmail from '@/containers/BulkEmail/BulkEmail';
+import BulkEmailSend from '@/containers/BulkEmail/BulkEmailSend';
+import BulkEmailSent from '@/containers/BulkEmail/BulkEmailSent';
 
 const routes = [
   {
@@ -134,6 +136,20 @@ const routes = [
     name: 'Organization',
     exact: true,
     component: Organization,
+    isSidebar: false,
+  },
+  {
+    path: '/bulk-email/send',
+    name: 'Send to Recipients',
+    exact: true,
+    component: BulkEmailSend,
+    isSidebar: false,
+  },
+  {
+    path: '/bulk-email/sent',
+    name: 'Sent Emails',
+    exact: true,
+    component: BulkEmailSent,
     isSidebar: false,
   },
   {

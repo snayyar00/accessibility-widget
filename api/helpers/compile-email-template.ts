@@ -21,7 +21,12 @@ type Props = {
 
 export default async function compileEmailTemplate({ fileName, data }: Props): Promise<string> {
   try {
-    const possiblePaths = [path.join(process.cwd(), 'dist', 'email-templates', fileName), path.join(process.cwd(), 'api', 'email-templates', fileName), path.join(__dirname, '..', 'email-templates', fileName)]
+    // Prefer source (api/email-templates) so edits are used without rebuilding; fallback to dist for production builds
+    const possiblePaths = [
+      path.join(process.cwd(), 'api', 'email-templates', fileName),
+      path.join(__dirname, '..', 'email-templates', fileName),
+      path.join(process.cwd(), 'dist', 'email-templates', fileName),
+    ]
 
     let mjmlContent: string | null = null
     let usedPath: string | null = null
@@ -51,7 +56,6 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
     const { html, errors } = mjml2html(mjmlContent, {
       keepComments: false,
       beautify: false,
-      minify: true,
     })
 
     if (errors && errors.length > 0) {

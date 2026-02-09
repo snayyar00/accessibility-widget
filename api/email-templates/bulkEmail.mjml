@@ -38,43 +38,38 @@
     <!-- Main Content -->
     <mj-section background-color="#ffffff" padding="0 24px 32px">
       <mj-column>
-        <mj-text font-size="24px" font-weight="700" color="#0052cc" padding="8px 0 4px" align="center">
-          The Wait is Over 🎉
-        </mj-text>
-        <mj-text font-size="24px" font-weight="700" color="#0052cc" padding="4px 0 16px" align="center">
-          Introducing the WebAbility Agency Franchise Program
-        </mj-text>
-        
-        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 12px">
-          As an agency owner, you’re finally getting the white‑label experience we promised — a fully branded WebAbility accessibility solution you can call your own. Turn our proven platform into <em>your</em> very own SaaS with everything your clients need in one place.
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 20px">
+          Hi {{recipientName}},
         </mj-text>
 
-        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="8px 0 24px">
-          • <strong style="color: #0052cc;">Accessibility Widget</strong><br/>
-          • <strong style="color: #0052cc;">Accessibility Report Generation</strong><br/>
-          • <strong style="color: #0052cc;">AI Accessibility Statement Generator</strong><br/>
-          • <strong style="color: #0052cc;">Proof Of Effort toolkit</strong><br/>
-          • <strong style="color: #0052cc;"> and much more</strong><br/>
-        </mj-text>
-
-        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
-          Here’s what you can do with your new white‑label:
+        <mj-text font-size="22px" font-weight="700" color="#0052cc" padding="0 0 16px" align="center">
+          Free homepage accessibility check by our experts
         </mj-text>
         
-        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
-          • <strong style="color: #0052cc;">Empower your team</strong>: add team members to your account so your whole agency can easily manage and support client sites together
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 20px">
+          We’re offering a <strong style="color: #0052cc;">free manual review</strong> of your site’s homepage. One of our accessibility specialists will review it (not just automated tools) and send you clear, actionable feedback you can use right away.
         </mj-text>
-        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
-          • <strong style="color: #0052cc;">Resell under your brand</strong>: package and position accessibility plans as your own service, with your own branding and client experience
+
+        <mj-text font-size="17px" font-weight="600" color="#374151" padding="0 0 12px">
+          What’s included
         </mj-text>
-        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
-          • <strong style="color: #0052cc;">Customize your widget</strong>: tailor colors, position, and behavior so it feels native to every client site
+
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 6px">
+          • Expert review of navigation, headings, images, forms, and structure
         </mj-text>
-        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 8px">
-          • <strong style="color: #0052cc;">Customize accessibility reports</strong>: deliver branded, client‑ready reports that match your agency’s look and messaging
+        <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 6px">
+          • A brief report with top issues and easy wins, so you know where to start
         </mj-text>
         <mj-text font-size="16px" color="#374151" line-height="1.8" padding="0 0 16px">
-          • <strong style="color: #0052cc;">Control your profits</strong>: charge your clients directly from your dashboard like a true SaaS platform. You pay a minimum of <strong>$6 per month per site</strong> on our end.
+          • No cost and no obligation. No sales pitch, just useful insight.
+        </mj-text>
+
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 20px">
+          We only do a <strong style="color: #0052cc;">limited number</strong> of these reviews so each one gets proper attention. Spots are first-come, first-served.
+        </mj-text>
+
+        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 16px" font-weight="600">
+          Ready to claim your spot? Click the link below to get started, it only takes a minute.
         </mj-text>
 
         <mj-button 
@@ -83,37 +78,17 @@
           font-size="16px"
           font-weight="600"
           border-radius="8px"
-          padding="8px 0 16px"
+          padding="14px 28px"
+          href="https://u1nvs.share.hsforms.com/2efnLT1piT5uQbEvyEIWWGA"
         >
-          Reply to this email to get started
+          Get started — claim your free review
         </mj-button>
 
-        <mj-button 
-          background-color="#ffffff" 
-          color="#0052cc"
-          font-size="16px"
-          font-weight="600"
-          border-radius="8px"
-          border="2px solid #0052cc"
-          padding="8px 0 24px"
-          href="https://meetings.hubspot.com/webability"
-        >
-          Schedule a Meeting
-        </mj-button>
+        <mj-text font-size="14px" color="#6b7280" line-height="1.6" padding="16px 0 0">
+          Or copy and paste this link into your browser: <a href="https://u1nvs.share.hsforms.com/2efnLT1piT5uQbEvyEIWWGA" style="color: #0052cc; text-decoration: underline; word-break: break-all;">https://u1nvs.share.hsforms.com/2efnLT1piT5uQbEvyEIWWGA</a>
+        </mj-text>
 
-        <mj-divider border-color="#e5e7eb" border-width="1px" padding="32px 0" />
-
-        <mj-text font-size="18px" font-weight="600" color="#0052cc" padding="0 0 12px">
-          Need help? We're here to assist
-        </mj-text>
-        
-        <mj-text font-size="16px" color="#374151" line-height="1.7" padding="0 0 8px">
-          If you need help with your setup or have any questions, our team is ready to assist anytime, just reply to this email.
-        </mj-text>
-        
-        <mj-text font-size="14px" color="#6b7280" padding="0">
-          Our support team is standing by to help you get started.
-        </mj-text>
+        <mj-divider border-color="#e5e7eb" border-width="1px" padding="28px 0" />
       </mj-column>
     </mj-section>
 
