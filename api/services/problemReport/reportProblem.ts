@@ -75,17 +75,17 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
       },
     })
 
-    sendMail(problem.reporter_email, 'Problem reported', template, undefined, 'WebAbility Support')
+    const reporterSmtpConfig =
+      site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
+    sendMail(problem.reporter_email, 'Problem reported', template, undefined, 'WebAbility Support', reporterSmtpConfig)
       .then(() => console.log('Mail sent successfully'))
       .catch((mailError) => console.error('Error sending mail:', mailError))
 
-    // Send email to the domain owner if possible
+    // Send email to the domain owner if possible (reuse same org SMTP config)
     if (site.user_id) {
       const owner = await getUserbyId(site.user_id)
       if (owner && owner.email) {
-        const smtpConfig =
-          site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
-        sendMail(owner.email, 'A problem was reported for your site', template1, undefined, 'WebAbility Support', smtpConfig)
+        sendMail(owner.email, 'A problem was reported for your site', template1, undefined, 'WebAbility Support', reporterSmtpConfig)
           .then(() => console.log('Owner mail sent successfully'))
           .catch((mailError) => console.error('Error sending owner mail:', mailError))
       }
