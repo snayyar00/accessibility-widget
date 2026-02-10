@@ -21,6 +21,10 @@ export default gql`
         favicon
         settings
         toggle_referral_program
+        smtp_host
+        smtp_port
+        smtp_secure
+        smtp_user
         created_at
         updated_at
       }

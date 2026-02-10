@@ -3,6 +3,7 @@ import { addProblemReport } from '../../repository/problem_reports.repository'
 import { FindAllowedSitesProps, findSiteByURL } from '../../repository/sites_allowed.repository'
 import { findUserNotificationByUserId, getUserbyId } from '../../repository/user.repository'
 import { getRootDomain } from '../../utils/domain.utils'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateReportProblem } from '../../validations/reportProblem.validation'
@@ -82,7 +83,9 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
     if (site.user_id) {
       const owner = await getUserbyId(site.user_id)
       if (owner && owner.email) {
-        sendMail(owner.email, 'A problem was reported for your site', template1, undefined, 'WebAbility Support')
+        const smtpConfig =
+          site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
+        sendMail(owner.email, 'A problem was reported for your site', template1, undefined, 'WebAbility Support', smtpConfig)
           .then(() => console.log('Owner mail sent successfully'))
           .catch((mailError) => console.error('Error sending owner mail:', mailError))
       }

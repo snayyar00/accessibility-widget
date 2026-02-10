@@ -95,6 +95,18 @@ const organizationResolver = {
     getOrganizationByDomain: combineResolvers(allowedOrganization, async (_: unknown, __: unknown, { organization }: GraphQLContext): Promise<Organization | null | ValidationError> => {
       return organization
     }),
+
+    organizationSmtpSettings: combineResolvers(allowedOrganization, isAuthenticated, async (_: unknown, args: { organizationId: string }, { user }): Promise<{ smtp_host?: string | null; smtp_port?: number | null; smtp_secure?: boolean | null; smtp_user?: string | null } | null> => {
+      const org = await getOrganizationById(args.organizationId, user)
+      if (!org) return null
+      const o = org as { smtp_host?: string | null; smtp_port?: number | null; smtp_secure?: boolean | null; smtp_user?: string | null }
+      return {
+        smtp_host: o.smtp_host ?? null,
+        smtp_port: o.smtp_port ?? null,
+        smtp_secure: o.smtp_secure ?? null,
+        smtp_user: o.smtp_user ?? null,
+      }
+    }),
   },
 
   Mutation: {
