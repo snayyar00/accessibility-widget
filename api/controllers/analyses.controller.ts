@@ -18,7 +18,6 @@ export async function getDomainAnalyses(req: Request, res: Response) {
     }
 
     const domain = normalizeDomain(url)
-    console.log('[DomainAnalyses] Fetching analyses for domain:', domain)
     const analyses = await getAnalysesByDomain(domain)
 
     res.status(200).json(analyses)
@@ -52,7 +51,6 @@ export async function updateAnalysisFixAction(req: Request, res: Response) {
       return res.status(400).json({ error: "action must be 'update' or 'deleted'" })
     }
 
-    console.log('[DomainAnalyses] Updating fix action:', { analysisId, fixIndex, action })
     const updatedAnalysis = await updateFixAction(analysisId, fixIndex, action)
 
     res.status(200).json(updatedAnalysis)
@@ -79,10 +77,14 @@ export async function getPageHtml(req: Request, res: Response) {
       return res.status(400).json({ error: 'URL parameter is required' })
     }
 
+    console.log('[PageHtml] Fetching HTML', { url: (url as string).trim() })
+    const pageHtmlStart = Date.now()
     const html = await getPageHtmlByUrl({
-      url: url.trim(),
+      url: (url as string).trim(),
       urlHash: typeof urlHash === 'string' ? urlHash : null,
     })
+
+    console.log('[PageHtml] Completed', { url: (url as string).trim(), ms: Date.now() - pageHtmlStart, found: html != null })
     if (html == null) {
       return res.status(404).json({
         error: 'Page HTML not found',
@@ -105,10 +107,11 @@ export async function getPageHtml(req: Request, res: Response) {
 
 export async function postSuggestedFixes(req: Request, res: Response) {
   try {
-    const { url, html, existingFixes } = req.body as {
+    const { url, html, existingFixes, domain: domainFromBody } = req.body as {
       url?: string
       html?: string
       existingFixes?: unknown[]
+      domain?: string
     }
 
     if (!url || typeof url !== 'string') {
@@ -118,10 +121,16 @@ export async function postSuggestedFixes(req: Request, res: Response) {
       return res.status(400).json({ error: 'html is required' })
     }
     const fixes = Array.isArray(existingFixes) ? existingFixes : []
+    const domain =
+      typeof domainFromBody === 'string' && domainFromBody.trim()
+        ? normalizeDomain(domainFromBody.trim())
+        : normalizeDomain(url)
+    console.log('[SuggestedFixes] Request received, starting GPT processing', { url: url.trim(), htmlLength: html?.length ?? 0 })
     const suggestedFixes = await getSuggestedFixes({
       url: url.trim(),
       html: html.trim(),
       existingFixes: fixes,
+      domain,
     })
     res.status(200).json({ suggestedFixes })
   } catch (error) {
