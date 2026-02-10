@@ -77,6 +77,7 @@ export async function getPageHtml(req: Request, res: Response) {
       return res.status(400).json({ error: 'URL parameter is required' })
     }
 
+    console.log('[PageHtml] Fetching HTML', { url: (url as string).trim() })
     const pageHtmlStart = Date.now()
     const html = await getPageHtmlByUrl({
       url: (url as string).trim(),
@@ -124,6 +125,7 @@ export async function postSuggestedFixes(req: Request, res: Response) {
       typeof domainFromBody === 'string' && domainFromBody.trim()
         ? normalizeDomain(domainFromBody.trim())
         : normalizeDomain(url)
+    console.log('[SuggestedFixes] Request received, starting GPT processing', { url: url.trim(), htmlLength: html?.length ?? 0 })
     const suggestedFixes = await getSuggestedFixes({
       url: url.trim(),
       html: html.trim(),

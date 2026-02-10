@@ -824,6 +824,110 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           : 'none';
       }
     });
+
+    // Hide empty section cards when all their profiles are turned off
+    const hasAccessibilityProfiles =
+      toggles.motorImpaired ||
+      toggles.blind ||
+      toggles.colorBlind ||
+      toggles.dyslexia ||
+      toggles.visuallyImpaired ||
+      toggles.cognitiveAndLearning ||
+      toggles.seizureAndEpileptic ||
+      toggles.adhd;
+
+    const hasContentAdjustments =
+      toggles.fontSize ||
+      toggles.highlightTitle ||
+      toggles.highlightLinks ||
+      toggles.dyslexiaFont ||
+      toggles.letterSpacing ||
+      toggles.lineHeight ||
+      toggles.fontWeight;
+
+    const hasColorAdjustments =
+      toggles.darkContrast ||
+      toggles.lightContrast ||
+      toggles.highContrast ||
+      toggles.highSaturation ||
+      toggles.lowSaturation ||
+      toggles.monochrome ||
+      toggles.textColor ||
+      toggles.titleColor ||
+      toggles.backgroundColor;
+
+    const hasTools =
+      toggles.screenReader ||
+      toggles.readingGuide ||
+      toggles.stopAnimations ||
+      toggles.bigCursor ||
+      toggles.voiceNavigation ||
+      toggles.keyboardNavigation ||
+      toggles.pageStructure ||
+      toggles.darkMode;
+
+    const sectionVisibility: Array<{ match: string; visible: boolean }> = [
+      { match: 'Accessibility Profiles', visible: hasAccessibilityProfiles },
+      { match: 'Content Adjustments', visible: hasContentAdjustments },
+      { match: 'Color Adjustments', visible: hasColorAdjustments },
+      { match: 'Tools', visible: hasTools },
+    ];
+
+    // Hide section cards by title
+    const cards = queryAllInWidget(iframeDoc, '.asw-card');
+    cards.forEach((card: Element) => {
+      const titleEl = card.querySelector('.asw-card-title');
+      const titleText = titleEl?.textContent?.trim();
+      if (titleText) {
+        for (const { match, visible } of sectionVisibility) {
+          if (titleText.includes(match)) {
+            (card as HTMLElement).style.display = visible ? '' : 'none';
+            break;
+          }
+        }
+      }
+    });
+
+    // Fallback: show/hide Accessibility Profiles section when card structure differs (e.g. collapsible header)
+    // Must run for BOTH states so we correctly show when profiles are enabled (undo any previous hide)
+    const setAccessibilityProfilesSectionVisibility = (visible: boolean) => {
+      const display = visible ? '' : 'none';
+      // Try via profile-grid's parent section (grid is inside the Accessibility Profiles card)
+      const profileGrid = queryInWidget(iframeDoc, '.profile-grid');
+      if (profileGrid) {
+        let sectionParent: Element | null =
+          profileGrid.closest('.asw-card') ||
+          profileGrid.closest('[class*="asw-section"]') ||
+          profileGrid.closest('[class*="asw-collapsible"]');
+        if (!sectionParent) {
+          sectionParent =
+            profileGrid.parentElement?.closest('.asw-card') ||
+            profileGrid.parentElement?.parentElement ||
+            profileGrid.parentElement;
+        }
+        if (sectionParent) {
+          (sectionParent as HTMLElement).style.display = display;
+        }
+      }
+      // Find element containing "Accessibility Profiles" and set its section parent visibility
+      const menuElements = queryAllInWidget(iframeDoc, '.asw-menu *');
+      for (const el of menuElements) {
+        const text = el.textContent?.trim();
+        if (text?.includes('Accessibility Profiles') && text.length < 50) {
+          const sectionParent =
+            el.closest('.asw-card') ||
+            el.closest('[class*="section"]') ||
+            el.closest('[class*="collapsible"]') ||
+            el.parentElement?.closest('.asw-card') ||
+            el.parentElement?.parentElement?.closest('.asw-card');
+          if (sectionParent) {
+            (sectionParent as HTMLElement).style.display = display;
+            break;
+          }
+        }
+      }
+    };
+    setAccessibilityProfilesSectionVisibility(hasAccessibilityProfiles);
   };
 
   // Generate widget HTML for iframe
