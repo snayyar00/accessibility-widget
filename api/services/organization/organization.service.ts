@@ -122,6 +122,11 @@ export async function editOrganization(data: Partial<Organization>, user: UserLo
       updateData.settings = objectToString(updateData.settings)
     }
 
+    // Only update smtp_password when a non-empty value is provided (leave existing password unchanged otherwise)
+    if ('smtp_password' in updateData && (updateData.smtp_password == null || String(updateData.smtp_password).trim() === '')) {
+      delete updateData.smtp_password
+    }
+
     const result = await updateOrganization(Number(organizationId), updateData, trx)
 
     await trx.commit()

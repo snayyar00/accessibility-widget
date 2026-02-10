@@ -23,7 +23,18 @@ export function validateAddOrganization(input: { name: string; domain: string; l
   return validator.validate(input, schema)
 }
 
-export function validateEditOrganization(input: { id: number | string; name?: string; domain?: string; logo_url?: string; settings?: any }): true | ValidationError[] | Promise<true | ValidationError[]> {
+export function validateEditOrganization(input: {
+  id: number | string
+  name?: string
+  domain?: string
+  logo_url?: string
+  settings?: any
+  smtp_host?: string
+  smtp_port?: number
+  smtp_secure?: boolean
+  smtp_user?: string
+  smtp_password?: string
+}): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator()
 
   const schema = {
@@ -32,6 +43,11 @@ export function validateEditOrganization(input: { id: number | string; name?: st
     domain: { type: 'string', min: 3, max: 100, pattern: domainPattern, optional: true },
     logo_url: { type: 'string', optional: true, max: 500 },
     settings: { type: 'object', optional: true },
+    smtp_host: { type: 'string', optional: true, max: 255 },
+    smtp_port: { type: 'number', optional: true, min: 1, max: 65535 },
+    smtp_secure: { type: 'boolean', optional: true },
+    smtp_user: { type: 'string', optional: true, max: 255 },
+    smtp_password: { type: 'string', optional: true, max: 512 },
   }
 
   return validator.validate(input, schema)

@@ -1,5 +1,6 @@
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import logger from '../../utils/logger'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { sendMail } from '../email/email.service'
 
 interface WidgetInstallationData {
@@ -8,11 +9,12 @@ interface WidgetInstallationData {
   position: string
   language: string
   languageName: string
+  organizationId?: number
 }
 
 export async function sendWidgetInstallationInstructions(data: WidgetInstallationData): Promise<boolean> {
   try {
-    const { email, code, position, language, languageName } = data
+    const { email, code, position, language, languageName, organizationId } = data
 
     // Format position for display
     const formattedPosition = position.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())
@@ -28,8 +30,8 @@ export async function sendWidgetInstallationInstructions(data: WidgetInstallatio
       },
     })
 
-    // Send the email
-    await sendMail(email, 'Your WebAbility Widget Installation Instructions', template, undefined, 'WebAbility Team')
+    const smtpConfig = organizationId != null ? await getOrganizationSmtpConfig(organizationId) : null
+    await sendMail(email, 'Your WebAbility Widget Installation Instructions', template, undefined, 'WebAbility Team', smtpConfig)
 
     logger.info(`Widget installation instructions sent successfully to ${email}`)
     return true

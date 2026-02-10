@@ -1,6 +1,7 @@
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { getUserbyId } from '../../repository/user.repository'
 import logger from '../../utils/logger'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { sendMail } from '../email/email.service'
 
 export interface QuoteRequestEmailData {
@@ -69,7 +70,11 @@ export async function sendQuoteRequestNotification(data: QuoteRequestEmailData):
 
     // Send to admin email (can be configured via environment variable)
     const adminEmail = process.env.EMAIL_TO || 'admin@webability.io'
-    await sendMail(adminEmail, `New Quote Request: ${data.projectName}`, template)
+    const smtpConfig =
+      user.current_organization_id != null
+        ? await getOrganizationSmtpConfig(user.current_organization_id)
+        : null
+    await sendMail(adminEmail, `New Quote Request: ${data.projectName}`, template, undefined, 'WebAbility Team', smtpConfig)
 
     logger.info(`Quote request notification sent to ${adminEmail}`)
   } catch (error) {
@@ -103,7 +108,12 @@ export async function sendMeetingRequestNotification(data: MeetingRequestEmailDa
 
     // Send to admin email (can be configured via environment variable)
     const adminEmail = process.env.EMAIL_TO || 'admin@webability.io'
-    await sendMail(adminEmail, `📅 New Meeting Request: ${data.fullName}`, template)
+    const user = await getUserbyId(data.userId)
+    const smtpConfig =
+      user?.current_organization_id != null
+        ? await getOrganizationSmtpConfig(user.current_organization_id)
+        : null
+    await sendMail(adminEmail, `📅 New Meeting Request: ${data.fullName}`, template, undefined, 'WebAbility Team', smtpConfig)
 
     logger.info(`Meeting request notification sent to ${adminEmail}`)
   } catch (error) {

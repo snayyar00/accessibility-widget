@@ -6,6 +6,7 @@ import compileEmailTemplate from '../../helpers/compile-email-template'
 import { checkOnboardingEmailsEnabled, getUserbyId, getUsersRegisteredOnDate, UserProfile } from '../../repository/user.repository'
 import { sendEmailWithRetries } from '../../services/email/email.service'
 import logger from '../../utils/logger'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { generateSecureUnsubscribeLink } from '../../utils/secure-unsubscribe.utils'
 
 /**
@@ -103,7 +104,8 @@ export class EmailSequenceService {
 
       // Send the email
       const emailToSend = this.getEmailForSending(userEmail)
-      await sendEmailWithRetries(emailToSend, template, welcomeStep.subject, 3, 2000, undefined, 'WebAbility Team')
+      const smtpConfig = organizationId ? await getOrganizationSmtpConfig(organizationId) : null
+      await sendEmailWithRetries(emailToSend, template, welcomeStep.subject, 3, 2000, undefined, 'WebAbility Team', smtpConfig)
 
       // Mark email as sent in tracking system
       await this.markEmailAsSent(userId, welcomeStep.day, organizationId)
@@ -449,7 +451,8 @@ export class EmailSequenceService {
 
       // Send the email
       const emailToSend = this.getEmailForSending(user.email)
-      await sendEmailWithRetries(emailToSend, template, compiledSubject, 3, 2000, undefined, 'WebAbility Team')
+      const smtpConfig = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+      await sendEmailWithRetries(emailToSend, template, compiledSubject, 3, 2000, undefined, 'WebAbility Team', smtpConfig)
 
       if (!user.current_organization_id) {
         logger.error(`Cannot mark email as sent - user ${user.id} has no current_organization_id`)

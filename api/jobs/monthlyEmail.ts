@@ -11,6 +11,7 @@ import { checkScript } from '../services/allowedSites/allowedSites.service'
 import { EmailAttachment, sendEmailWithRetries } from '../services/email/email.service'
 import { generatePDF } from '../utils/generatePDF'
 import logger from '../utils/logger'
+import { getOrganizationSmtpConfig } from '../utils/organizationSmtp.utils'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../utils/secure-unsubscribe.utils'
 
 interface sitePlan {
@@ -176,7 +177,8 @@ const sendMonthlyEmails = async () => {
               console.error(`Failed to generate PDF for site ${site?.url}:`, pdfError)
             }
 
-            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments, 'WebAbility Reports')
+            const smtpConfig = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments, 'WebAbility Reports', smtpConfig)
             console.log(`Email with PDF attachment successfully sent to ${user.email} for site ${site?.url}`)
           } catch (error) {
             console.error(`Error processing sitePlan ${sitePlan.siteId}:`, error)

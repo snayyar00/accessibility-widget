@@ -29,7 +29,7 @@ const Organization: React.FC = () => {
       </h1>
 
       <div className="space-y-6 empty:hidden">
-        <Settings organization={organization} />
+        <Settings organization={organization} isOwner={isOrganizationOwner} />
 
         {/* Agency Program - Only show to owners */}
         <AgencyProgram
