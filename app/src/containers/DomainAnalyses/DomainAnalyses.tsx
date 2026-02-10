@@ -244,6 +244,7 @@ const DomainAnalyses: React.FC = () => {
           url: sliderUrl,
           html: pageHtml.html,
           existingFixes: existingFixesForSuggested,
+          ...(sliderAnalysis?.domain ? { domain: sliderAnalysis.domain } : {}),
         }),
       });
       const data = await res.json();
@@ -341,7 +342,7 @@ const DomainAnalyses: React.FC = () => {
         existingFixes = [];
       }
 
-      // Fetch suggested fixes
+      // Fetch suggested fixes (backend will also fetch scanner report issues where Affected Pages includes this URL and send with HTML to GPT)
       const fixesApiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/suggested-fixes`;
       const fixesRes = await fetch(fixesApiUrl, {
         method: 'POST',
@@ -353,6 +354,7 @@ const DomainAnalyses: React.FC = () => {
           url,
           html: htmlData.html,
           existingFixes,
+          ...(analysis.domain ? { domain: analysis.domain } : {}),
         }),
       });
       const fixesData = await fixesRes.json();
@@ -577,7 +579,21 @@ const DomainAnalyses: React.FC = () => {
       }
     });
 
-    return Array.from(urlMap.values()).sort((a, b) => b.analyzedAt - a.analyzedAt);
+    const list = Array.from(urlMap.values());
+    const getPathDepth = (urlStr: string): number => {
+      try {
+        const url = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
+        return url.pathname.split('/').filter(Boolean).length;
+      } catch {
+        return 0;
+      }
+    };
+    return list.sort((a, b) => {
+      const depthA = getPathDepth(a.url);
+      const depthB = getPathDepth(b.url);
+      if (depthA !== depthB) return depthA - depthB;
+      return a.url.localeCompare(b.url, undefined, { sensitivity: 'base' });
+    });
   }, [analyses]);
 
   // Filter URL list based on search query
