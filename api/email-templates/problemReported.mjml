@@ -92,7 +92,7 @@
     <mj-font name="Open Sans" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap" />
   </mj-head>
 
-  <mj-body background-color="#f5f7fa" style="background-image: url(&quot;data:image/svg+xml;utf8,<svg width='400' height='400' xmlns='http://www.w3.org/2000/svg'><circle cx='200' cy='200' r='180' fill='%23e0e7ff' fill-opacity='0.12'/></svg>&quot;); background-repeat: repeat">
+  <mj-body background-color="#f5f7fa">
     <!-- Decorative SVG wave at the top of the header -->
     <mj-raw> <div style="width:100%;overflow:hidden;line-height:0;"> <svg viewBox="0 0 500 40" width="100%" height="40" preserveAspectRatio="none" style="display:block;"><path d="M0,20 Q250,-20 500,20 L500,40 L0,40 Z" fill="#0080ff " fill-opacity="0.18"/></svg> </div> </mj-raw>
     <!-- Header with logo, icon, and gradient overlay -->

@@ -1,3 +1,4 @@
+import { generateOrganizationLogoUrl } from '../helpers/imgproxy.helper'
 import { getOrganizationById } from '../repository/organization.repository'
 
 /**
@@ -14,6 +15,8 @@ export type OrganizationSmtpConfig = {
   fromName?: string
   /** Organization display name for sender (e.g. "Acme Corp" instead of "WebAbility") */
   organizationName?: string
+  /** Full URL for organization logo (for email templates); only set when org has logo_url */
+  logoUrl?: string
 }
 
 const DEFAULT_HOST = 'smtp.hostinger.com'
@@ -31,7 +34,7 @@ function parseSettings(settings: string | object | null | undefined): Record<str
 }
 
 /** Config when org has SMTP credentials; org name is always included when org exists */
-export type OrganizationEmailContext = OrganizationSmtpConfig | { organizationName: string }
+export type OrganizationEmailContext = OrganizationSmtpConfig | { organizationName: string; logoUrl?: string }
 
 /**
  * Returns SMTP config for an organization (when credentials exist), or at least organization name for sender display.
@@ -44,6 +47,12 @@ export async function getOrganizationSmtpConfig(organizationId: number): Promise
 
   const organizationName = typeof org.name === 'string' && org.name.trim() ? org.name.trim() : undefined
   if (!organizationName) return null
+
+  const orgWithLogo = org as { logo_url?: string | null }
+  const logoUrl =
+    typeof orgWithLogo.logo_url === 'string' && orgWithLogo.logo_url.trim()
+      ? generateOrganizationLogoUrl(orgWithLogo.logo_url.trim())
+      : undefined
 
   const o = org as {
     smtp_user?: string | null
@@ -78,6 +87,7 @@ export async function getOrganizationSmtpConfig(organizationId: number): Promise
       user: o.smtp_user.trim(),
       password: o.smtp_password,
       organizationName,
+      logoUrl,
     }
   }
 
@@ -106,10 +116,11 @@ export async function getOrganizationSmtpConfig(organizationId: number): Promise
         user: user.trim(),
         password,
         organizationName,
+        logoUrl,
       }
     }
   }
 
-  // Org exists but no SMTP credentials: still return org name for sender display
-  return { organizationName }
+  // Org exists but no SMTP credentials: still return org name and logo for sender display
+  return { organizationName, logoUrl }
 }
