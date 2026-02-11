@@ -211,7 +211,6 @@ async function inviteUserToWorkspace(user: UserLogined, workspaceId: number, inv
 
     try {
       await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template, undefined, 'WebAbility Team', workspaceSmtpConfig)
-      console.log('Workspace Invitation Token', token)
     } catch (emailError) {
       logger.error('Failed to send workspace invitation email:', {
         error: emailError,
@@ -353,7 +352,6 @@ async function inviteUserToOrganization(user: UserLogined, invitee_email: string
     try {
       const smtpConfig = organization.id ? await getOrganizationSmtpConfig(organization.id) : null
       await sendMail(normalizeEmail(invitee_email), 'Organization invitation', template, undefined, 'WebAbility Team', smtpConfig)
-      console.log('Organization Invitation Token', token)
     } catch (emailError) {
       logger.error('Failed to send organization invitation email:', {
         error: emailError,

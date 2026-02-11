@@ -20,10 +20,6 @@ export const OrganizationSchema = `#graphql
     logo_url: String
     settings: JSON
     toggle_referral_program: Boolean
-    smtp_host: String
-    smtp_port: Int
-    smtp_secure: Boolean
-    smtp_user: String
     created_at: Date
     updated_at: Date
   }

@@ -475,6 +475,7 @@ const Settings: React.FC<SettingsProps> = ({ organization, isOwner: isOrgOwner }
           </Paper>
         </Grid>
 
+        {isOrgOwner && (
         <Grid item xs={12}>
           <Paper variant="outlined" sx={{ p: 4 }}>
             <div className="mb-4">
@@ -648,6 +649,7 @@ const Settings: React.FC<SettingsProps> = ({ organization, isOwner: isOrgOwner }
               </form>
             </Paper>
           </Grid>
+        )}
       </Grid>
     </section>
   );

@@ -49,6 +49,7 @@ const proofOfEffortResolvers = {
             })
           }
         } catch (error) {
+          if (error instanceof GraphQLError) throw error
           console.error('Error in sendProofOfEffortToolkit resolver:', error)
           throw new GraphQLError('Failed to send proof of effort toolkit', {
             extensions: { code: 'INTERNAL_SERVER_ERROR' },
