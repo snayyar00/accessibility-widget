@@ -1,12 +1,5 @@
 <mjml>
   <mj-body background-color="#f1f1f1">
-    <!-- Header Section with Image -->
-    <mj-section background-color="#fff">
-      <mj-column>
-        <mj-image width="500px" src="https://www.webability.io/images/section_1_right.png"></mj-image>
-      </mj-column>
-    </mj-section>
-
     <!-- Welcome Text Section -->
     <mj-section background-color="#fff">
       <mj-column>

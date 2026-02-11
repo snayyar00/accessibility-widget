@@ -60,10 +60,12 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
       logger.warn('MJML compilation warnings:', errors)
     }
 
-    // Escape all string values in data using entities; ensure organizationName has a default for templates
+    // Escape all string values in data; ensure organizationName and logoUrl have defaults for templates
+    const defaultLogoUrl = 'https://www.webability.io/images/logo.png'
     const escapedData: typeof data = {
       ...data,
       organizationName: typeof data.organizationName === 'string' && data.organizationName.trim() ? data.organizationName.trim() : 'WebAbility',
+      logoUrl: typeof data.logoUrl === 'string' && data.logoUrl.trim() ? data.logoUrl.trim() : defaultLogoUrl,
     }
 
     for (const key in escapedData) {

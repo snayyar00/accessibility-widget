@@ -1,6 +1,3 @@
-import fs from 'fs'
-import path from 'path'
-
 import { EMAIL_SEQUENCES, EmailSequenceStep } from '../../config/emailSequences.config'
 import compileEmailTemplate from '../../helpers/compile-email-template'
 import { checkOnboardingEmailsEnabled, getUserbyId, getUsersRegisteredOnDate, UserProfile } from '../../repository/user.repository'
@@ -22,6 +19,9 @@ import { generateSecureUnsubscribeLink } from '../../utils/secure-unsubscribe.ut
  * - Proper gap enforcement ensures correct timing between emails
  * - No volatile file tracking - everything persisted in database
  */
+
+/** Default platform logo when org has no logo_url (emails always show a logo). */
+const DEFAULT_LOGO_URL = 'https://www.webability.io/images/logo.png'
 
 export class EmailSequenceService {
   // ============================================================================
@@ -65,39 +65,19 @@ export class EmailSequenceService {
       // Extract first URL from comma-separated FRONTEND_URL
       const frontendUrl = allowedFrontendUrl
 
-      // Gmail-optimized logo approach
-      // Gmail requires properly hosted images with specific characteristics
-      const logoUrl = 'https://www.webability.io/images/logo.png'
-      const fallbackLogoUrl = 'https://cdn.jsdelivr.net/gh/webability-io/assets/logo.png'
-
-      // Additional fallback for maximum compatibility
-      const altFallbackUrl = 'https://via.placeholder.com/150x40/1565C0/FFFFFF?text=WebAbility'
-
-      try {
-        const logoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
-        const logoBuffer = await fs.promises.readFile(logoPath)
-
-        logger.info(`Logo setup - Primary: ${logoUrl}`)
-        logger.info(`Logo setup - Fallback: ${fallbackLogoUrl}`)
-        logger.info(`Logo setup - Alt fallback: ${altFallbackUrl}`)
-        logger.info(`Local logo available (${logoBuffer.length} bytes)`)
-      } catch (logoError) {
-        logger.warn('Logo file issue, using hosted URLs only:', logoError.message)
-      }
-
       // Send the email
       const emailToSend = this.getEmailForSending(userEmail)
       const smtpConfig = organizationId ? await getOrganizationSmtpConfig(organizationId) : null
       const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+      // Use org logo when available; otherwise display current/default platform logo
+      const logoUrl = (smtpConfig && 'logoUrl' in smtpConfig && smtpConfig.logoUrl) ? smtpConfig.logoUrl : DEFAULT_LOGO_URL
 
       const template = await compileEmailTemplate({
         fileName: welcomeStep.template,
         data: {
           name: userName,
           email: userEmail,
-          logoUrl: logoUrl,
-          fallbackLogoUrl: fallbackLogoUrl,
-          altFallbackUrl: altFallbackUrl,
+          logoUrl,
           installationGuide: 'https://www.webability.io/installation',
           dashboardLink: frontendUrl,
           supportLink: 'mailto:support@webability.io',
@@ -412,33 +392,19 @@ export class EmailSequenceService {
       // Extract first URL from comma-separated FRONTEND_URL
       const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim() || 'http://localhost:3000'
 
-      // Generate logo URL (same robust logic as welcome email)
-      const logoUrl = 'https://www.webability.io/images/logo.png'
-      const fallbackLogoUrl = 'https://cdn.jsdelivr.net/gh/webability-io/assets/logo.png'
-      const altFallbackUrl = 'https://via.placeholder.com/150x40/1565C0/FFFFFF?text=WebAbility'
-
-      try {
-        const logoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
-        const _logoBuffer = await fs.promises.readFile(logoPath)
-
-        logger.info(`Logo setup for ${step.description} - Primary: ${logoUrl}`)
-      } catch (logoError) {
-        logger.warn(`Logo file issue for ${step.description}, using hosted URLs only:`, logoError.message)
-      }
-
       // Send the email
       const emailToSend = this.getEmailForSending(user.email)
       const smtpConfig = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
       const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+      // Use org logo when available; otherwise display current/default platform logo
+      const logoUrl = (smtpConfig && 'logoUrl' in smtpConfig && smtpConfig.logoUrl) ? smtpConfig.logoUrl : DEFAULT_LOGO_URL
 
       const template = await compileEmailTemplate({
         fileName: step.template,
         data: {
           name: user.name,
           email: user.email,
-          logoUrl: logoUrl,
-          fallbackLogoUrl: fallbackLogoUrl,
-          altFallbackUrl: altFallbackUrl,
+          logoUrl,
           hasActiveDomains: hasActiveDomains,
           scannerLink: `${frontendUrl}/scanner`,
           dashboardLink: frontendUrl,

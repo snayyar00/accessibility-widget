@@ -17,37 +17,12 @@
     </mj-style>
   </mj-head>
   <mj-body background-color="#1565C0">
-    <!-- Header -->
+    <!-- Header: org logo only when logoUrl is provided -->
     <mj-section background-color="#1565C0" padding="32px 24px">
       <mj-column width="100%">
         <mj-text align="center">
-          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
-            <!-- Primary logo with multiple fallbacks for Gmail compatibility -->
-            <img 
-              src="{{logoUrl}}" 
-              alt="{{organizationName}} - Making the web accessible for everyone" 
-              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
-              width="150"
-              border="0"
-              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
-            />
-            <!-- Gmail-specific fallback using conditional comments -->
-            <!--[if mso]>
-            <img src="{{altFallbackUrl}}" alt="{{organizationName}} Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
-            <![endif]-->
-          </div>
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;"><img src="{{logoUrl}}" alt="{{organizationName}}" style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" width="150" border="0" /></div>
         </mj-text>
-      </mj-column>
-    </mj-section>
-
-    <!-- Hero Image Section -->
-    <mj-section background-color="#ffffff" padding="0">
-      <mj-column>
-        <mj-image 
-          width="500px" 
-          src="https://www.webability.io/images/section_1_right.png"
-          alt="{{organizationName}} Hero"
-        />
       </mj-column>
     </mj-section>
 
