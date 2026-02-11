@@ -164,6 +164,9 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
 
         const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
 
+        const smtpConfigForTemplate = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+        const organizationName = smtpConfigForTemplate?.organizationName ?? 'WebAbility'
+
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
           data: {
@@ -178,6 +181,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
             reportLink: 'https://app.webability.io/accessibility-test',
             unsubscribeLink,
             year,
+            organizationName,
           },
         })
 
@@ -206,8 +210,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
           },
         ]
 
-        const smtpConfig = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
-        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports', smtpConfig)
+        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports', smtpConfigForTemplate)
       } catch (error) {
         logger.error('Async email/report task failed:', error)
       }

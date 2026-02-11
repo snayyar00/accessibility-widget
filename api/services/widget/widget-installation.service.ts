@@ -19,6 +19,9 @@ export async function sendWidgetInstallationInstructions(data: WidgetInstallatio
     // Format position for display
     const formattedPosition = position.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 
+    const smtpConfig = organizationId != null ? await getOrganizationSmtpConfig(organizationId) : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+
     // Compile the email template
     const template = await compileEmailTemplate({
       fileName: 'widgetInstallation.mjml',
@@ -27,10 +30,9 @@ export async function sendWidgetInstallationInstructions(data: WidgetInstallatio
         position: formattedPosition,
         language,
         languageName,
+        organizationName,
       },
     })
-
-    const smtpConfig = organizationId != null ? await getOrganizationSmtpConfig(organizationId) : null
     await sendMail(email, 'Your WebAbility Widget Installation Instructions', template, undefined, 'WebAbility Team', smtpConfig)
 
     logger.info(`Widget installation instructions sent successfully to ${email}`)

@@ -50,12 +50,17 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
       }
     }
 
+    const reporterSmtpConfig =
+      site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
+    const organizationName = reporterSmtpConfig?.organizationName ?? 'WebAbility'
+
     const template = await compileEmailTemplate({
       fileName: 'reportProblem.mjml',
       data: {
         issue_type: problem.issue_type,
         description: problem.description,
         year,
+        organizationName,
       },
     })
     // Generate unsubscribe link for the domain owner (if user exists)
@@ -72,11 +77,10 @@ export async function handleReportProblem(site_url: string, issue_type: string, 
         year,
         domain,
         unsubscribeLink,
+        organizationName,
       },
     })
 
-    const reporterSmtpConfig =
-      site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
     sendMail(problem.reporter_email, 'Problem reported', template, undefined, 'WebAbility Support', reporterSmtpConfig)
       .then(() => console.log('Mail sent successfully'))
       .catch((mailError) => console.error('Error sending mail:', mailError))

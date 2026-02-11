@@ -166,11 +166,15 @@ async function inviteUserToWorkspace(user: UserLogined, workspaceId: number, inv
 
     const token = await generateRandomKey()
 
+    const workspaceSmtpConfig = await getOrganizationSmtpConfig(workspace.organization_id)
+    const organizationName = workspaceSmtpConfig?.organizationName ?? 'WebAbility'
+
     const template = await compileEmailTemplate({
       fileName: 'inviteWorkspaceMember.mjml',
       data: {
         workspaceName: workspace.name,
         url: `${allowedFrontendUrl}/invitation/${token}`,
+        organizationName,
       },
     })
 
@@ -206,8 +210,7 @@ async function inviteUserToWorkspace(user: UserLogined, workspaceId: number, inv
     await transaction.commit()
 
     try {
-      const smtpConfig = await getOrganizationSmtpConfig(workspace.organization_id)
-      await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template, undefined, 'WebAbility Team', smtpConfig)
+      await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template, undefined, 'WebAbility Team', workspaceSmtpConfig)
       console.log('Workspace Invitation Token', token)
     } catch (emailError) {
       logger.error('Failed to send workspace invitation email:', {
@@ -323,7 +326,7 @@ async function inviteUserToOrganization(user: UserLogined, invitee_email: string
     const template = await compileEmailTemplate({
       fileName: 'inviteOrganizationMember.mjml',
       data: {
-        organizationName: organization.name,
+        organizationName: organization?.name ?? 'WebAbility',
         url: `${allowedFrontendUrl}/invitation/${token}`,
       },
     })
