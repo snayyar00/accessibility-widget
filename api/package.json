@@ -28,7 +28,6 @@
     "@getbrevo/brevo": "^2.5.0",
     "@imgproxy/imgproxy-node": "^1.1.0",
     "@libsql/client": "^0.17.0",
-    "@libsql/linux-x64-gnu": "^0.17.0",
     "@scrapeless-ai/sdk": "^1.11.0",
     "@sentry/node": "^5.30.0",
     "@types/cors": "^2.8.19",
@@ -121,5 +120,8 @@
     "prettier": "^3.6.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3"
+  },
+  "optionalDependencies": {
+    "@libsql/linux-x64-gnu": "0.5.22"
   }
 }
