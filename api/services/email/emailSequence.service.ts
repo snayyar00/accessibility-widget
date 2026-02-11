@@ -85,7 +85,11 @@ export class EmailSequenceService {
         logger.warn('Logo file issue, using hosted URLs only:', logoError.message)
       }
 
-      // Compile the welcome email template
+      // Send the email
+      const emailToSend = this.getEmailForSending(userEmail)
+      const smtpConfig = organizationId ? await getOrganizationSmtpConfig(organizationId) : null
+      const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+
       const template = await compileEmailTemplate({
         fileName: welcomeStep.template,
         data: {
@@ -99,12 +103,9 @@ export class EmailSequenceService {
           supportLink: 'mailto:support@webability.io',
           unsubscribeLink: generateSecureUnsubscribeLink(userEmail, 'onboarding', userId),
           year: new Date().getFullYear(),
+          organizationName,
         },
       })
-
-      // Send the email
-      const emailToSend = this.getEmailForSending(userEmail)
-      const smtpConfig = organizationId ? await getOrganizationSmtpConfig(organizationId) : null
       await sendEmailWithRetries(emailToSend, template, welcomeStep.subject, 3, 2000, undefined, 'WebAbility Team', smtpConfig)
 
       // Mark email as sent in tracking system
@@ -425,7 +426,11 @@ export class EmailSequenceService {
         logger.warn(`Logo file issue for ${step.description}, using hosted URLs only:`, logoError.message)
       }
 
-      // Compile the email template
+      // Send the email
+      const emailToSend = this.getEmailForSending(user.email)
+      const smtpConfig = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+      const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+
       const template = await compileEmailTemplate({
         fileName: step.template,
         data: {
@@ -443,15 +448,12 @@ export class EmailSequenceService {
           installationGuide: 'https://www.webability.io/installation',
           unsubscribeLink: generateSecureUnsubscribeLink(user.email, 'onboarding', user.id),
           year: new Date().getFullYear(),
+          organizationName,
         },
       })
 
       // Compile subject line for conditional content (Day 1 email has Handlebars syntax)
       const compiledSubject = step.subject.includes('{{#if') ? (hasActiveDomains ? step.subject.replace(/{{#if hasActiveDomains}}(.*?){{else}}.*?{{\/if}}/g, '$1') : step.subject.replace(/{{#if hasActiveDomains}}.*?{{else}}(.*?){{\/if}}/g, '$1')) : step.subject
-
-      // Send the email
-      const emailToSend = this.getEmailForSending(user.email)
-      const smtpConfig = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
       await sendEmailWithRetries(emailToSend, template, compiledSubject, 3, 2000, undefined, 'WebAbility Team', smtpConfig)
 
       if (!user.current_organization_id) {

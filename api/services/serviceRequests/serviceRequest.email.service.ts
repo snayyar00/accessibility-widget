@@ -51,6 +51,11 @@ export async function sendQuoteRequestNotification(data: QuoteRequestEmailData):
   try {
     const user = await getUserbyId(data.userId)
     const year = new Date().getFullYear()
+    const smtpConfig =
+      user.current_organization_id != null
+        ? await getOrganizationSmtpConfig(user.current_organization_id)
+        : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
 
     const template = await compileEmailTemplate({
       fileName: 'quoteRequestReceived.mjml',
@@ -65,15 +70,12 @@ export async function sendQuoteRequestNotification(data: QuoteRequestEmailData):
         userName: user.name || user.email,
         dashboardLink: `${process.env.CLIENT_URL || 'https://app.webability.io'}/service-requests`,
         year,
+        organizationName,
       },
     })
 
     // Send to admin email (can be configured via environment variable)
     const adminEmail = process.env.EMAIL_TO || 'admin@webability.io'
-    const smtpConfig =
-      user.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
     await sendMail(adminEmail, `New Quote Request: ${data.projectName}`, template, undefined, 'WebAbility Team', smtpConfig)
 
     logger.info(`Quote request notification sent to ${adminEmail}`)
@@ -89,6 +91,12 @@ export async function sendQuoteRequestNotification(data: QuoteRequestEmailData):
 export async function sendMeetingRequestNotification(data: MeetingRequestEmailData): Promise<void> {
   try {
     const year = new Date().getFullYear()
+    const user = await getUserbyId(data.userId)
+    const smtpConfig =
+      user?.current_organization_id != null
+        ? await getOrganizationSmtpConfig(user.current_organization_id)
+        : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
 
     const template = await compileEmailTemplate({
       fileName: 'meetingRequestReceived.mjml',
@@ -103,16 +111,12 @@ export async function sendMeetingRequestNotification(data: MeetingRequestEmailDa
         requestDate: formatDate(new Date()),
         dashboardLink: `${process.env.CLIENT_URL || 'https://app.webability.io'}/service-requests`,
         year,
+        organizationName,
       },
     })
 
     // Send to admin email (can be configured via environment variable)
     const adminEmail = process.env.EMAIL_TO || 'admin@webability.io'
-    const user = await getUserbyId(data.userId)
-    const smtpConfig =
-      user?.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
     await sendMail(adminEmail, `📅 New Meeting Request: ${data.fullName}`, template, undefined, 'WebAbility Team', smtpConfig)
 
     logger.info(`Meeting request notification sent to ${adminEmail}`)

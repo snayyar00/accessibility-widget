@@ -5,7 +5,7 @@
         <mj-image
           width="150px"
           src="https://www.webability.io/logo.png"
-          alt="WebAbility"
+          alt="{{organizationName}}"
           align="center"
           padding="20px 0"
         ></mj-image>
@@ -18,7 +18,7 @@
         </mj-text>
         <mj-text font-size="18px" align="center" color="#555" line-height="30px"
           >Hi {{name}}! Please confirm that you want to use this as your
-          Web Ability account email address.</mj-text
+          {{organizationName}} account email address.</mj-text
         >
         <mj-button
           background-color="#06adef"

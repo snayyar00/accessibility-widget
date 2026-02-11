@@ -46,15 +46,17 @@ export async function forgotPasswordUser(email: string, organization: Organizati
       await updateUserTokenById(session.id, token)
     }
 
+    const smtpConfig = organization.id ? await getOrganizationSmtpConfig(organization.id) : null
+    const organizationName = smtpConfig?.organizationName ?? organization?.name ?? 'WebAbility'
+
     const template = await compileEmailTemplate({
       fileName: 'forgotPassword.mjml',
       data: {
         name: session.name,
         url: `${currentUrl}/auth/reset-password?&token=${token}`,
+        organizationName,
       },
     })
-
-    const smtpConfig = organization.id ? await getOrganizationSmtpConfig(organization.id) : null
     await sendMail(session.email, 'Reset Password from WebAbility', template, undefined, 'WebAbility Support', smtpConfig)
 
     return true

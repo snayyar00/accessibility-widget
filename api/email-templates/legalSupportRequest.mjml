@@ -59,8 +59,8 @@
       <mj-column>
         <mj-divider border-color="#e5e7eb" border-width="1px" padding="0 0 24px"></mj-divider>
         <mj-text font-size="14px" align="center" color="#666" line-height="20px">
-          This is an automated notification from the WebAbility Legal Resources system.<br>
-          © {{year}} WebAbility. All rights reserved.
+          This is an automated notification from the {{organizationName}} Legal Resources system.<br>
+          © {{year}} {{organizationName}}. All rights reserved.
         </mj-text>
       </mj-column>
     </mj-section>

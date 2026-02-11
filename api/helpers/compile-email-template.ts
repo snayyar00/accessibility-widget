@@ -15,6 +15,8 @@ type Props = {
     url?: string
     teamName?: string
     link?: string
+    /** Brand/organization name shown in email (defaults to "WebAbility" when omitted) */
+    organizationName?: string
     [key: string]: unknown
   }
 }
@@ -58,14 +60,15 @@ export default async function compileEmailTemplate({ fileName, data }: Props): P
       logger.warn('MJML compilation warnings:', errors)
     }
 
-    // Escape all string values in data using entities
-    const escapedData: typeof data = {}
+    // Escape all string values in data using entities; ensure organizationName has a default for templates
+    const escapedData: typeof data = {
+      ...data,
+      organizationName: typeof data.organizationName === 'string' && data.organizationName.trim() ? data.organizationName.trim() : 'WebAbility',
+    }
 
-    for (const key in data) {
-      if (typeof data[key] === 'string') {
-        escapedData[key] = escapeHandlebarsExpressions(data[key])
-      } else {
-        escapedData[key] = data[key]
+    for (const key in escapedData) {
+      if (typeof escapedData[key] === 'string') {
+        escapedData[key] = escapeHandlebarsExpressions(escapedData[key] as string)
       }
     }
 

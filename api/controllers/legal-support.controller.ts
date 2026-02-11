@@ -58,18 +58,18 @@ export async function sendLegalSupportRequest(req: Request, res: Response) {
       }),
     }
 
-    // Compile the email template
-    const emailHtml = await compileEmailTemplate({
-      fileName: 'legalSupportRequest.mjml',
-      data: templateVariables,
-    })
-
     // Send to admin email (configured via EMAIL_TO environment variable)
     const adminEmail = process.env.EMAIL_TO || 'admin@webability.io'
     const smtpConfig =
       user?.current_organization_id != null
         ? await getOrganizationSmtpConfig(user.current_organization_id)
         : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+
+    const emailHtml = await compileEmailTemplate({
+      fileName: 'legalSupportRequest.mjml',
+      data: { ...templateVariables, organizationName },
+    })
     const emailSent = await sendMail(
       adminEmail,
       `Legal Support Request: ${complaintType} - ${name}`,

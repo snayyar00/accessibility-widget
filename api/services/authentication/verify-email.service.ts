@@ -70,18 +70,21 @@ export async function verifyEmail(authToken: string): Promise<true | ApolloError
 
     const user = await getUserbyId(token.user_id)
 
+  const smtpConfig =
+      user?.current_organization_id != null
+        ? await getOrganizationSmtpConfig(user.current_organization_id)
+        : null
+  const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+
   const template = await compileEmailTemplate({
     fileName: 'WelcomeEmail.mjml',
     data: {
       name: user?.name,
       date: dayjs().format('dddd, MMMM D, YYYY h:mm A'),
+      organizationName,
     },
   })
 
-  const smtpConfig =
-      user?.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
   await sendMail(user?.email, "Welcome to WebAbility ! Let's Make the Web Accessible Together", template, undefined, 'WebAbility Team', smtpConfig)
 
     return true
@@ -103,6 +106,9 @@ export async function resendEmailAction(user: UserLogined, type: 'verify_email' 
       throw new ForbiddenError('Provided domain is not in the list of allowed URLs')
     }
 
+    const smtpConfig = organization?.id ? await getOrganizationSmtpConfig(organization.id) : null
+    const organizationName = smtpConfig?.organizationName ?? organization?.name ?? 'WebAbility'
+
     switch (type) {
       case SEND_MAIL_TYPE.VERIFY_EMAIL:
         if (user.isActive) {
@@ -114,6 +120,7 @@ export async function resendEmailAction(user: UserLogined, type: 'verify_email' 
           data: {
             name: user.name,
             url: `${currentUrl}/verify-email?token=${token}`,
+            organizationName,
           },
         })
         break
@@ -125,6 +132,7 @@ export async function resendEmailAction(user: UserLogined, type: 'verify_email' 
           data: {
             name: user.name,
             url: `${currentUrl}/auth/reset-password?token=${token}`,
+            organizationName,
           },
         })
         break
@@ -136,13 +144,13 @@ export async function resendEmailAction(user: UserLogined, type: 'verify_email' 
           data: {
             name: user.name,
             url: `${currentUrl}/verify-email?token=${token}`,
+            organizationName,
           },
         })
         break
     }
 
     await changeTokenStatus(null, type, false)
-    const smtpConfig = organization?.id ? await getOrganizationSmtpConfig(organization.id) : null
     await Promise.all([
       createToken(user.id, token, type),
       sendMail(normalizeEmail(user.email), subject, template, undefined, 'WebAbility Team', smtpConfig),

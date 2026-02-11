@@ -24,7 +24,7 @@
             <!-- Gmail-optimized logo with multiple fallbacks -->
             <img 
               src="{{logoUrl}}" 
-              alt="WebAbility - Making the web accessible for everyone" 
+              alt="{{organizationName}} - Making the web accessible for everyone" 
               style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
               width="150"
               border="0"
@@ -32,7 +32,7 @@
             />
             <!-- Gmail-specific fallback using conditional comments -->
             <!--[if mso]>
-            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
+            <img src="{{altFallbackUrl}}" alt="{{organizationName}} Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
             <![endif]-->
           </div>
         </mj-text>
@@ -43,10 +43,10 @@
     <mj-section background-color="#ffffff" padding="12px 24px 32px">
       <mj-column>
         <mj-text css-class="welcome-title" align="center">
-          Real Stories from WebAbility Customers 🌟
+          Real Stories from {{organizationName}} Customers 🌟
         </mj-text>
         <mj-text align="center" font-size="18px" color="#6b7280" padding="16px 0 0">
-          Hi {{name}}, we love hearing from our customers! Here are some genuine reviews from real users who've transformed their website accessibility with WebAbility.
+          Hi {{name}}, we love hearing from our customers! Here are some genuine reviews from real users who've transformed their website accessibility with {{organizationName}}.
         </mj-text>
       </mj-column>
     </mj-section>
@@ -71,7 +71,7 @@
         <mj-text css-class="testimonial">
           <span style="color: #374151; font-size: 16px; line-height: 1.6;">
             <strong>"A Requirement These Days"</strong><br><br>
-            "Whether you want to actually help your site visitors, please the SEO and Social Over Lords .. or just look like a more thought through site, accessibility is an increasingly factor thing these days. WebAbility has progressed and responded to the Q&A requests and is now a key part of all of our sites. Thanks to their very responsive support team .. All up and running now. :)"
+            "Whether you want to actually help your site visitors, please the SEO and Social Over Lords .. or just look like a more thought through site, accessibility is an increasingly factor thing these days. {{organizationName}} has progressed and responded to the Q&A requests and is now a key part of all of our sites. Thanks to their very responsive support team .. All up and running now. :)"
           </span><br><br>
           <strong style="color: #1f2937;">— christian814</strong>
         </mj-text>
@@ -80,7 +80,7 @@
         <mj-text css-class="testimonial">
           <span style="color: #374151; font-size: 16px; line-height: 1.6;">
             <strong>"Easy to use, even without WCAG knowledge"</strong><br><br>
-            "I'm not very familiar with WCAG, but Webability.io made the whole process simple and smooth. The app gives clear insights and helps improve accessibility step by step. Support is fast and genuinely helpful. Great tool for anyone who wants to make their website more accessible without diving deep into technicalities."
+            "I'm not very familiar with WCAG, but {{organizationName}}.io made the whole process simple and smooth. The app gives clear insights and helps improve accessibility step by step. Support is fast and genuinely helpful. Great tool for anyone who wants to make their website more accessible without diving deep into technicalities."
           </span><br><br>
           <strong style="color: #1f2937;">— MichalPliszka</strong>
         </mj-text>
@@ -89,7 +89,7 @@
         <mj-text css-class="testimonial">
           <span style="color: #374151; font-size: 16px; line-height: 1.6;">
             <strong>"Very helpful for any site owner"</strong><br><br>
-            "Website Accessibility is the next big thing where not so friendly people will make money with sending you judicial warnings. WebAbility is a helpful tool to protect your website and make it Accessibility friendly. It's not only the Website widget, it's also the AI suggestions for every element of your site which need optimisation."
+            "Website Accessibility is the next big thing where not so friendly people will make money with sending you judicial warnings. {{organizationName}} is a helpful tool to protect your website and make it Accessibility friendly. It's not only the Website widget, it's also the AI suggestions for every element of your site which need optimisation."
           </span><br><br>
           <strong style="color: #1f2937;">— gieri</strong>
         </mj-text>
@@ -120,7 +120,7 @@
           🌟 Share Your Success Story
         </mj-text>
         <mj-text align="center" font-size="16px" color="#6b7280" padding="0 0 20px">
-          Have you seen similar improvements with WebAbility? We'd love to hear about your accessibility wins and help other businesses learn from your experience.
+          Have you seen similar improvements with {{organizationName}}? We'd love to hear about your accessibility wins and help other businesses learn from your experience.
         </mj-text>
         
         <mj-button 
@@ -142,11 +142,11 @@
     <mj-section background-color="#f9fafb" padding="32px 24px">
       <mj-column>
         <mj-text css-class="footer-text" align="center">
-          <strong>WebAbility</strong><br>
+          <strong>{{organizationName}}</strong><br>
           Making the web accessible for everyone
         </mj-text>
         <mj-text css-class="footer-text" align="center" padding="16px 0 0">
-          © {{year}} WebAbility. All rights reserved.
+          © {{year}} {{organizationName}}. All rights reserved.
         </mj-text>
         <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
           Your success inspires us to keep building better accessibility solutions!

@@ -34,6 +34,13 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
       })
     }
 
+    const user = (req as { user?: { current_organization_id?: number } }).user
+    const smtpConfig =
+      user?.current_organization_id != null
+        ? await getOrganizationSmtpConfig(user.current_organization_id)
+        : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+
     // Prepare template variables
     const templateVariables = {
       domain,
@@ -44,6 +51,7 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
         month: 'long',
         day: 'numeric',
       }),
+      organizationName,
     }
 
     // Compile the email template
@@ -85,11 +93,6 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
       name: `${domain}-proof-of-effort-toolkit.zip`,
     }
 
-    const user = (req as { user?: { current_organization_id?: number } }).user
-    const smtpConfig =
-      user?.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
     const emailSent = await sendMail(
       email,
       `Your Proof of Effort Toolkit for ${domain}`,

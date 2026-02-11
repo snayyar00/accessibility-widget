@@ -126,15 +126,15 @@ async function sendStatusChangeNotification(result: MonitoringResult, lastStatus
       unsubscribeLink: generateSecureUnsubscribeLink(userEmail, getUnsubscribeTypeForEmail('monitoring'), user.id),
     }
 
+    const smtpConfig =
+      site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
     const emailHtml = await compileEmailTemplate({
       fileName: templateName,
-      data: emailData,
+      data: { ...emailData, organizationName },
     })
 
     const subject = currentStatus === 'down' ? `🔴 WebAbility Alert: ${result.url} is DOWN` : `✅ WebAbility Recovery: ${result.url} is back UP`
-
-    const smtpConfig =
-      site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
     const emailSent = await sendMail(userEmail, subject, emailHtml, undefined, 'WebAbility Monitoring', smtpConfig)
 
     if (emailSent) {

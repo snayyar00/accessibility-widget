@@ -5,7 +5,7 @@
         <mj-image
           width="150px"
           src="https://www.webability.io/images/logo.png"
-          alt="WebAbility"
+          alt="{{organizationName}}"
           align="center"
           padding="20px 0"
         ></mj-image>
