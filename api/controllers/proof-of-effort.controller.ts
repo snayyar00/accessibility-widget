@@ -93,12 +93,13 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
       name: `${domain}-proof-of-effort-toolkit.zip`,
     }
 
+    const senderName = organizationName ? `${organizationName} Team` : 'WebAbility Team'
     const emailSent = await sendMail(
       email,
       `Your Proof of Effort Toolkit for ${domain}`,
       emailHtml,
       [attachment],
-      'WebAbility Team',
+      senderName,
       smtpConfig,
     )
 

@@ -42,7 +42,7 @@
       <mj-column>
         <mj-text css-class="faq-section">
           <div style="margin-bottom: 12px;">
-            <strong style="font-size: 18px; color: #1f2937;">🧠 What does {{organizationName}}.io's AI do?</strong>
+            <strong style="font-size: 18px; color: #1f2937;">🧠 What does {{organizationName}}'s AI do?</strong>
           </div>
           <div style="color: #374151; line-height: 1.6;">
             Our AI-powered accessibility widget automatically enhances your website's accessibility by:
@@ -62,7 +62,7 @@
       <mj-column>
         <mj-text css-class="faq-section">
           <div style="margin-bottom: 12px;">
-            <strong style="font-size: 18px; color: #1f2937;">🛠️ What is included in my {{organizationName}}.io plan?</strong>
+            <strong style="font-size: 18px; color: #1f2937;">🛠️ What is included in my {{organizationName}} plan?</strong>
           </div>
           <div style="color: #374151; line-height: 1.6;">
             Your plan includes:
@@ -117,7 +117,7 @@
       <mj-column>
         <mj-text css-class="faq-section">
           <div style="margin-bottom: 12px;">
-            <strong style="font-size: 18px; color: #1f2937;">📩 Does {{organizationName}}.io offer manual audit help?</strong>
+            <strong style="font-size: 18px; color: #1f2937;">📩 Does {{organizationName}} offer manual audit help?</strong>
           </div>
           <div style="color: #374151; line-height: 1.6;">
             Yes, we offer manual audits and implementation assistance as an additional service. If you're interested, we can schedule a consultation or provide a quote based on your needs.
@@ -152,10 +152,10 @@
       <mj-column>
         <mj-text css-class="faq-section">
           <div style="margin-bottom: 12px;">
-            <strong style="font-size: 18px; color: #1f2937;">🌍 Does {{organizationName}}.io support global compliance standards?</strong>
+            <strong style="font-size: 18px; color: #1f2937;">🌍 Does {{organizationName}} support global compliance standards?</strong>
           </div>
           <div style="color: #374151; line-height: 1.6;">
-            Yes, {{organizationName}}.io is designed to support compliance with various global accessibility standards, including:
+            Yes, {{organizationName}} is designed to support compliance with various global accessibility standards, including:
             <ul style="margin: 12px 0; padding-left: 20px;">
               <li>ADA (Americans with Disabilities Act)</li>
               <li>WCAG 2.1 and 2.2 (Web Content Accessibility Guidelines)</li>
@@ -174,10 +174,10 @@
       <mj-column>
         <mj-text css-class="faq-section">
           <div style="margin-bottom: 12px;">
-            <strong style="font-size: 18px; color: #1f2937;">🛡️ Is {{organizationName}}.io GDPR compliant?</strong>
+            <strong style="font-size: 18px; color: #1f2937;">🛡️ Is {{organizationName}} GDPR compliant?</strong>
           </div>
           <div style="color: #374151; line-height: 1.6;">
-            Yes, {{organizationName}}.io is fully GDPR compliant. All analytics are securely processed and stored in Canadian data centers with TLS encryption and role-based access controls. We can provide a Data Processing Agreement (DPA) upon request.
+            Yes, {{organizationName}} is fully GDPR compliant. All analytics are securely processed and stored in Canadian data centers with TLS encryption and role-based access controls. We can provide a Data Processing Agreement (DPA) upon request.
           </div>
         </mj-text>
       </mj-column>

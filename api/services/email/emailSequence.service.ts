@@ -86,7 +86,8 @@ export class EmailSequenceService {
           organizationName,
         },
       })
-      await sendEmailWithRetries(emailToSend, template, welcomeStep.subject, 3, 2000, undefined, 'WebAbility Team', smtpConfig)
+      const senderName = organizationName ? `${organizationName} Team` : 'WebAbility Team'
+      await sendEmailWithRetries(emailToSend, template, welcomeStep.subject, 3, 2000, undefined, senderName, smtpConfig)
 
       // Mark email as sent in tracking system
       await this.markEmailAsSent(userId, welcomeStep.day, organizationId)
@@ -420,7 +421,8 @@ export class EmailSequenceService {
 
       // Compile subject line for conditional content (Day 1 email has Handlebars syntax)
       const compiledSubject = step.subject.includes('{{#if') ? (hasActiveDomains ? step.subject.replace(/{{#if hasActiveDomains}}(.*?){{else}}.*?{{\/if}}/g, '$1') : step.subject.replace(/{{#if hasActiveDomains}}.*?{{else}}(.*?){{\/if}}/g, '$1')) : step.subject
-      await sendEmailWithRetries(emailToSend, template, compiledSubject, 3, 2000, undefined, 'WebAbility Team', smtpConfig)
+      const senderName = organizationName ? `${organizationName} Team` : 'WebAbility Team'
+      await sendEmailWithRetries(emailToSend, template, compiledSubject, 3, 2000, undefined, senderName, smtpConfig)
 
       if (!user.current_organization_id) {
         logger.error(`Cannot mark email as sent - user ${user.id} has no current_organization_id`)

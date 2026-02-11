@@ -157,7 +157,7 @@ async function sendMailMultiple(
 
   if (smtpConfig && hasSmtpCredentials(smtpConfig)) {
     try {
-      const host = (smtpConfig.host || '').trim() || 'smtp.hostinger.com'
+      const host = (smtpConfig.host || '').trim()
       const transporter = nodemailer.createTransport({
         host,
         port: smtpConfig.port,
@@ -230,20 +230,16 @@ async function sendEmailWithRetries(
   while (attempt < maxRetries) {
     attempt += 1
     try {
-      console.log(`Attempt ${attempt} to send email to ${email}`)
       const ok = await sendMail(email, subject, template, attachments, senderName, smtpConfig)
       if (ok) {
-        console.log(`Email sent successfully to ${email}`)
         return
       }
       throw new Error('sendMail returned false')
     } catch (error) {
-      console.error(`Failed to send email on attempt ${attempt}:`, error)
       if (attempt >= maxRetries) {
-        throw new Error(`Failed to send email to ${email} after ${maxRetries} attempts.`)
+        throw new Error(`Failed to send email after ${maxRetries} attempts.`)
       }
       const retryDelay = delay * 2 ** (attempt - 1)
-      console.log(`Retrying in ${retryDelay}ms...`)
       await new Promise((resolve) => setTimeout(resolve, retryDelay))
     }
   }
