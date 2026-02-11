@@ -27,7 +27,6 @@
     "@clickhouse/client": "^1.12.1",
     "@getbrevo/brevo": "^2.5.0",
     "@imgproxy/imgproxy-node": "^1.1.0",
-    "@scrapeless-ai/sdk": "^1.11.0",
     "@libsql/client": "^0.17.0",
     "@scrapeless-ai/sdk": "^1.11.0",
     "@sentry/node": "^5.30.0",
