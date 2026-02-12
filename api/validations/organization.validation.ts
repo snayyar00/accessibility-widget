@@ -56,6 +56,7 @@ export function validateEditOrganization(input: {
     logo_url: { type: 'string', optional: true, max: 500 },
     settings: { type: 'object', optional: true },
     smtp_host: {
+      type: 'any',
       optional: true,
       custom: (v: unknown) =>
         v == null || v === ''
@@ -65,6 +66,7 @@ export function validateEditOrganization(input: {
             : 'SMTP host must be a string up to 255 characters with no line breaks',
     },
     smtp_port: {
+      type: 'any',
       optional: true,
       custom: (v: unknown) =>
         v == null || v === ''
@@ -74,7 +76,7 @@ export function validateEditOrganization(input: {
             : 'Port must be between 1 and 65535',
     },
     smtp_secure: { type: 'boolean', optional: true },
-    smtp_user: { optional: true, custom: smtpUserValid },
+    smtp_user: { type: 'any', optional: true, custom: smtpUserValid },
     smtp_password: { type: 'string', optional: true, max: 512 },
   }
 
