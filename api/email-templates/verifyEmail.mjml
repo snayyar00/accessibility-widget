@@ -2,23 +2,12 @@
   <mj-body background-color="#f1f1f1">
     <mj-section background-color="#fff">
       <mj-column>
-        <mj-image
-          width="150px"
-          src="https://www.webability.io/logo.png"
-          alt="WebAbility"
-          align="center"
-          padding="20px 0"
-        ></mj-image>
-      </mj-column>
-    </mj-section>
-    <mj-section background-color="#fff">
-      <mj-column>
         <mj-text font-size="30px" align="center">
           Verify your email address
         </mj-text>
         <mj-text font-size="18px" align="center" color="#555" line-height="30px"
           >Hi {{name}}! Please confirm that you want to use this as your
-          Web Ability account email address.</mj-text
+          {{organizationName}} account email address.</mj-text
         >
         <mj-button
           background-color="#06adef"

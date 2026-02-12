@@ -20,21 +20,7 @@
     <mj-section background-color="#1565C0" padding="32px 24px">
       <mj-column width="100%">
         <mj-text align="center">
-          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
-            <!-- Gmail-optimized logo with multiple fallbacks -->
-            <img 
-              src="{{logoUrl}}" 
-              alt="WebAbility - Making the web accessible for everyone" 
-              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
-              width="150"
-              border="0"
-              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
-            />
-            <!-- Gmail-specific fallback using conditional comments -->
-            <!--[if mso]>
-            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
-            <![endif]-->
-          </div>
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;"><img src="{{logoUrl}}" alt="{{organizationName}}" style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" width="150" border="0" /></div>
         </mj-text>
       </mj-column>
     </mj-section>
@@ -43,10 +29,10 @@
     <mj-section background-color="#ffffff" padding="12px 24px 32px">
       <mj-column>
         <mj-text css-class="welcome-title" align="center">
-          Your WebAbility 90-Day Milestones 🎉
+          Your {{organizationName}} 90-Day Milestones 🎉
         </mj-text>
         <mj-text align="center" font-size="18px" color="#6b7280" padding="16px 0 0">
-          Hi {{name}}, congratulations! You've completed 90 days with WebAbility. Let's celebrate your accessibility achievements and look ahead to continued success.
+          Hi {{name}}, congratulations! You've completed 90 days with {{organizationName}}. Let's celebrate your accessibility achievements and look ahead to continued success.
         </mj-text>
       </mj-column>
     </mj-section>
@@ -169,7 +155,7 @@
           💭 Your Feedback Shapes Our Future
         </mj-text>
         <mj-text align="center" font-size="16px" color="#6b7280" padding="0 0 20px">
-          Help us continue improving WebAbility! Share your experience, suggest new features, or tell us how we can better serve the accessibility community.
+          Help us continue improving {{organizationName}}! Share your experience, suggest new features, or tell us how we can better serve the accessibility community.
         </mj-text>
         
         <mj-button 
@@ -182,7 +168,7 @@
           📝 Share Feedback
         </mj-button>
         <mj-text align="center" font-size="14px" color="#9ca3af" padding="16px 0 0">
-          Consider becoming a WebAbility advocate and help us spread accessibility awareness!
+          Consider becoming a {{organizationName}} advocate and help us spread accessibility awareness!
         </mj-text>
       </mj-column>
     </mj-section>
@@ -191,11 +177,11 @@
     <mj-section background-color="#f9fafb" padding="32px 24px">
       <mj-column>
         <mj-text css-class="footer-text" align="center">
-          <strong>WebAbility</strong><br>
+          <strong>{{organizationName}}</strong><br>
           Making the web accessible for everyone
         </mj-text>
         <mj-text css-class="footer-text" align="center" padding="16px 0 0">
-          © {{year}} WebAbility. All rights reserved.
+          © {{year}} {{organizationName}}. All rights reserved.
         </mj-text>
         <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
           Thank you for 90 amazing days of building a more accessible web together! 🌟

@@ -30,6 +30,7 @@ import logger from '../../utils/logger'
 import { validateInviteWorkspaceMember } from '../../validations/workspace.validation'
 import { UserLogined } from '../authentication/get-user-logined.service'
 import { sendMail } from '../email/email.service'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { addUserToOrganization, getUserOrganization } from '../organization/organization_users.service'
 
 type InvitationResponse = {
@@ -165,11 +166,15 @@ async function inviteUserToWorkspace(user: UserLogined, workspaceId: number, inv
 
     const token = await generateRandomKey()
 
+    const workspaceSmtpConfig = await getOrganizationSmtpConfig(workspace.organization_id)
+    const organizationName = workspaceSmtpConfig?.organizationName ?? 'WebAbility'
+
     const template = await compileEmailTemplate({
       fileName: 'inviteWorkspaceMember.mjml',
       data: {
         workspaceName: workspace.name,
         url: `${allowedFrontendUrl}/invitation/${token}`,
+        organizationName,
       },
     })
 
@@ -205,8 +210,7 @@ async function inviteUserToWorkspace(user: UserLogined, workspaceId: number, inv
     await transaction.commit()
 
     try {
-      await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template, undefined, 'WebAbility Team')
-      console.log('Workspace Invitation Token', token)
+      await sendMail(normalizeEmail(invitee_email), 'Workspace invitation', template, undefined, 'WebAbility Team', workspaceSmtpConfig)
     } catch (emailError) {
       logger.error('Failed to send workspace invitation email:', {
         error: emailError,
@@ -321,7 +325,7 @@ async function inviteUserToOrganization(user: UserLogined, invitee_email: string
     const template = await compileEmailTemplate({
       fileName: 'inviteOrganizationMember.mjml',
       data: {
-        organizationName: organization.name,
+        organizationName: organization?.name ?? 'WebAbility',
         url: `${allowedFrontendUrl}/invitation/${token}`,
       },
     })
@@ -346,8 +350,8 @@ async function inviteUserToOrganization(user: UserLogined, invitee_email: string
     await transaction.commit()
 
     try {
-      await sendMail(normalizeEmail(invitee_email), 'Organization invitation', template, undefined, 'WebAbility Team')
-      console.log('Organization Invitation Token', token)
+      const smtpConfig = organization.id ? await getOrganizationSmtpConfig(organization.id) : null
+      await sendMail(normalizeEmail(invitee_email), 'Organization invitation', template, undefined, 'WebAbility Team', smtpConfig)
     } catch (emailError) {
       logger.error('Failed to send organization invitation email:', {
         error: emailError,

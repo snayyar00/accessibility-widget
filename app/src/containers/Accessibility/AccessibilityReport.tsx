@@ -1054,7 +1054,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   }}
                   disabled={isGenerating}
                 >
-                  Free Scan
+                  Analyze My Site
                   {isGenerating && (
                     <CircularProgress
                       size={18}

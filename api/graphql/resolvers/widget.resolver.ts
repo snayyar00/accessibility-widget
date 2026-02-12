@@ -47,13 +47,14 @@ const widgetResolvers = {
           throw new Error(finalMessage)
         }
 
-        // Send the installation instructions
+        // Send the installation instructions (use org SMTP when configured)
         await sendWidgetInstallationInstructions({
           email,
           code,
           position,
           language,
           languageName,
+          organizationId: user.current_organization_id ?? undefined,
         })
 
         logger.info(`Widget installation instructions sent to ${email} by user ${user.id}`)

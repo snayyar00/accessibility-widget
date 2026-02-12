@@ -69,6 +69,7 @@ const languages = [
   { code: 'hi', name: 'हिन्दी', englishName: 'Hindi' },
   { code: 'hr', name: 'Hrvatski', englishName: 'Croatian' },
   { code: 'hu', name: 'Magyar', englishName: 'Hungarian' },
+  { code: 'is', name: 'Íslenska', englishName: 'Icelandic' },
   { code: 'id', name: 'Bahasa Indonesia', englishName: 'Indonesian' },
   { code: 'it', name: 'Italiano', englishName: 'Italian' },
   { code: 'ja', name: '日本語', englishName: 'Japanese' },
@@ -468,7 +469,7 @@ export default function CodeContainer({
 
   return (
     <div
-      className="w-full bg-white rounded-2xl overflow-hidden border shadow-sm"
+      className="w-full bg-white rounded-2xl overflow-hidden border shadow-sm min-w-0"
       style={{ borderColor: '#A2ADF3' }}
     >
       {/* Screen reader announcement for copy success */}
@@ -1039,7 +1040,18 @@ export default function CodeContainer({
       )}
 
       {/* Installation Snippet - Matches Figma exactly */}
-      <div className="p-4 installation-instructions">
+      <div className="p-4 installation-instructions min-w-0">
+        <style>{`
+          .installation-code-block {
+            overflow-x: visible !important;
+            overflow-y: visible !important;
+          }
+          .installation-code-block code {
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+          }
+        `}</style>
         <div className="mb-3">
           <span className="text-sm font-semibold text-gray-900 mb-1 block">
             Installation snippet
@@ -1115,12 +1127,21 @@ export default function CodeContainer({
 
         {/* Code Block with integrated Copy Button */}
         <div
-          className="rounded-lg p-4 md:p-8 mb-4 relative min-h-[160px] installation-code-block overflow-x-auto max-w-full"
-          style={{ backgroundColor: '#D0D5F9' }}
+          className="rounded-lg p-4 md:p-8 mb-4 relative min-h-[160px] installation-code-block w-full"
+          style={{ 
+            backgroundColor: '#D0D5F9', 
+            minWidth: 0,
+            maxWidth: '100%',
+            boxSizing: 'border-box'
+          }}
         >
           <code
-            className="text-sm lg:text-base font-mono break-all pb-16 block whitespace-pre-wrap md:whitespace-pre"
-            style={{ color: '#0052CC' }}
+            className="text-sm lg:text-base font-mono pb-16 block whitespace-pre-wrap break-all"
+            style={{ 
+              color: '#0052CC',
+              display: 'block',
+              overflowWrap: 'anywhere'
+            }}
           >
             {selectedScript === 'new'
               ? newFormattedCodeString
@@ -1287,3 +1308,4 @@ export default function CodeContainer({
     </div>
   );
 }
+

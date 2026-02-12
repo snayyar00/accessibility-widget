@@ -11,6 +11,7 @@ import { checkScript } from '../services/allowedSites/allowedSites.service'
 import { EmailAttachment, sendEmailWithRetries } from '../services/email/email.service'
 import { generatePDF } from '../utils/generatePDF'
 import logger from '../utils/logger'
+import { getOrganizationSmtpConfig } from '../utils/organizationSmtp.utils'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../utils/secure-unsubscribe.utils'
 
 interface sitePlan {
@@ -134,6 +135,9 @@ const sendMonthlyEmails = async () => {
             const warningsCount = (report?.axe?.warnings?.length || 0) + (report?.htmlcs?.warnings?.length || 0)
             const noticesCount = (report?.axe?.notices?.length || 0) + (report?.htmlcs?.notices?.length || 0)
 
+            const smtpConfigForTemplate = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+            const organizationName = smtpConfigForTemplate?.organizationName ?? 'WebAbility'
+
             const template = await compileEmailTemplate({
               fileName: 'accessReport.mjml',
               data: {
@@ -148,6 +152,7 @@ const sendMonthlyEmails = async () => {
                 reportLink: 'https://app.webability.io/accessibility-test',
                 unsubscribeLink,
                 year,
+                organizationName,
               },
             })
 
@@ -176,7 +181,7 @@ const sendMonthlyEmails = async () => {
               console.error(`Failed to generate PDF for site ${site?.url}:`, pdfError)
             }
 
-            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments, 'WebAbility Reports')
+            await sendEmailWithRetries(user.email, template, `Monthly Accessibility Report for ${site?.url}`, 2, 2000, attachments, 'WebAbility Reports', smtpConfigForTemplate)
             console.log(`Email with PDF attachment successfully sent to ${user.email} for site ${site?.url}`)
           } catch (error) {
             console.error(`Error processing sitePlan ${sitePlan.siteId}:`, error)

@@ -14,6 +14,7 @@ import { checkScript } from '../../services/allowedSites/allowedSites.service'
 import { fetchAccessibilityReport } from '../../services/accessibilityReport/accessibilityReport.service'
 import { EmailAttachment, sendEmailWithRetries } from '../../services/email/email.service'
 import { normalizeDomain } from '../../utils/domain.utils'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { generatePDF } from '../../utils/generatePDF'
 import { UserInputError, ValidationError } from '../../utils/graphql-errors.helper'
 import { deleteReportFromR2, fetchReportFromR2, saveReportToR2 } from '../../utils/r2Storage'
@@ -171,6 +172,9 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
           const r2KeyForUrl = emailReportKey.replace(/^reports\//, '')
           const reportLink = `${frontendUrl}/reports/${r2KeyForUrl}?domain=${encodeURIComponent(emailNormalizedUrl)}`
 
+          const smtpConfigForTemplate = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+          const organizationName = smtpConfigForTemplate?.organizationName ?? 'WebAbility'
+
           const template = await compileEmailTemplate({
             fileName: 'accessReport.mjml',
             data: {
@@ -185,6 +189,7 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
               reportLink: reportLink,
               unsubscribeLink: unsubscribeLink,
               year,
+              organizationName,
             },
           })
 
@@ -276,7 +281,7 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
             // Continue without attachment - the email will still have the link to view the report
           }
 
-          await sendEmailWithRetries(user.email, template, `Full Site Accessibility Report for ${emailUrl}`, 2, 2000, attachments, 'WebAbility Reports')
+          await sendEmailWithRetries(user.email, template, `Full Site Accessibility Report for ${emailUrl}`, 2, 2000, attachments, 'WebAbility Reports', smtpConfigForTemplate)
           console.log(`Full site scan email successfully sent to ${user.email} for site ${emailUrl} with report key ${emailReportKey}`)
         } catch (error) {
           console.error(`Error sending full site scan email for ${emailUrl}:`, error)

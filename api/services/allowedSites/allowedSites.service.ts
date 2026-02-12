@@ -18,6 +18,7 @@ import { findUserNotificationByUserId, getUserbyId } from '../../repository/user
 import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { generatePDF } from '../../utils/generatePDF'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
@@ -163,6 +164,9 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
 
         const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
 
+        const smtpConfigForTemplate = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+        const organizationName = smtpConfigForTemplate?.organizationName ?? 'WebAbility'
+
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
           data: {
@@ -177,6 +181,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
             reportLink: 'https://app.webability.io/accessibility-test',
             unsubscribeLink,
             year,
+            organizationName,
           },
         })
 
@@ -205,7 +210,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
           },
         ]
 
-        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports')
+        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports', smtpConfigForTemplate)
       } catch (error) {
         logger.error('Async email/report task failed:', error)
       }

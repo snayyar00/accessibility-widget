@@ -2,18 +2,6 @@
   <mj-body background-color="#f1f1f1">
     <mj-section background-color="#fff">
       <mj-column>
-        <mj-image
-          width="150px"
-          src="https://www.webability.io/images/logo.png"
-          alt="WebAbility"
-          align="center"
-          padding="20px 0"
-        ></mj-image>
-      </mj-column>
-    </mj-section>
-    
-    <mj-section background-color="#fff">
-      <mj-column>
         <mj-text font-size="30px" align="center" color="#10B981">
           ✅ Website Recovery Notice
         </mj-text>

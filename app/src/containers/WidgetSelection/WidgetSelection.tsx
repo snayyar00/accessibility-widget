@@ -41,7 +41,7 @@ const WidgetSelection: React.FC = () => {
                 tabIndex={-1}
                 style={{ pointerEvents: 'none' }}
               >
-                CLASSIC
+                Old Widget
               </button>
             </div>
             <div className="flex flex-col items-center text-center pt-8">
@@ -80,7 +80,7 @@ const WidgetSelection: React.FC = () => {
                 tabIndex={-1}
                 style={{ pointerEvents: 'none', backgroundColor: '#0052CC' }}
               >
-                RECOMMENDED
+               New Widget
               </button>
             </div>
             <div className="flex flex-col items-center text-center pt-8">

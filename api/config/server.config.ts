@@ -6,7 +6,7 @@ import { IS_PROD } from './env'
 export const PORT = process.env.PORT || 3001
 
 export const ALLOWED_ORIGINS = [...parseEnvUrls(process.env.FRONTEND_URL), ...(process.env.COOLIFY_URL ? [process.env.COOLIFY_URL] : []), 'https://www.webability.io']
-export const ALLOWED_OPERATIONS = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts']
+export const ALLOWED_OPERATIONS = ['validateToken', 'addImpressionsURL', 'registerInteraction', 'reportProblem', 'updateImpressionProfileCounts', 'getAccessibilityReport']
 
 export const configureServer = (app: Express): void => {
   if (IS_PROD) {

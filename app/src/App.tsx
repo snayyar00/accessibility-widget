@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 
 import Auth from '@/containers/Auth/Auth';
 import PrivateRoute from '@/routes/PrivateRoute';
+import { loadHubSpotScript } from '@/utils/hubspot';
 import PublicRoute from '@/routes/PublicRoute';
 import AdminLayout from '@/containers/Layout/Admin';
 import VerifyEmail from '@/containers/VerifyEmail';
@@ -38,6 +39,14 @@ const App: React.FC<props> = ({ options }) => {
   );
 
   useFavicon(organization?.favicon || null);
+
+  // Load HubSpot chat widget only when current org matches REACT_APP_CURRENT_ORG
+  useEffect(() => {
+    const allowedOrgId = process.env.REACT_APP_CURRENT_ORG || '1';
+    if (organization?.id != null && String(organization.id) === String(allowedOrgId)) {
+      loadHubSpotScript();
+    }
+  }, [organization?.id]);
 
   useEffect(() => {
     if (error) {
