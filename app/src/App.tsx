@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ApolloProvider } from '@apollo/client';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -53,7 +54,9 @@ const App: React.FC<props> = ({ options }) => {
     }
   }, [error]);
 
-  return (
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_KEY || '';
+
+  const appContent = (
     <ApolloProvider client={client}>
       <BrowserRouter>
         <GlobalLoader />
@@ -81,6 +84,12 @@ const App: React.FC<props> = ({ options }) => {
         </Switch>
       </BrowserRouter>
     </ApolloProvider>
+  );
+
+  return googleClientId ? (
+    <GoogleOAuthProvider clientId={googleClientId}>{appContent}</GoogleOAuthProvider>
+  ) : (
+    appContent
   );
 };
 
