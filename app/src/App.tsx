@@ -43,6 +43,8 @@ const App: React.FC<props> = ({ options }) => {
   // Load HubSpot chat widget only when current org matches REACT_APP_CURRENT_ORG
   useEffect(() => {
     const allowedOrgId = process.env.REACT_APP_CURRENT_ORG || '1';
+    console.log('allowed', allowedOrgId);
+    console.log('current', organization?.id);
     if (organization?.id != null && String(organization.id) === String(allowedOrgId)) {
       loadHubSpotScript();
     }
