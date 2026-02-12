@@ -77,7 +77,8 @@ const SignInForm: React.FC<Props> = ({
         const currentHost = window.location.hostname;
         const targetHost = new URL(data.loginWithGoogle.url).hostname;
         if (currentHost !== targetHost && !IS_LOCAL) {
-          window.location.href = `${data.loginWithGoogle.url}/auth-redirect?token=${data.loginWithGoogle.token}`;
+          // Use fragment (#) instead of query (?) - fragment is never sent to server (avoids logs, referrers)
+          window.location.href = `${data.loginWithGoogle.url}/auth-redirect#token=${encodeURIComponent(data.loginWithGoogle.token)}`;
         } else {
           history.push('/');
         }

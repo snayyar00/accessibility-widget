@@ -54,12 +54,16 @@ export async function loginOrRegisterWithGoogle(
   const providerId = payload.sub
   let avatarUrl = payload.picture ?? undefined
   
-  // Validate avatar URL if provided
+  // Validate avatar URL if provided - use strict hostname matching to prevent bypass
+  // (e.g. googleusercontent.com.evil.com must not pass)
   if (avatarUrl) {
     try {
       const url = new URL(avatarUrl)
-      // Only allow https URLs from Google domains
-      if (url.protocol !== 'https:' || !url.hostname.includes('googleusercontent.com')) {
+      const hostname = url.hostname.toLowerCase()
+      const isGoogleHost =
+        hostname === 'googleusercontent.com' ||
+        hostname.endsWith('.googleusercontent.com')
+      if (url.protocol !== 'https:' || !isGoogleHost) {
         avatarUrl = undefined
       }
     } catch {
@@ -196,7 +200,7 @@ export async function loginOrRegisterWithGoogle(
         error.message.includes('Duplicate entry') &&
         (error.message.includes('for key') || error.message.includes('email') || error.message.includes('provider_id')))
     ) {
-      logger.warn(`Duplicate Google sign-in attempt for email: ${email}, provider_id: ${providerId}`, error)
+      logger.warn('Duplicate Google sign-in attempt (race condition)', error)
       // Retry lookup - user may have been created by concurrent request
       const existingUser = await findUser({ provider_id: providerId, provider: 'google' })
       if (existingUser) {

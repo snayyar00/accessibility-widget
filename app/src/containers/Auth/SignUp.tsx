@@ -179,8 +179,8 @@ const SignUp: React.FC = () => {
         const targetHost = new URL(data.register.url).hostname;
 
         if (currentHost !== targetHost && !IS_LOCAL) {
-          // Need to redirect to different domain
-          window.location.href = `${data.register.url}/auth-redirect?token=${data.register.token}`;
+          // Use fragment (#) instead of query (?) - fragment is never sent to server (avoids logs, referrers)
+          window.location.href = `${data.register.url}/auth-redirect#token=${encodeURIComponent(data.register.token)}`;
           return true;
         } else {
           // Same domain, just set cookie and continue
