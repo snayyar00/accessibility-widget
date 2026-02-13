@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@apollo/client';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { GoogleLogin } from '@react-oauth/google';
 
 import { IS_LOCAL } from '@/config/env';
 import { RootState } from '@/config/store';
+import { setLastLoginMethod } from '@/features/auth/authPreferencesSlice';
 import { setAuthenticationCookie } from '@/utils/cookie';
 import FormControl from '@/components/Common/FormControl';
 import Input from '@/components/Common/Input/Input';
@@ -35,11 +36,15 @@ const SignInForm: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const history = useHistory();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
   const [loginWithGoogleMutation] = useMutation(loginWithGoogleQuery);
   const organization = useSelector(
     (state: RootState) => state.organization.data,
+  );
+  const lastLoginMethod = useSelector(
+    (state: RootState) => state.authPreferences?.lastLoginMethod ?? null,
   );
   const organizationName = organization?.name || 'WebAbility';
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_KEY;
@@ -73,6 +78,7 @@ const SignInForm: React.FC<Props> = ({
           return;
         }
         
+        dispatch(setLastLoginMethod('google'));
         setAuthenticationCookie(data.loginWithGoogle.token);
         const currentHost = window.location.hostname;
         const targetHost = new URL(data.loginWithGoogle.url).hostname;
@@ -100,7 +106,6 @@ const SignInForm: React.FC<Props> = ({
       }
       
       setGoogleError(displayMessage);
-      console.error('Google sign-in failed:', e);
     }
   };
 
@@ -238,15 +243,30 @@ const SignInForm: React.FC<Props> = ({
               Forgot password?
             </Link>
           </div>
-          <Button
-            color="primary"
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full text-white font-medium py-3 px-4 rounded-lg transition-colors"
-            style={{ backgroundColor: '#0052CC' }}
-          >
-            {isSubmitting ? t('Common.text.please_wait') : 'Login'}
-          </Button>
+          <div className="relative">
+            <Button
+              color="primary"
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              style={{ backgroundColor: '#0052CC' }}
+            >
+              {isSubmitting ? t('Common.text.please_wait') : 'Login'}
+            </Button>
+            {lastLoginMethod === 'email' && (
+              <span
+                className="absolute -top-1 -right-1 px-2 py-0.5 text-xs font-medium rounded-full border whitespace-nowrap"
+                style={{
+                  backgroundColor: '#E0E5ED',
+                  borderColor: '#ADB9CE',
+                  color: '#4A5568',
+                }}
+                role="status"
+              >
+                {String(t('Sign_in.text.last_used'))}
+              </span>
+            )}
+          </div>
           {googleClientId && (
             <>
               <div className="relative my-6">
@@ -258,17 +278,32 @@ const SignInForm: React.FC<Props> = ({
                 </div>
               </div>
               <div className="flex justify-center flex-col items-center gap-2">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => {
-                    setGoogleError('Google sign-in was cancelled or failed.');
-                  }}
-                  useOneTap={false}
-                  theme="outline"
-                  size="large"
-                  text="signin_with"
-                  width={352}
-                />
+                <div className="relative inline-block">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => {
+                      setGoogleError('Google sign-in was cancelled or failed.');
+                    }}
+                    useOneTap={false}
+                    theme="outline"
+                    size="large"
+                    text="signin_with"
+                    width={352}
+                  />
+                  {lastLoginMethod === 'google' && (
+                    <span
+                      className="absolute -top-1 -right-1 px-2 py-0.5 text-xs font-medium rounded-full border whitespace-nowrap"
+                      style={{
+                        backgroundColor: '#E0E5ED',
+                        borderColor: '#ADB9CE',
+                        color: '#4A5568',
+                      }}
+                      role="status"
+                    >
+                      {String(t('Sign_in.text.last_used'))}
+                    </span>
+                  )}
+                </div>
                 {googleError && (
                   <ErrorText message={googleError} position="center" />
                 )}
