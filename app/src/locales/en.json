@@ -123,7 +123,10 @@
       "next": "Next",
       "forgot_password": "Forgot Password?",
       "reset_password_to_unlock": "Reset Password to Unlock Account",
-      "not_have_account": "Dont have account? <0>Register</0>"
+      "not_have_account": "Dont have account? <0>Register</0>",
+      "last_signed_in_with_google": "Last time you signed in with Google",
+      "last_signed_in_with_email": "Last time you signed in with Email",
+      "last_used": "Last used"
     },
     "error": {
       "UNAUTHENTICATED": "Invalid email or password",
