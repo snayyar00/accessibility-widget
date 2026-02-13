@@ -5,7 +5,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useMutation } from '@apollo/client';
 import { useHistory } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import SignInForm from '@/components/Auth/SignInForm';
+import { setLastLoginMethod } from '@/features/auth/authPreferencesSlice';
 import AccessibilityBanner from '@/components/Auth/AccessibilityBanner';
 import loginQuery from '@/queries/auth/login';
 import useDocumentHeader from '@/hooks/useDocumentTitle';
@@ -32,6 +34,7 @@ type Payload = {
 
 const SignIn: React.FC = () => {
   const { t } = useTranslation();
+  const dispatch = useDispatch();
   useDocumentHeader({ title: t('Common.title.sign_in') });
   const {
     register,
@@ -71,18 +74,20 @@ const SignIn: React.FC = () => {
       const { data } = await loginMutation({ variables: params });
 
       if (data?.login.token && data?.login.url) {
+        dispatch(setLastLoginMethod('email'));
         const currentHost = window.location.hostname;
         const targetHost = new URL(data.login.url).hostname;
 
         if (currentHost !== targetHost && !IS_LOCAL) {
-          window.location.href = `${data.login.url}/auth-redirect?token=${data.login.token}`;
+          // Use fragment (#) instead of query (?) - fragment is never sent to server (avoids logs, referrers)
+          window.location.href = `${data.login.url}/auth-redirect#token=${encodeURIComponent(data.login.token)}`;
         } else {
           setAuthenticationCookie(data.login.token);
           history.push('/');
         }
       }
-    } catch (e) {
-      console.log(e);
+    } catch {
+      // Error is surfaced via Apollo's error state and displayed to user
     }
 
     return false;
@@ -149,12 +154,6 @@ const SignIn: React.FC = () => {
 
   const currentErrorCode = getErrorCode();
 
-  // Debug logging
-  if (error?.graphQLErrors?.[0]) {
-    console.log('GraphQL Error Message:', error.graphQLErrors[0].message);
-    console.log('Extracted Error Code:', currentErrorCode);
-    console.log('Custom Error Message:', getErrorMessage(currentErrorCode));
-  }
   return (
     <div className="flex min-h-screen sm:flex-col">
       <main className="w-[45%] flex justify-center items-center sm:w-full">
