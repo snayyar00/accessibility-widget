@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation, Trans } from 'react-i18next';
+import { Link, useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useMutation } from '@apollo/client';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/config/store';
+import { GoogleLogin } from '@react-oauth/google';
 
+import { IS_LOCAL } from '@/config/env';
+import { RootState } from '@/config/store';
+import { setAuthenticationCookie } from '@/utils/cookie';
 import FormControl from '@/components/Common/FormControl';
 import Input from '@/components/Common/Input/Input';
 import Checkbox from '@/components/Common/Input/InputCheckbox';
@@ -11,6 +15,7 @@ import Button from '@/components/Common/Button';
 import ErrorText from '@/components/Common/ErrorText';
 import Logo from '@/components/Common/Logo';
 import { ReactHookFormType } from '@/typeReactHookForm';
+import loginWithGoogleQuery from '@/queries/auth/loginWithGoogle';
 
 type Props = ReactHookFormType & {
   isSubmitting: boolean;
@@ -29,11 +34,75 @@ const SignInForm: React.FC<Props> = ({
   showForgotPasswordLink,
 }) => {
   const { t } = useTranslation();
+  const history = useHistory();
   const [showPassword, setShowPassword] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const [loginWithGoogleMutation] = useMutation(loginWithGoogleQuery);
   const organization = useSelector(
     (state: RootState) => state.organization.data,
   );
   const organizationName = organization?.name || 'WebAbility';
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_KEY;
+
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    const credential = credentialResponse.credential;
+    setGoogleError(null);
+    if (!credential) {
+      setGoogleError('No credential received from Google. Please try again.');
+      return;
+    }
+    
+    // Basic validation: credential should be a JWT-like string
+    if (typeof credential !== 'string' || credential.length < 100) {
+      setGoogleError('Invalid credential format. Please try again.');
+      return;
+    }
+    
+    try {
+      const { data } = await loginWithGoogleMutation({ variables: { idToken: credential } });
+      if (data?.loginWithGoogle?.token && data?.loginWithGoogle?.url) {
+        // Validate URL before redirecting
+        try {
+          const targetUrl = new URL(data.loginWithGoogle.url);
+          if (targetUrl.protocol !== 'https:' && !IS_LOCAL) {
+            setGoogleError('Invalid redirect URL. Please contact support.');
+            return;
+          }
+        } catch {
+          setGoogleError('Invalid redirect URL. Please contact support.');
+          return;
+        }
+        
+        setAuthenticationCookie(data.loginWithGoogle.token);
+        const currentHost = window.location.hostname;
+        const targetHost = new URL(data.loginWithGoogle.url).hostname;
+        if (currentHost !== targetHost && !IS_LOCAL) {
+          // Use fragment (#) instead of query (?) - fragment is never sent to server (avoids logs, referrers)
+          window.location.href = `${data.loginWithGoogle.url}/auth-redirect#token=${encodeURIComponent(data.loginWithGoogle.token)}`;
+        } else {
+          history.push('/');
+        }
+      } else {
+        setGoogleError('Invalid response from server. Please try again.');
+      }
+    } catch (e: unknown) {
+      const graphQLError = (e as { graphQLErrors?: Array<{ message?: string; extensions?: { code?: string } }> })?.graphQLErrors?.[0];
+      const errorCode = graphQLError?.extensions?.code;
+      const errorMessage = graphQLError?.message;
+      
+      // User-friendly error messages
+      let displayMessage = 'Google sign-in failed. Please try again.';
+      if (errorCode === 'UNAUTHENTICATED') {
+        displayMessage = errorMessage || 'Authentication failed. Please try again.';
+      } else if (errorMessage) {
+        // Use server message if available, but sanitize it
+        displayMessage = errorMessage.length > 200 ? 'An error occurred. Please try again.' : errorMessage;
+      }
+      
+      setGoogleError(displayMessage);
+      console.error('Google sign-in failed:', e);
+    }
+  };
 
   return (
     <div className="bg-white max-w-[400px] w-[400px] mt-16">
@@ -178,6 +247,34 @@ const SignInForm: React.FC<Props> = ({
           >
             {isSubmitting ? t('Common.text.please_wait') : 'Login'}
           </Button>
+          {googleClientId && (
+            <>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="px-2 bg-white text-sm text-gray-600">Or</span>
+                </div>
+              </div>
+              <div className="flex justify-center flex-col items-center gap-2">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => {
+                    setGoogleError('Google sign-in was cancelled or failed.');
+                  }}
+                  useOneTap={false}
+                  theme="outline"
+                  size="large"
+                  text="signin_with"
+                  width={352}
+                />
+                {googleError && (
+                  <ErrorText message={googleError} position="center" />
+                )}
+              </div>
+            </>
+          )}
           {showForgotPasswordLink && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-center">
               <Link

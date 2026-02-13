@@ -75,7 +75,8 @@ const SignIn: React.FC = () => {
         const targetHost = new URL(data.login.url).hostname;
 
         if (currentHost !== targetHost && !IS_LOCAL) {
-          window.location.href = `${data.login.url}/auth-redirect?token=${data.login.token}`;
+          // Use fragment (#) instead of query (?) - fragment is never sent to server (avoids logs, referrers)
+          window.location.href = `${data.login.url}/auth-redirect#token=${encodeURIComponent(data.login.token)}`;
         } else {
           setAuthenticationCookie(data.login.token);
           history.push('/');

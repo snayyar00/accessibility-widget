@@ -103,9 +103,16 @@ const Topbar: React.FC<Props> = ({
   } = useSelector((state: RootState) => state.user);
 
   const { data } = useSelector((state: RootState) => state.user);
+  const organization = useSelector(
+    (state: RootState) => state.organization.data,
+  );
   const { isOpen: isSidebarOpen, lockedOpen } = useSelector(
     (state: RootState) => state.sidebar,
   );
+
+  const shouldShowSupportIcon =
+    organization?.id != null &&
+    String(organization.id) === String(process.env.REACT_APP_CURRENT_ORG || '1');
 
   const lastSeenDate = useSelector(selectLastSeenDate);
 
@@ -372,14 +379,16 @@ const Topbar: React.FC<Props> = ({
                 <PiBellBold className="w-5 h-5" style={{ color: '#484848' }} />
               </button>
 
-              {/* Support */}
-              <button
-                className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
-                onClick={openHubSpotChat}
-                title="Contact Support"
-              >
-                <Headset className="w-5 h-5" style={{ color: '#484848' }} />
-              </button>
+              {/* Support - only show when current org matches REACT_APP_CURRENT_ORG */}
+              {shouldShowSupportIcon && (
+                <button
+                  className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
+                  onClick={openHubSpotChat}
+                  title="Contact Support"
+                >
+                  <Headset className="w-5 h-5" style={{ color: '#484848' }} />
+                </button>
+              )}
 
               {/* User Avatar */}
               <button

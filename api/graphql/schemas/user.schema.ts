@@ -66,6 +66,8 @@ export const UserSchema = `#graphql
 
     login(email: String!, password: String!): LoginPayload! @rateLimit(limit: 7, duration: 900, message: "Too many login attempts. Please try again later.")
 
+    loginWithGoogle(idToken: String!): LoginPayload! @rateLimit(limit: 10, duration: 300, message: "Too many Google sign-in attempts. Please try again later.")
+
     forgotPassword(email: String!): Boolean! @rateLimit(limit: 3, duration: 3600, message: "Too many password reset requests. Please try again later.")
 
     changePassword(currentPassword: String!, newPassword: String!): ChangePasswordPayload! @rateLimit(limit: 5, duration: 3600, message: "Too many password change attempts. Please try again later.")
