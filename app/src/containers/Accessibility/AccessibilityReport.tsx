@@ -175,6 +175,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const [reportUrl, setReportUrl] = useState<string>('');
   // Modal state for full site scan notification
   const [isFullSiteScanModalOpen, setIsFullSiteScanModalOpen] = useState(false);
+  const fullSiteScanModalRef = useRef<HTMLDivElement>(null);
   const screenReaderAnnouncementRef = useRef<HTMLDivElement>(null);
 
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
@@ -209,6 +210,45 @@ const AccessibilityReport = ({ currentDomain }: any) => {
   const selectedScanType = scanTypeOptions.find(
     (option) => option.value === scanType,
   );
+
+  // Focus modal when it opens so screen readers announce "Full Site Scan Started, Dialog"
+  useEffect(() => {
+    if (isFullSiteScanModalOpen && fullSiteScanModalRef.current) {
+      fullSiteScanModalRef.current.focus();
+    }
+  }, [isFullSiteScanModalOpen]);
+
+  // Focus trap for Full Site Scan modal - keep keyboard focus within the modal
+  const handleFullSiteScanModalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab' || !fullSiteScanModalRef.current) return;
+
+    const focusableSelectors =
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusableElements =
+      fullSiteScanModalRef.current.querySelectorAll<HTMLElement>(
+        focusableSelectors,
+      );
+    const focusable = Array.from(focusableElements).filter(
+      (el) => !el.hasAttribute('disabled') && el.offsetParent !== null,
+    );
+    const firstElement = focusable[0];
+    const lastElement = focusable[focusable.length - 1];
+    const activeElement = document.activeElement;
+
+    if (e.shiftKey) {
+      // Shift+Tab: trap focus when on first element or when focus is on dialog container
+      if (activeElement === firstElement || activeElement === fullSiteScanModalRef.current) {
+        e.preventDefault();
+        lastElement?.focus();
+      }
+    } else {
+      // Tab: trap focus when on last element or when focus is on dialog container
+      if (activeElement === lastElement || activeElement === fullSiteScanModalRef.current) {
+        e.preventDefault();
+        firstElement?.focus();
+      }
+    }
+  };
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -757,6 +797,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
@@ -1093,6 +1134,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         viewBox="0 0 36 36"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
                       >
                         <path
                           d="M9.75 26.25L9.75 21.75M17.25 26.25L17.25 12.75M24.75 26.25V20.25"
@@ -1159,6 +1201,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         viewBox="0 0 29 34"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
                       >
                         <path
                           d="M1.91699 14C1.91699 8.34315 1.91699 5.51472 3.78419 3.75736C5.65138 2 8.65658 2 14.667 2H15.8261C20.7179 2 23.1638 2 24.8624 3.19675C25.3491 3.53964 25.7811 3.94629 26.1454 4.40433C27.417 6.00301 27.417 8.30504 27.417 12.9091V16.7273C27.417 21.172 27.417 23.3944 26.7136 25.1694C25.5828 28.0229 23.1913 30.2737 20.1595 31.338C18.2736 32 15.9123 32 11.1897 32C8.49112 32 7.14182 32 6.06416 31.6217C4.33168 31.0135 2.96512 29.7274 2.31894 28.0968C1.91699 27.0825 1.91699 25.8126 1.91699 23.2727V14Z"
@@ -1234,6 +1277,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         viewBox="0 0 37 36"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
                       >
                         <rect
                           x="1.33301"
@@ -1309,7 +1353,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     style={{ borderCollapse: 'separate', borderSpacing: '0 1rem' }}
                   >
                     <caption className="sr-only">
-                      Table showing scan history with site URLs, last scanned dates, accessibility scores, and action menus
+                      Scan history table with 4 columns and {processedReportKeys.length} rows. Site URLs, last scanned dates, accessibility scores, and action menus.
                     </caption>
                     <thead className="hidden md:table-header-group">
                       <tr className="mb-4">
@@ -1432,6 +1476,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                     <img
                                       src={getFaviconUrl(row.url)!}
                                       alt=""
+                                      role="presentation"
                                       className="w-8 h-8 rounded"
                                       onError={(e) => {
                                         (
@@ -1500,6 +1545,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                     style={{ color: baseColors.brandPrimary }}
+                                    aria-hidden="true"
                                   >
                                     <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                   </svg>
@@ -1724,6 +1770,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   <img
                                     src={getFaviconUrl(row.url)!}
                                     alt=""
+                                    role="presentation"
                                     className="w-8 h-8 rounded"
                                     onError={(e) => {
                                       (
@@ -1809,6 +1856,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                   fill="currentColor"
                                   viewBox="0 0 20 20"
                                   style={{ color: baseColors.brandPrimary }}
+                                  aria-hidden="true"
                                 >
                                   <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                 </svg>
@@ -2059,7 +2107,13 @@ const AccessibilityReport = ({ currentDomain }: any) => {
 
               {/* Modal */}
               <div
-                className="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden"
+                ref={fullSiteScanModalRef}
+                role="dialog"
+                aria-label="Full Site Scan Started"
+                aria-modal="true"
+                tabIndex={-1}
+                onKeyDown={handleFullSiteScanModalKeyDown}
+                className="relative bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden outline-none focus:outline-none"
                 style={{
                   animation: 'slideUp 0.3s ease-out',
                   boxShadow:
@@ -2085,9 +2139,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         <FaClock className="w-8 h-8" />
                       </div>
                       <div>
-                        <h3 className="text-3xl font-bold mb-2 leading-tight">
+                        <h2 className="text-3xl font-bold mb-2 leading-tight">
                           Full Site Scan Started
-                        </h3>
+                        </h2>
                         <p className="text-white/90 text-base font-medium">
                           Your comprehensive scan is in progress
                         </p>
@@ -2096,8 +2150,9 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                     <button
                       onClick={() => setIsFullSiteScanModalOpen(false)}
                       className="w-10 h-10 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                      aria-label="Close"
                     >
-                      <FaTimes className="w-5 h-5" />
+                      <FaTimes className="w-5 h-5" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
