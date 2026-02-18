@@ -1,11 +1,295 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
+const LANGUAGES = [
+  { code: '', name: 'English' },
+  { code: 'af', name: 'Afrikaans' },
+  { code: 'sq', name: 'Albanian' },
+  { code: 'am', name: 'Amharic' },
+  { code: 'ar', name: 'Arabic' },
+  { code: 'hy', name: 'Armenian' },
+  { code: 'as', name: 'Assamese' },
+  { code: 'az', name: 'Azerbaijani' },
+  { code: 'eu', name: 'Basque' },
+  { code: 'be', name: 'Belarusian' },
+  { code: 'bn', name: 'Bengali' },
+  { code: 'bs', name: 'Bosnian' },
+  { code: 'bg', name: 'Bulgarian' },
+  { code: 'my', name: 'Burmese' },
+  { code: 'ca', name: 'Catalan' },
+  { code: 'zh-CN', name: 'Chinese (Simplified)' },
+  { code: 'zh-TW', name: 'Chinese (Traditional)' },
+  { code: 'hr', name: 'Croatian' },
+  { code: 'cs', name: 'Czech' },
+  { code: 'da', name: 'Danish' },
+  { code: 'nl', name: 'Dutch' },
+  { code: 'et', name: 'Estonian' },
+  { code: 'fil', name: 'Filipino' },
+  { code: 'fi', name: 'Finnish' },
+  { code: 'fr', name: 'French' },
+  { code: 'gl', name: 'Galician' },
+  { code: 'ka', name: 'Georgian' },
+  { code: 'de', name: 'German' },
+  { code: 'el', name: 'Greek' },
+  { code: 'gu', name: 'Gujarati' },
+  { code: 'ht', name: 'Haitian Creole' },
+  { code: 'ha', name: 'Hausa' },
+  { code: 'he', name: 'Hebrew' },
+  { code: 'hi', name: 'Hindi' },
+  { code: 'hu', name: 'Hungarian' },
+  { code: 'is', name: 'Icelandic' },
+  { code: 'ig', name: 'Igbo' },
+  { code: 'id', name: 'Indonesian' },
+  { code: 'ga', name: 'Irish' },
+  { code: 'it', name: 'Italian' },
+  { code: 'ja', name: 'Japanese' },
+  { code: 'kn', name: 'Kannada' },
+  { code: 'kk', name: 'Kazakh' },
+  { code: 'km', name: 'Khmer' },
+  { code: 'ko', name: 'Korean' },
+  { code: 'ky', name: 'Kyrgyz' },
+  { code: 'lo', name: 'Lao' },
+  { code: 'lv', name: 'Latvian' },
+  { code: 'lt', name: 'Lithuanian' },
+  { code: 'ms', name: 'Malay' },
+  { code: 'ml', name: 'Malayalam' },
+  { code: 'mt', name: 'Maltese' },
+  { code: 'mi', name: 'Maori' },
+  { code: 'mr', name: 'Marathi' },
+  { code: 'mn', name: 'Mongolian' },
+  { code: 'ne', name: 'Nepali' },
+  { code: 'no', name: 'Norwegian' },
+  { code: 'fa', name: 'Persian' },
+  { code: 'pl', name: 'Polish' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'pa', name: 'Punjabi' },
+  { code: 'ro', name: 'Romanian' },
+  { code: 'ru', name: 'Russian' },
+  { code: 'sr', name: 'Serbian' },
+  { code: 'sk', name: 'Slovak' },
+  { code: 'sl', name: 'Slovenian' },
+  { code: 'so', name: 'Somali' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'sw', name: 'Swahili' },
+  { code: 'sv', name: 'Swedish' },
+  { code: 'tl', name: 'Tagalog' },
+  { code: 'tg', name: 'Tajik' },
+  { code: 'ta', name: 'Tamil' },
+  { code: 'te', name: 'Telugu' },
+  { code: 'th', name: 'Thai' },
+  { code: 'tr', name: 'Turkish' },
+  { code: 'uk', name: 'Ukrainian' },
+  { code: 'ur', name: 'Urdu' },
+  { code: 'uz', name: 'Uzbek' },
+  { code: 'vi', name: 'Vietnamese' },
+  { code: 'cy', name: 'Welsh' },
+  { code: 'xh', name: 'Xhosa' },
+  { code: 'yi', name: 'Yiddish' },
+  { code: 'yo', name: 'Yoruba' },
+  { code: 'zu', name: 'Zulu' },
+];
+
+/** Get root domain for cookie sharing across subdomains (e.g. app.webability.io -> .webability.io) */
+function getCookieDomain(): string | null {
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) return null;
+  const parts = hostname.split('.');
+  while (parts.length > 2) parts.shift();
+  return '.' + parts.join('.');
+}
+
+/** Far-future expiry for googtrans cookie (2047) */
+const GOOGTRANS_EXPIRES = 'Thu, 07-Mar-2047 20:22:40 GMT';
+
+/** Custom language dropdown - Globe icon + dropdown, triggers Google Translate via cookie */
+const GoogleTranslateWidget: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState<string>('');
+  const ref = useRef<HTMLDivElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(false);
+
+  useEffect(() => {
+    if (mountedRef.current) return;
+    mountedRef.current = true;
+
+    (window as any).googleTranslateElementInit = () => {
+      const g = (window as any).google?.translate;
+      if (g && document.getElementById('google_translate_element')) {
+        const match = document.cookie.match(/googtrans=\/en\/([^;]+)/);
+        if (match) {
+          const code = match[1];
+          const domain = getCookieDomain();
+          document.cookie = `googtrans=/en/${code}; path=/; expires=${GOOGTRANS_EXPIRES}`;
+          if (domain) document.cookie = `googtrans=/en/${code}; path=/; expires=${GOOGTRANS_EXPIRES}; domain=${domain}`;
+        }
+        new g.TranslateElement(
+          { pageLanguage: 'en', layout: g.TranslateElement.InlineLayout.SIMPLE, autoDisplay: false },
+          'google_translate_element'
+        );
+      }
+    };
+
+    if (!document.querySelector('script[src*="translate.google.com"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.async = true;
+      script.onload = () => {
+        if (!(window as any).google?.translate) {
+          setTimeout(() => (window as any).googleTranslateElementInit?.(), 2000);
+        }
+      };
+      document.body.appendChild(script);
+      // Note: If using CSP, allow script-src https://translate.google.com https://translate.googleapis.com
+    } else if ((window as any).google?.translate) {
+      (window as any).googleTranslateElementInit();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && listboxRef.current) {
+      const opts = listboxRef.current.querySelectorAll<HTMLButtonElement>('[role="option"]');
+      const selected = Array.from(opts).find((o) => o.getAttribute('aria-selected') === 'true');
+      (selected || opts[0])?.focus();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const match = document.cookie.match(/googtrans=\/en\/([^;]+)/);
+    setCurrentLang(match ? match[1] : '');
+  }, []);
+
+  useEffect(() => {
+    const hideBanner = () => {
+      const frames = document.querySelectorAll('.goog-te-banner-frame, iframe.goog-te-banner-frame');
+      frames.forEach((el) => {
+        (el as HTMLElement).style.cssText = 'display:none!important;height:0!important;visibility:hidden!important';
+      });
+      document.body.style.top = '0';
+      document.documentElement.style.top = '0';
+    };
+    hideBanner();
+    const observer = new MutationObserver(hideBanner);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const interval = setInterval(hideBanner, 1000);
+    return () => {
+      observer.disconnect();
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('click', handleClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
+  const handleListboxKeyDown = (e: React.KeyboardEvent, code: string) => {
+    const opts = listboxRef.current?.querySelectorAll<HTMLButtonElement>('[role="option"]');
+    if (!opts?.length) return;
+    const arr = Array.from(opts);
+    let i = LANGUAGES.findIndex((l) => l.code === code);
+    if (i < 0) i = arr.findIndex((o) => o.getAttribute('aria-selected') === 'true') || 0;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleSelect(code);
+    } else if (e.key === 'ArrowDown' && i < arr.length - 1) {
+      e.preventDefault();
+      arr[i + 1].focus();
+    } else if (e.key === 'ArrowUp' && i > 0) {
+      e.preventDefault();
+      arr[i - 1].focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      arr[0].focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      arr[arr.length - 1].focus();
+    }
+  };
+
+  const handleSelect = (code: string) => {
+    const expire = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    const path = 'path=/';
+    const domain = getCookieDomain();
+
+    // Clear ALL googtrans cookies (host-only + domain) to prevent revert from duplicates
+    document.cookie = `googtrans=; ${path}; ${expire}`;
+    if (domain) document.cookie = `googtrans=; ${path}; ${expire}; domain=${domain}`;
+
+    if (code !== '') {
+      document.cookie = `googtrans=/en/${code}; path=/; expires=${GOOGTRANS_EXPIRES}`;
+      if (domain) document.cookie = `googtrans=/en/${code}; path=/; expires=${GOOGTRANS_EXPIRES}; domain=${domain}`;
+    }
+
+    setIsOpen(false);
+    setTimeout(() => {
+      window.location.href = window.location.href;
+    }, 300);
+  };
+
+  return (
+    <div ref={ref} className="relative notranslate">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
+        aria-label="Select language"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? 'google-translate-listbox' : undefined}
+      >
+        <Globe className="w-5 h-5" style={{ color: '#484848' }} />
+        <FiChevronDown
+          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          style={{ color: '#6b7280' }}
+        />
+      </button>
+      {isOpen && (
+        <div
+          ref={listboxRef}
+          id="google-translate-listbox"
+          role="listbox"
+          aria-label="Select language"
+          className="absolute right-0 top-full mt-2 w-56 py-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 max-h-[400px] overflow-y-auto notranslate"
+        >
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang.code || 'en'}
+              role="option"
+              type="button"
+              aria-selected={lang.code === currentLang}
+              onClick={() => handleSelect(lang.code)}
+              onKeyDown={(e) => handleListboxKeyDown(e, lang.code)}
+              className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors first:rounded-t-xl last:rounded-b-xl ${
+                lang.code === currentLang ? 'font-semibold text-[#0052cc] bg-blue-50/50' : 'text-gray-700'
+              }`}
+            >
+              {lang.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {/* Off-screen - Google script needs this div for translation to work */}
+      <div id="google_translate_element" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, overflow: 'hidden' }} aria-hidden="true" />
+    </div>
+  );
+};
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { PiBellBold } from 'react-icons/pi';
 import { FiChevronDown } from 'react-icons/fi';
 import { FaRocket } from 'react-icons/fa6';
-import { Headset } from 'lucide-react';
+import { Headset, Globe } from 'lucide-react';
 import { HiOutlinePlay } from 'react-icons/hi';
 
 import OrganizationsSelect from '@/containers/Dashboard/OrganizationsSelect';
@@ -389,6 +673,9 @@ const Topbar: React.FC<Props> = ({
                   <Headset className="w-5 h-5" style={{ color: '#484848' }} />
                 </button>
               )}
+
+              {/* Google Translate - load script after mount so the div exists */}
+              <GoogleTranslateWidget />
 
               {/* User Avatar */}
               <button

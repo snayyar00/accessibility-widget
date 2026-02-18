@@ -56,9 +56,54 @@
         width: 40%;
         margin: 0 auto;
       }
+      /* Google Translate - hide "Translated into" top banner */
+      .goog-te-banner-frame.skiptranslate,
+      iframe.goog-te-banner-frame,
+      .skiptranslate iframe {
+        display: none !important;
+        height: 0 !important;
+        visibility: hidden !important;
+      }
+      body, html { top: 0 !important; position: static !important; }
+      /* Prevent body shift when banner is hidden */
+      body.te-translated { top: 0 !important; }
     </style>
   </head>
   <body>
+    <!-- Google Translate + React compatibility: patch DOM methods before React loads (prod-ready) -->
+    <script>
+      (function () {
+        if (window.__googTranslateReactFix) return;
+        window.__googTranslateReactFix = true;
+        var origRemoveChild = Node.prototype.removeChild;
+        var origInsertBefore = Node.prototype.insertBefore;
+        var origReplaceChild = Node.prototype.replaceChild;
+        Node.prototype.removeChild = function (child) {
+          try {
+            if (!this.contains(child)) return child;
+            return origRemoveChild.call(this, child);
+          } catch (e) {
+            return child;
+          }
+        };
+        Node.prototype.insertBefore = function (newNode, ref) {
+          try {
+            if (ref && !this.contains(ref)) return this.appendChild(newNode);
+            return origInsertBefore.call(this, newNode, ref);
+          } catch (e) {
+            try { return this.appendChild(newNode); } catch (_) { return newNode; }
+          }
+        };
+        Node.prototype.replaceChild = function (newChild, oldChild) {
+          try {
+            if (!this.contains(oldChild)) return this.appendChild(newChild);
+            return origReplaceChild.call(this, newChild, oldChild);
+          } catch (e) {
+            try { return this.appendChild(newChild); } catch (_) { return newChild; }
+          }
+        };
+      })();
+    </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>
