@@ -44,6 +44,8 @@ module.exports = {
       'green-400': '#4ade80',
       'green-500': '#22c55e',
       'green-600': '#16a34a',
+      'green-700': '#15803d', // WCAG AA compliant: 4.54:1 contrast with white
+      'green-800': '#166534',
       'green-compliant': '#edfcf3',
       gray: '#ECEFF8',
       'gray-element': '#e2e8f0',
