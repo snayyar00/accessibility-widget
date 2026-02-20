@@ -30,7 +30,7 @@ const getImpactColor = (impact: string = 'minor') => {
       return { border: '#ef4444', bgColor: '#ffffff', badge: { bg: '#fee2e2', text: '#991b1b' }, icon: { bg: '#fecaca', color: '#dc2626' }, labelColor: '#991b1b', accentColor: '#ef4444' };
     case 'major':
     case 'moderate':
-      return { border: '#f59e0b', bgColor: '#ffffff', badge: { bg: '#fef3c7', text: '#92400e' }, icon: { bg: '#fde68a', color: '#d97706' }, labelColor: '#92400e', accentColor: '#f59e0b' };
+      return { border: '#f59e0b', bgColor: '#ffffff', badge: { bg: '#fef3c7', text: '#92400e' }, icon: { bg: '#fde68a', color: '#b45309' }, labelColor: '#92400e', accentColor: '#f59e0b' };
     default:
       return { border: '#3b82f6', bgColor: '#ffffff', badge: { bg: '#dbeafe', text: '#1e40af' }, icon: { bg: '#bfdbfe', color: '#2563eb' }, labelColor: '#1e40af', accentColor: '#3b82f6' };
   }
@@ -45,8 +45,8 @@ const SuggestedFixCard: React.FC<SuggestedFixCardProps> = ({ fix, url, onAccept,
       style={{ backgroundColor: colors.bgColor, borderColor: colors.border }}
     >
       <div className="flex items-start gap-3 mb-3">
-        <div className="flex-shrink-0 p-2 rounded-lg shadow-md" style={{ backgroundColor: colors.icon.bg }}>
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: colors.icon.color }}>
+        <div className="flex-shrink-0 p-2 rounded-lg shadow-md" style={{ backgroundColor: colors.icon.bg }} aria-hidden="true">
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: colors.icon.color }} aria-hidden="true" focusable="false">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
         </div>
@@ -88,7 +88,7 @@ const SuggestedFixCard: React.FC<SuggestedFixCardProps> = ({ fix, url, onAccept,
         )}
         {fix.suggested_fix && (
           <div>
-            <p className="text-xs font-bold mb-1" style={{ color: '#16a34a' }}>Suggested Fix:</p>
+            <p className="text-xs font-bold mb-1" style={{ color: '#15803d' }}>Suggested Fix:</p>
             <div className="bg-green-50 rounded-lg px-2 py-2 border-2 border-green-200 overflow-x-auto">
               <code className="text-xs text-gray-800 break-words font-mono">{fix.suggested_fix}</code>
             </div>
