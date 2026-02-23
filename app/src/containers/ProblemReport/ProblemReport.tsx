@@ -246,7 +246,7 @@ const ProblemReport: React.FC = () => {
       <TourGuide
         steps={reportsTourSteps}
         tourKey={tourKeys.reports}
-        autoStart={true}
+        autoStart={false}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
       />

@@ -148,7 +148,7 @@ export default function Installation({ domain }: any) {
       <TourGuide
         steps={getInstallationTourSteps(organizationName)}
         tourKey={tourKeys.installation}
-        autoStart={true}
+        autoStart={false}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
         onStepChange={handleTourStepChange}

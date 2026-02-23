@@ -10,7 +10,7 @@ import Joyride, {
 interface TourGuideProps {
   /** Array of tour steps to display */
   steps: Step[];
-  /** Whether the tour should run automatically for new users */
+  /** Whether the tour should run automatically for new users. Default false: tour only starts when user clicks "Start Tour" for this page. */
   autoStart?: boolean;
   /** Unique key for localStorage to track completion */
   tourKey: string;
@@ -37,7 +37,7 @@ interface TourGuideProps {
 
 const TourGuide: React.FC<TourGuideProps> = ({
   steps,
-  autoStart = true,
+  autoStart = false,
   tourKey,
   onTourComplete,
   onStepChange,

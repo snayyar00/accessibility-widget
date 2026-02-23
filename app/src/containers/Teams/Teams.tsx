@@ -109,7 +109,7 @@ const Teams = ({ domains, setReloadSites, customerData, refetchSites, totalCount
       <TourGuide
         steps={mySitesTourSteps}
         tourKey={tourKeys.mySites}
-        autoStart={true}
+        autoStart={false}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
       />

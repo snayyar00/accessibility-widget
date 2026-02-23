@@ -444,7 +444,7 @@ const Topbar: React.FC<Props> = ({
   const [clicked, setClicked] = useState(false);
 
   // Tour guidance hook
-  const { resetAndStartTour, hasCurrentPageTour } = useTourGuidance();
+  const { startCurrentPageTour, hasCurrentPageTour } = useTourGuidance();
 
   // Auto-show logic is handled entirely by WhatsNewModal component
 
@@ -619,7 +619,7 @@ const Topbar: React.FC<Props> = ({
               {hasCurrentPageTour() && (
                 <button
                   className="p-2 rounded-lg hover:bg-blue-200 transition-colors duration-200"
-                  onClick={resetAndStartTour}
+                  onClick={startCurrentPageTour}
                   title="Start Tour"
                 >
                   <HiOutlinePlay
