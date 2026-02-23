@@ -22,31 +22,30 @@ export function usePortal(id: string): HTMLDivElement {
 
     return function removeElement() {
       const rootElem = rootElemRef.current;
-      
-      // Safely remove the root element only if it exists and is still connected to the DOM
-      if (rootElem) {
-        try {
-          // Check if the node is actually connected to the document before removing
-          if (rootElem.isConnected && rootElem.parentNode) {
-            rootElem.remove();
+      const parentId = id;
+
+      // Defer DOM removal to the next task so we don't remove nodes while React
+      // is still in the middle of a commit (avoids NotFoundError insertBefore races).
+      const scheduleRemoval = () => {
+        if (rootElem) {
+          try {
+            if (rootElem.isConnected && rootElem.parentNode) {
+              rootElem.remove();
+            }
+          } catch (error) {
+            console.debug('Portal cleanup: node already removed', error);
           }
-        } catch (error) {
-          // Silently handle any removal errors (node may already be removed by React)
-          console.debug('Portal cleanup: node already removed', error);
         }
-      }
-      
-      // Remove parent element only if it has no children
-      // Use querySelector to verify it still exists in the DOM
-      const parentStillExists = document.querySelector(`#${id}`);
-      if (parentStillExists && parentStillExists.childNodes.length === 0) {
-        try {
-          parentStillExists.remove();
-        } catch (error) {
-          // Silently handle any removal errors
-          console.debug('Portal cleanup: parent already removed', error);
+        const parentStillExists = document.querySelector(`#${parentId}`);
+        if (parentStillExists && parentStillExists.childNodes.length === 0) {
+          try {
+            parentStillExists.remove();
+          } catch (error) {
+            console.debug('Portal cleanup: parent already removed', error);
+          }
         }
-      }
+      };
+      setTimeout(scheduleRemoval, 0);
     };
   }, [id]);
 

@@ -158,6 +158,14 @@ const TourGuide: React.FC<TourGuideProps> = ({
     }
   }, [tourKey, onTourComplete]);
 
+  // Defer completion to next frame to avoid ResizeObserver loop when Joyride
+  // tears down the tooltip in the same frame as navigation/callbacks.
+  const deferCompleteTour = useCallback(() => {
+    requestAnimationFrame(() => {
+      completeTour();
+    });
+  }, [completeTour]);
+
   // Handle tour callback
   const handleTourCallback = (data: CallBackProps) => {
     const { status, type, index, action } = data;
@@ -184,7 +192,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
         action === ACTIONS.PREV ? Math.max(0, index - 1) : index + 1;
 
       if (nextIndex >= totalSteps) {
-        completeTour();
+        deferCompleteTour();
         return;
       }
 
@@ -194,12 +202,12 @@ const TourGuide: React.FC<TourGuideProps> = ({
 
     // Handle close button (X) click
     if (action === ACTIONS.CLOSE) {
-      completeTour();
+      deferCompleteTour();
       return;
     }
 
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-      completeTour();
+      deferCompleteTour();
       return;
     }
 
@@ -220,7 +228,7 @@ const TourGuide: React.FC<TourGuideProps> = ({
 
       // If we've reached the last step, finish the tour
       if (nextIndex >= totalSteps) {
-        completeTour();
+        deferCompleteTour();
         return;
       }
 
