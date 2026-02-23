@@ -401,7 +401,7 @@ const Dashboard: React.FC<any> = ({
       <TourGuide
         steps={getDashboardTourSteps(organizationName)}
         tourKey={tourKeys.dashboard}
-        autoStart={true}
+        autoStart={false}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
       />

@@ -834,7 +834,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
       <TourGuide
         steps={customizeWidgetTourSteps}
         tourKey={tourKeys.customizeWidget}
-        autoStart={true}
+        autoStart={false}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
       />
