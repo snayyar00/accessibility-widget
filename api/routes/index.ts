@@ -12,11 +12,13 @@ import sitesRoutes from './sites.routes'
 import stripeRoutes from './stripe.routes'
 import translationRoutes from './translation.routes'
 import widgetRoutes from './widget.routes'
+import widgetChatRoutes from './widget-chat.routes'
 
 const router = Router()
 
 router.use(stripeRoutes)
 router.use(widgetRoutes)
+router.use(widgetChatRoutes)
 router.use(translationRoutes)
 router.use(reportsRoutes)
 router.use(formRoutes)
