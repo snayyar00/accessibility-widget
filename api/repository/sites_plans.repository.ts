@@ -54,6 +54,16 @@ export function getSitesPlanByCustomerIdAndSubscriptionId(customerId: string, su
     .where(sitesPlansColumns.expiredAt, '>=', formatDateDB())
 }
 
+/**
+ * Same as getSitesPlanByCustomerIdAndSubscriptionId but does NOT filter by expired_at.
+ * Use for webhooks (e.g. invoice.paid) so we can fix wrongly-expired rows.
+ */
+export function getSitesPlansByCustomerIdAndSubscriptionIdIncludeExpired(customerId: string, subscriptionId: string) {
+  return database(TABLE)
+    .select(sitesPlansColumns)
+    .where({ [sitesPlansColumns.customerId]: customerId, [sitesPlansColumns.isActive]: true, [sitesPlansColumns.subcriptionId]: subscriptionId })
+}
+
 export function getActiveSitesPlan() {
   return database(TABLE)
     .select(sitesPlansColumns)

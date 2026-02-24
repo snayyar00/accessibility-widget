@@ -1994,7 +1994,7 @@ const ProofOfEffortToolkit: React.FC = () => {
       <TourGuide
         steps={proofOfEffortTourSteps}
         tourKey={tourKeys.proofOfEffort}
-        autoStart={true}
+        autoStart={false}
         onTourComplete={() => {
           // noop for now
         }}

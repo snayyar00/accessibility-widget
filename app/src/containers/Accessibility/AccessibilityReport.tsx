@@ -699,7 +699,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
       <TourGuide
         steps={accessibilityTourSteps}
         tourKey={tourKeys.accessibility}
-        autoStart={true}
+        autoStart={false}
         onTourComplete={handleTourComplete}
         customStyles={defaultTourStyles}
       />
