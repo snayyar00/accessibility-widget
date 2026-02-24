@@ -16,6 +16,92 @@ const openrouter = new OpenAI({
   },
 })
 
+const PROFILE_KEYS = [
+  'adhd',
+  'seizure-epileptic',
+  'cognitive-learning',
+  'visually-impaired',
+  'dyslexia-font',
+  'color-blind',
+  'blind',
+  'motor-impaired',
+] as const
+
+const TOOL_KEYS = [
+  'highlight-title',
+  'highlight-links',
+  'letter-spacing',
+  'line-height',
+  'font-weight',
+  'readable-font',
+  'readable-guide',
+  'stop-animations',
+  'big-cursor',
+  'screen-reader',
+  'darkMode',
+  'voiceNavigation',
+  'keyboard-navigation',
+  'page-structure',
+  'monochrome',
+  'saturation',
+  'contrast',
+] as const
+
+const WIDGET_POSITIONS = [
+  'bottom-left',
+  'bottom-right',
+  'top-left',
+  'top-right',
+  'center-left',
+  'center-right',
+  'bottom-center',
+  'top-center',
+] as const
+
+const PAGE_COLOR_SECTIONS = ['text', 'title', 'background'] as const
+const PAGE_COLOR_VALUES = ['white', 'black', 'orange', 'blue', 'red', 'green', 'default'] as const
+
+type ProfileKey = (typeof PROFILE_KEYS)[number]
+type ToolKey = (typeof TOOL_KEYS)[number]
+type WidgetPosition = (typeof WIDGET_POSITIONS)[number]
+type PageColorSection = (typeof PAGE_COLOR_SECTIONS)[number]
+type PageColorValue = (typeof PAGE_COLOR_VALUES)[number]
+
+type WidgetCommandType =
+  | 'open_menu'
+  | 'close_menu'
+  | 'profile'
+  | 'tool'
+  | 'language'
+  | 'font_size'
+  | 'widget_position'
+  | 'oversize_widget'
+  | 'menu_theme'
+  | 'reset'
+  | 'widget_visibility'
+  | 'page_color'
+  | 'none'
+
+type WidgetCommand =
+  | { type: 'open_menu' }
+  | { type: 'close_menu' }
+  | { type: 'profile'; value: ProfileKey; enabled: boolean }
+  | { type: 'tool'; value: ToolKey; enabled: boolean; mode?: string }
+  | { type: 'language'; value: string }
+  | { type: 'font_size'; value?: number; step?: 'increase' | 'decrease' }
+  | { type: 'widget_position'; value: WidgetPosition }
+  | { type: 'oversize_widget'; enabled: boolean }
+  | { type: 'menu_theme'; value: 'dark' | 'light' }
+  | { type: 'reset' }
+  | { type: 'widget_visibility'; enabled: boolean }
+  | { type: 'page_color'; section: PageColorSection; value: PageColorValue }
+  | { type: 'none' }
+
+export interface WidgetChatAction {
+  command: WidgetCommand
+  reply?: string
+}
+
 export interface WidgetChatRequestBody {
   /** Current user message (required). */
   message: string
@@ -25,6 +111,134 @@ export interface WidgetChatRequestBody {
   siteUrl?: string
   /** Optional language hint (e.g. 'en', 'es') so the model can respond in that language. */
   language?: string
+}
+
+function parseAndValidateActions(raw: string): WidgetChatAction[] {
+  const trimmed = raw.trim()
+  if (!trimmed) {
+    throw new Error('Empty AI response')
+  }
+
+  let jsonText = trimmed
+
+  // If the model returned multiple objects back-to-back, join them into a JSON array
+  if (!trimmed.startsWith('[')) {
+    jsonText = `[${trimmed.replace(/}\s*{/g, '},{')}]`
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(jsonText)
+  } catch (e) {
+    throw new Error('AI response is not valid JSON')
+  }
+
+  const items = Array.isArray(parsed) ? parsed : [parsed]
+
+  const actions: WidgetChatAction[] = items.map((item, index) => {
+    if (typeof item !== 'object' || item === null) {
+      throw new Error(`AI response item at index ${index} is not an object`)
+    }
+
+    const obj = item as { command?: any; reply?: unknown }
+    const { command, reply } = obj
+
+    if (!command || typeof command !== 'object') {
+      throw new Error(`AI response item at index ${index} is missing a valid "command" object`)
+    }
+
+    const type = command.type as WidgetCommandType
+
+    switch (type) {
+      case 'open_menu':
+      case 'close_menu':
+      case 'reset':
+      case 'none':
+        break
+
+      case 'profile': {
+        if (!PROFILE_KEYS.includes(command.value)) {
+          throw new Error(`Invalid profile value "${command.value}" at index ${index}`)
+        }
+        if (typeof command.enabled !== 'boolean') {
+          throw new Error(`Profile command at index ${index} must include boolean "enabled"`)
+        }
+        break
+      }
+
+      case 'tool': {
+        if (!TOOL_KEYS.includes(command.value)) {
+          throw new Error(`Invalid tool value "${command.value}" at index ${index}`)
+        }
+        if (typeof command.enabled !== 'boolean') {
+          throw new Error(`Tool command at index ${index} must include boolean "enabled"`)
+        }
+        break
+      }
+
+      case 'language': {
+        if (typeof command.value !== 'string' || !command.value.trim()) {
+          throw new Error(`Language command at index ${index} must include non-empty "value"`)
+        }
+        break
+      }
+
+      case 'font_size': {
+        const hasValue = typeof command.value === 'number'
+        const hasStep = typeof command.step === 'string'
+        if (!hasValue && !hasStep) {
+          throw new Error(`font_size command at index ${index} must include "value" or "step"`)
+        }
+        if (hasValue && (command.value < 1 || command.value > 2)) {
+          throw new Error(`font_size value at index ${index} must be between 1 and 2`)
+        }
+        if (hasStep && !['increase', 'decrease'].includes(command.step)) {
+          throw new Error(`font_size step at index ${index} must be "increase" or "decrease"`)
+        }
+        break
+      }
+
+      case 'widget_position': {
+        if (!WIDGET_POSITIONS.includes(command.value)) {
+          throw new Error(`Invalid widget_position value "${command.value}" at index ${index}`)
+        }
+        break
+      }
+
+      case 'oversize_widget':
+      case 'widget_visibility': {
+        if (typeof command.enabled !== 'boolean') {
+          throw new Error(`"${type}" command at index ${index} must include boolean "enabled"`)
+        }
+        break
+      }
+
+      case 'menu_theme': {
+        if (!['dark', 'light'].includes(command.value)) {
+          throw new Error(`menu_theme value at index ${index} must be "dark" or "light"`)
+        }
+        break
+      }
+
+      case 'page_color': {
+        if (!PAGE_COLOR_SECTIONS.includes(command.section)) {
+          throw new Error(`Invalid page_color section "${command.section}" at index ${index}`)
+        }
+        if (!PAGE_COLOR_VALUES.includes(command.value)) {
+          throw new Error(`Invalid page_color value "${command.value}" at index ${index}`)
+        }
+        break
+      }
+
+      default:
+        throw new Error(`Unknown command type "${String(type)}" at index ${index}`)
+    }
+
+    const safeReply = typeof reply === 'string' ? reply : undefined
+    return { command: command as WidgetCommand, reply: safeReply }
+  })
+
+  return actions
 }
 
 /**
@@ -70,7 +284,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       ...chatMessages.map((m) => ({ role: m.role, content: m.content })),
     ]
 
-    let reply = ''
+    let rawReply = ''
 
     try {
       // Primary model via OpenRouter
@@ -79,7 +293,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         messages: messagesForModel,
       })
 
-      reply =
+      rawReply =
         completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string'
           ? completion.choices[0].message.content
           : ''
@@ -91,15 +305,17 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         messages: messagesForModel,
       })
 
-      reply =
+      rawReply =
         fallbackCompletion.choices?.[0]?.message?.content &&
         typeof fallbackCompletion.choices[0].message.content === 'string'
           ? fallbackCompletion.choices[0].message.content
           : ''
     }
 
+    const actions = parseAndValidateActions(rawReply)
+
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
-    res.status(200).json({ reply })
+    res.status(200).json({ reply: rawReply, actions })
   } catch (error) {
     console.error('Widget chat API error:', error)
     res.status(500).json({
