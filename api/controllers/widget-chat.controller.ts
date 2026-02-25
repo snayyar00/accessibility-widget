@@ -61,6 +61,15 @@ const WIDGET_POSITIONS = [
 const PAGE_COLOR_SECTIONS = ['text', 'title', 'background'] as const
 const PAGE_COLOR_VALUES = ['white', 'black', 'orange', 'blue', 'red', 'green', 'default'] as const
 
+/** Allowed "mode" values for tools that have cycling options (CYCLING BUTTONS in prompt). */
+const TOOL_MODES: Record<string, readonly string[]> = {
+  contrast: ['light-contrast', 'high-contrast', 'dark-contrast'],
+  saturation: ['low-saturation', 'high-saturation'],
+  'screen-reader': ['normal', 'fast', 'slow'],
+  'letter-spacing': ['light', 'medium', 'wide'],
+  'line-height': ['light', 'medium', 'loose'],
+}
+
 type ProfileKey = (typeof PROFILE_KEYS)[number]
 type ToolKey = (typeof TOOL_KEYS)[number]
 type WidgetPosition = (typeof WIDGET_POSITIONS)[number]
@@ -172,6 +181,17 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
         }
         if (typeof command.enabled !== 'boolean') {
           throw new Error(`Tool command at index ${index} must include boolean "enabled"`)
+        }
+        const allowedModes = TOOL_MODES[command.value]
+        if (allowedModes) {
+          if (command.enabled && command.mode !== undefined && command.mode !== null) {
+            const mode = typeof command.mode === 'string' ? command.mode.trim() : String(command.mode)
+            if (!allowedModes.includes(mode)) {
+              throw new Error(
+                `Invalid mode "${command.mode}" for tool "${command.value}" at index ${index}. Allowed: ${allowedModes.join(', ')}`,
+              )
+            }
+          }
         }
         break
       }
