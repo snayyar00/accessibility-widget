@@ -14,7 +14,6 @@ import AIInsights from '@/containers/AIInsights/AIInsights';
 import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
 import ServiceRequests from '@/containers/ServiceRequests';
-import Impersonate from '@/containers/Impersonate/Impersonate';
 import DomainAnalyses from '@/containers/DomainAnalyses/DomainAnalyses';
 
 const routes = [
@@ -150,13 +149,6 @@ const routes = [
     name: 'Organization',
     exact: true,
     component: Organization,
-    isSidebar: false,
-  },
-  {
-    path: '/impersonate',
-    name: 'Impersonate User',
-    exact: true,
-    component: Impersonate,
     isSidebar: false,
   },
 ];
