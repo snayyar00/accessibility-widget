@@ -28,12 +28,12 @@ export const computePurchaseAction = ({
   appSumoCount,
   codeCount,
 }: PurchaseActionConfig): { action: ActionType; label: string; tooltip: string } => {
-  if (!isAppSumoOrg) {
-    return { action: 'buy', label: 'Buy License', tooltip: 'Buy license' };
-  }
-
   if (activePlan !== '' && tierPlan) {
     return { action: 'activate-subscription', label: 'Activate', tooltip: 'Activate subscription' };
+  }
+
+  if (!isAppSumoOrg) {
+    return { action: 'buy', label: 'Buy License', tooltip: 'Buy license' };
   }
 
   if (appSumoCount < codeCount) {

@@ -275,11 +275,15 @@ const TrialBannerAndModal: React.FC<any> = ({
 
   useEffect(() => {
     if (customerData) {
+      // Tier plan and submeta checks are independent of isCustomer (consistent with DomainTable)
+      if (customerData.tierPlan && customerData.tierPlan == true) {
+        setTierPlan(true);
+      }
+      if (customerData.submeta) {
+        setPlanMetaData(customerData.submeta);
+      }
       if (customerData.isCustomer == true) {
         // console.log(customerData);
-        if (customerData.tierPlan && customerData.tierPlan == true) {
-          setTierPlan(true);
-        }
         if (customerData.subscriptions) {
           try {
             const subs = JSON.parse(customerData.subscriptions);
@@ -320,9 +324,6 @@ const TrialBannerAndModal: React.FC<any> = ({
         if (customerData.expiry) {
           setTrialPlan(true);
           setExpiryDays(customerData.expiry);
-        }
-        if (customerData.submeta) {
-          setPlanMetaData(customerData.submeta);
         }
         if (customerData.appSumoCount) {
           setAppSumoActive(customerData.appSumoCount);
