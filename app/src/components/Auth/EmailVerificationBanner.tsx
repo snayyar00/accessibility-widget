@@ -54,7 +54,7 @@ const EmailVerificationBanner: React.FC<EmailVerificationBannerProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="bg-primary text-white w-full">
+    <div className="text-white w-full" style={{ backgroundColor: '#0052CC' }}>
       <div className="container mx-auto px-4 py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-2 lg:gap-0">
         <div className="flex items-center space-x-3">
           <FaExclamationTriangle className="text-white h-5 w-5 flex-shrink-0" />

@@ -3,8 +3,8 @@ export const IS_DEV = process.env.NODE_ENV === 'development'
 export const IS_PROD = process.env.NODE_ENV === 'production'
 
 // Scanner polling configuration
-export const SCANNER_MAX_POLLING_ATTEMPTS_SINGLE = parseInt(process.env.SCANNER_MAX_POLLING_ATTEMPTS_SINGLE || '60')
-export const SCANNER_MAX_POLLING_ATTEMPTS_FULL = parseInt(process.env.SCANNER_MAX_POLLING_ATTEMPTS_FULL || '120')
+export const SCANNER_MAX_POLLING_ATTEMPTS_SINGLE = parseInt(process.env.SCANNER_MAX_POLLING_ATTEMPTS_SINGLE || '120')
+export const SCANNER_MAX_POLLING_ATTEMPTS_FULL = parseInt(process.env.SCANNER_MAX_POLLING_ATTEMPTS_FULL || '240')
 
 // Job expiry configuration
 // Default: 1 hour (3600000 milliseconds)

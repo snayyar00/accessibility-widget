@@ -21,7 +21,9 @@ const DomainsSelect = ({ data, selectedOption, setSelectedOption }: any) => {
         size="small"
         value={selectedOption || ''}
         onChange={handleChange}
-        label={selectedOption || ''}
+        label="Domain"
+        inputProps={{ 'aria-label': 'Domain' }}
+        aria-label="Domain"
         className="[&>fieldset>legend>span]:hidden"
         renderValue={(value) => value}
       >

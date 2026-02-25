@@ -139,6 +139,7 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
     }
 
     let promoCodeData: Stripe.PromotionCode[]
+    let regularPromoCouponId: string | null = null
 
     if (promoCode && promoCode.length > 0 && typeof promoCode?.[0] !== 'number') {
       const validCodesData: Stripe.PromotionCode[] = []
@@ -161,6 +162,11 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
       }
 
       promoCodeData = validCodesData
+
+      // Check if this is a regular promo code (not AppSumo)
+      if (promoCodeData.length > 0 && !APP_SUMO_COUPON_IDS.includes(promoCodeData[0].coupon?.id)) {
+        regularPromoCouponId = promoCodeData[0].coupon?.id
+      }
     }
 
     let session: any = {}
@@ -217,8 +223,8 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
 
       return
     }
-    if (promoCode && promoCode.length > 0) {
-      // Coupon is not valid or not the app sumo promo
+    if (promoCode && promoCode.length > 0 && !regularPromoCouponId) {
+      // Coupon is not valid (not AppSumo and not a regular promo)
       return res.json({ valid: false, error: 'Invalid promo code' })
     }
     if (cardTrial) {
@@ -236,13 +242,16 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
           },
         ],
         customer: customer.id,
-        // Only allow promotion codes if no referral discount is applied
-        ...(user.referral ? {} : { allow_promotion_codes: true }),
+        // Only allow promotion codes if no referral or regular promo discount is applied
+        ...(user.referral || regularPromoCouponId ? {} : { allow_promotion_codes: true }),
         success_url: `${returnUrl}`,
         cancel_url: returnUrl,
         ...(user.referral && {
           client_reference_id: user.referral,
           discounts: [{ coupon: REWARDFUL_COUPON }],
+        }),
+        ...(regularPromoCouponId && !user.referral && {
+          discounts: [{ coupon: regularPromoCouponId }],
         }),
         ...(brandingSettings && { branding_settings: brandingSettings }),
         metadata: {
@@ -317,13 +326,16 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
             },
           ],
           customer: customer.id,
-          // Only allow promotion codes if no referral discount is applied
-          ...(user.referral ? {} : { allow_promotion_codes: true }),
+          // Only allow promotion codes if no referral or regular promo discount is applied
+          ...(user.referral || regularPromoCouponId ? {} : { allow_promotion_codes: true }),
           success_url: `${returnUrl}`,
           cancel_url: returnUrl,
           ...(user.referral && {
             client_reference_id: user.referral,
             discounts: [{ coupon: REWARDFUL_COUPON }],
+          }),
+          ...(regularPromoCouponId && !user.referral && {
+            discounts: [{ coupon: regularPromoCouponId }],
           }),
           ...(brandingSettings && { branding_settings: brandingSettings }),
           metadata: {

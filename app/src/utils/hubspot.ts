@@ -3,6 +3,9 @@
  * Provides functions to interact with the HubSpot chat widget
  */
 
+const HUBSPOT_SCRIPT_ID = 'hs-script-loader';
+const HUBSPOT_PORTAL_ID = '50466088';
+
 // Extend the Window interface to include HubSpot chat methods
 declare global {
   interface Window {
@@ -92,6 +95,24 @@ export const isHubSpotChatAvailable = (): boolean => {
     window.HubSpotConversations?.widget ||
     window.hsConversationsAPI
   );
+};
+
+/**
+ * Dynamically loads the HubSpot chat script.
+ * Only call when the current org matches REACT_APP_CURRENT_ORG.
+ */
+export const loadHubSpotScript = (): void => {
+  if (document.getElementById(HUBSPOT_SCRIPT_ID)) {
+    return; // Already loaded
+  }
+
+  const script = document.createElement('script');
+  script.id = HUBSPOT_SCRIPT_ID;
+  script.type = 'text/javascript';
+  script.async = true;
+  script.defer = true;
+  script.src = `//js-na1.hs-scripts.com/${HUBSPOT_PORTAL_ID}.js`;
+  document.head.appendChild(script);
 };
 
 /**

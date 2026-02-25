@@ -80,6 +80,7 @@ export const useTourGuidance = () => {
 
   return {
     resetAndStartTour,
+    startCurrentPageTour,
     hasCurrentPageTour,
     getCurrentTourKey,
   };

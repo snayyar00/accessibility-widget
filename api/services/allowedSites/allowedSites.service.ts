@@ -18,8 +18,9 @@ import { findUserNotificationByUserId, getUserbyId } from '../../repository/user
 import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { generatePDF } from '../../utils/generatePDF'
-import { ValidationError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
@@ -114,7 +115,14 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
     const response = await insertSite(data)
 
     if (typeof response === 'string') {
-      throw new Error(response)
+      // Distinguish between validation errors (duplicate site) and system errors (insert failures)
+      if (response === 'You have already added this site.') {
+        // This is a validation error - user tried to add a duplicate site
+        throw new ValidationError(response)
+      } else {
+        // This is a system error (e.g., "insert failed: ...")
+        throw new ApolloError(response)
+      }
     }
 
     const site = response
@@ -156,6 +164,9 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
 
         const complianceByScore = displayedScore >= 80 ? 'Compliant' : displayedScore >= 50 ? 'Partially Compliant' : 'Not Compliant'
 
+        const smtpConfigForTemplate = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+        const organizationName = smtpConfigForTemplate?.organizationName ?? 'WebAbility'
+
         const template = await compileEmailTemplate({
           fileName: 'accessReport.mjml',
           data: {
@@ -170,6 +181,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
             reportLink: 'https://app.webability.io/accessibility-test',
             unsubscribeLink,
             year,
+            organizationName,
           },
         })
 
@@ -198,7 +210,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
           },
         ]
 
-        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports')
+        await sendEmailWithRetries(user.email, template, `Accessibility Report for ${url}`, 5, 2000, attachments, 'WebAbility Reports', smtpConfigForTemplate)
       } catch (error) {
         logger.error('Async email/report task failed:', error)
       }
@@ -216,7 +228,7 @@ export interface PaginatedSitesResponse {
   total: number
 }
 
-export async function findUserSites(user: UserLogined, limit?: number, offset?: number, filter?: 'all' | 'active' | 'disabled'): Promise<PaginatedSitesResponse> {
+export async function findUserSites(user: UserLogined, limit?: number, offset?: number, filter?: 'all' | 'active' | 'disabled', search?: string): Promise<PaginatedSitesResponse> {
   if (!user.current_organization_id) {
     return { sites: [], total: 0 }
   }
@@ -224,11 +236,11 @@ export async function findUserSites(user: UserLogined, limit?: number, offset?: 
   try {
     const isAdmin = await isAdminOrManager(user)
     
-    // Get total count first (before pagination, with filter)
-    const total = await findUserSitesCount(user.id, user.current_organization_id, isAdmin, filter)
+    // Get total count first (before pagination, with filter and search)
+    const total = await findUserSitesCount(user.id, user.current_organization_id, isAdmin, filter, search)
     
-    // Get sites (paginated if limit provided, otherwise all, with filter)
-    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin, limit, offset, filter)
+    // Get sites (paginated if limit provided, otherwise all, with filter and search)
+    const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin, limit, offset, filter, search)
     const sitesWithOwnership = addOwnershipFlag(allSites, user.id)
     const sortedSites = sortSitesByPriorityAndAlphabetically(sitesWithOwnership)
 

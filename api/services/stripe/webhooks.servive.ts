@@ -1,11 +1,18 @@
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
+import dayjs from 'dayjs'
 
 import { REWARDFUL_COUPON } from '../../constants/billing.constant'
 import { getAgencyRevenueSharePercent } from '../../helpers/agency-revenue.helper'
 import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductById, findProductByStripeId, insertProduct, updateProduct } from '../../repository/products.repository'
-import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId } from '../../repository/sites_plans.repository'
+import formatDateDB from '../../utils/format-date-db'
+import {
+  getSitePlanBySiteId,
+  getSitesPlanByCustomerIdAndSubscriptionId,
+  getSitesPlansByCustomerIdAndSubscriptionIdIncludeExpired,
+  updateSitePlanById,
+} from '../../repository/sites_plans.repository'
 import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } from '../allowedSites/plans-sites.service'
 
 const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY!, {
@@ -399,6 +406,90 @@ export const stripeWebhook = async (req: Request, res: Response) => {
         console.log('Subscription Deleted')
       } catch (error) {
         console.log('error=', error)
+      }
+    } else if (event.type === 'invoice.paid') {
+      // Source of truth for expired_at on payment: first payment and renewals. Does not create/delete rows.
+      // Event order: checkout.session.completed creates the row; invoice.paid then sets expired_at from Stripe.
+      // customer.subscription.updated only runs on plan name change and also sets expired_at; invoice.paid uses current_period_end (preferred).
+      // customer.subscription.deleted removes rows; invoice.paid after that finds no rows and skips. No conflict.
+      console.log('Invoice paid - updating subscription expiry')
+      try {
+        const invoice = event.data.object as Stripe.Invoice
+
+        // One-time invoices have no subscription — skip
+        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id ?? null
+        const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id ?? null
+
+        if (!subscriptionId || !customerId) {
+          console.log('[invoice.paid] Skipping: invoice has no subscription or customer (e.g. one-time payment)', {
+            subscriptionId: subscriptionId ?? null,
+            customerId: customerId ?? null,
+          })
+          res.json({ received: true })
+          return
+        }
+
+        let subscription: Stripe.Subscription
+        try {
+          subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        } catch (error) {
+          console.error('[invoice.paid] Failed to retrieve subscription', subscriptionId, error)
+          res.json({ received: true })
+          return
+        }
+
+        if (subscription.current_period_end == null || subscription.current_period_end === undefined) {
+          console.log('[invoice.paid] Skipping: subscription has no current_period_end', subscriptionId)
+          res.json({ received: true })
+          return
+        }
+
+        const newExpiry = formatDateDB(dayjs.unix(subscription.current_period_end).add(7, 'day'))
+
+        if (dayjs(newExpiry).isBefore(dayjs(), 'day')) {
+          console.log('[invoice.paid] Note: current_period_end is in the past; updating DB anyway', {
+            subscriptionId,
+            newExpiry,
+          })
+        }
+
+        let sitePlans: Array<{ id: number; siteId?: number }>
+        try {
+          sitePlans = await getSitesPlansByCustomerIdAndSubscriptionIdIncludeExpired(customerId, subscriptionId)
+        } catch (error) {
+          console.error('[invoice.paid] Failed to load site plans', { customerId, subscriptionId }, error)
+          res.json({ received: true })
+          return
+        }
+
+        if (!sitePlans || sitePlans.length === 0) {
+          console.log('[invoice.paid] No site plans found for subscription (may be non-app subscription)', {
+            customerId,
+            subscriptionId,
+          })
+          res.json({ received: true })
+          return
+        }
+
+        const updatePayload: { expired_at: string } = { expired_at: newExpiry }
+        let failed = 0
+        for (const plan of sitePlans) {
+          try {
+            await updateSitePlanById(plan.id, updatePayload as any)
+            console.log('Updated expired_at for site plan', plan.siteId)
+          } catch (error) {
+            failed++
+            console.error('Error updating expired_at for site plan', plan.siteId, error)
+          }
+        }
+
+        if (failed > 0) {
+          console.log('error=', { event: 'invoice.paid', updated: sitePlans.length - failed, failed, subscriptionId })
+        } else {
+          console.log('All site plans updated for invoice.paid', { count: sitePlans.length, subscriptionId })
+        }
+      } catch (error) {
+        console.log('error in invoice.paid', error)
       }
     } else {
       console.log(`Unhandled event type ${event.type}`)

@@ -66,9 +66,10 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
         <div
           className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ml-2 cursor-pointer transition-all duration-200 hover:scale-110 ${
             problem.fixed
-              ? 'border-[#445AE7] bg-transparent'
+              ? 'bg-transparent'
               : 'border-gray-400 bg-white hover:border-gray-500'
           }`}
+          style={problem.fixed ? { borderColor: '#0052CC' } : {}}
           onClick={handleToggleFixed}
           title={problem.fixed ? 'Mark as unfixed' : 'Mark as fixed'}
         >
@@ -79,7 +80,7 @@ const ProblemCard: React.FC<ProblemCardProps> = ({
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="text-[#445AE7]"
+              style={{ color: '#0052CC' }}
             >
               <path
                 d="M7 12l3 3 7-7"

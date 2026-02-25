@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ApolloProvider } from '@apollo/client';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
@@ -7,6 +8,7 @@ import { useSelector } from 'react-redux';
 
 import Auth from '@/containers/Auth/Auth';
 import PrivateRoute from '@/routes/PrivateRoute';
+import { loadHubSpotScript } from '@/utils/hubspot';
 import PublicRoute from '@/routes/PublicRoute';
 import AdminLayout from '@/containers/Layout/Admin';
 import VerifyEmail from '@/containers/VerifyEmail';
@@ -38,13 +40,25 @@ const App: React.FC<props> = ({ options }) => {
 
   useFavicon(organization?.favicon || null);
 
+  // Load HubSpot chat widget only when current org matches REACT_APP_CURRENT_ORG
+  useEffect(() => {
+    const allowedOrgId = process.env.REACT_APP_CURRENT_ORG || '1';
+    console.log('allowed', allowedOrgId);
+    console.log('current', organization?.id);
+    if (organization?.id != null && String(organization.id) === String(allowedOrgId)) {
+      loadHubSpotScript();
+    }
+  }, [organization?.id]);
+
   useEffect(() => {
     if (error) {
       toast.error(error);
     }
   }, [error]);
 
-  return (
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_KEY || '';
+
+  const appContent = (
     <ApolloProvider client={client}>
       <BrowserRouter>
         <GlobalLoader />
@@ -72,6 +86,12 @@ const App: React.FC<props> = ({ options }) => {
         </Switch>
       </BrowserRouter>
     </ApolloProvider>
+  );
+
+  return googleClientId ? (
+    <GoogleOAuthProvider clientId={googleClientId}>{appContent}</GoogleOAuthProvider>
+  ) : (
+    appContent
   );
 };
 

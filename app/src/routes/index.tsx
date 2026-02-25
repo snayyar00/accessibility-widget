@@ -5,6 +5,7 @@ import ProblemReport from '@/containers/ProblemReport/ProblemReport';
 import { TbReportSearch } from 'react-icons/tb';
 import { MdOutlineGavel, MdOutlineInsights } from 'react-icons/md';
 import { FiFile, FiShoppingBag } from 'react-icons/fi';
+import { MdAnalytics } from 'react-icons/md';
 import ReportView from '@/containers/Accessibility/ReportView';
 import StatementGenerator from '@/containers/StatementGenerator/StatementGenerator';
 import Users from '@/containers/Users';
@@ -14,6 +15,7 @@ import Workspaces from '@/containers/Workspaces';
 import Organization from '@/containers/Organization';
 import ServiceRequests from '@/containers/ServiceRequests';
 import Impersonate from '@/containers/Impersonate/Impersonate';
+import DomainAnalyses from '@/containers/DomainAnalyses/DomainAnalyses';
 
 const routes = [
   {
@@ -52,6 +54,20 @@ const routes = [
     isSidebar: true,
   },
   {
+    path: '/domain-analyses',
+    name: 'Auto-Fixes',
+    exact: true,
+    component: DomainAnalyses,
+    icon: (
+      <MdAnalytics
+        className="menu-icon text-white-blue transition-colors duration-200"
+        size={30}
+        aria-label="Auto-Fixes navigation icon"
+      />
+    ),
+    isSidebar: true,
+  },
+  {
     path: '/statement-generator',
     name: 'AI Statement',
     exact: true,
@@ -67,14 +83,14 @@ const routes = [
   },
   {
     path: '/proof-of-effort-toolkit',
-    name: 'Proof of Effort',
+    name: 'Legal resources',
     exact: true,
     component: ProofOfEffortToolkit,
     icon: (
       <FiFile
         className="menu-icon text-white-blue transition-colors duration-200"
         size={25}
-        aria-label="Proof of Effort Toolkit navigation icon"
+        aria-label="Legal resources navigation icon"
       />
     ),
     isSidebar: true,

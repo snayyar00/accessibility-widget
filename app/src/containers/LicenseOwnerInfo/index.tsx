@@ -215,7 +215,12 @@ const LicenseOwnerInfo: React.FC = () => {
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-auto md:w-auto flex-shrink-0 px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-xs md:text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2 shadow-sm"
+          aria-expanded={isOpen}
+          aria-controls="license-info-form"
+          className="w-auto md:w-auto flex-shrink-0 px-3 md:px-4 py-2 text-white rounded-lg text-xs md:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-2 shadow-sm focus:outline-none focus:ring-4 focus:ring-offset-2"
+          style={{
+            backgroundColor: '#0052CC',
+          }}
         >
           <Settings className="w-3 h-3 md:w-4 md:h-4 text-white" />
           <span className="text-white">
@@ -234,6 +239,7 @@ const LicenseOwnerInfo: React.FC = () => {
 
       {/* Expandable Form Section */}
       <div
+        id="license-info-form"
         className={cn(
           'transition-all duration-300 ease-in-out overflow-hidden',
           {
@@ -241,72 +247,121 @@ const LicenseOwnerInfo: React.FC = () => {
             'max-h-[1000px] opacity-100': isOpen,
           },
         )}
+        aria-hidden={!isOpen}
+        style={!isOpen ? { display: 'none' } : { display: 'block' }}
       >
         <div className="bg-gray-50 rounded-lg p-4 md:p-6">
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="space-y-3 sm:space-y-4 md:space-y-6 max-w-full min-w-0"
           >
+            <p className="text-xs text-gray-600 mb-4">
+              Fields marked with an asterisk (*) are required.
+            </p>
             {/* Website Owner's Name */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
-                <HiOutlineUser className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+              <label 
+                htmlFor="owner-name"
+                className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
+              >
+                <HiOutlineUser className="w-6 h-6 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: '#0052CC' }} />
                 <span>
-                  {t('Common.license_owner.owner_name') || 'Website owner name'}
+                  {t('Common.license_owner.owner_name') || 'Website owner name'}{' '}
+                  <span className="text-red-600" aria-label="required">*</span>
                 </span>
               </label>
               <div className="md:col-span-1 lg:col-span-2">
                 <Input
+                  id="owner-name"
                   name="ownerName"
                   ref={register}
+                  autoComplete="name"
                   placeholder={
                     t('Common.license_owner.enter_owner_name') ||
                     "Enter website owner's name"
                   }
+                  aria-label={`License owner ${t('Common.license_owner.owner_name') || 'Name'}`}
+                  aria-invalid={!!errors.ownerName}
+                  aria-describedby="owner-name-error"
                   className={errors.ownerName ? 'border-red-500' : ''}
                 />
-                {errors.ownerName && (
-                  <p className="text-red-500 text-xs sm:text-sm mt-1">
-                    {errors.ownerName.message}
-                  </p>
-                )}
+                <div
+                  id="owner-name-error"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                  aria-relevant="additions text"
+                >
+                  {errors.ownerName && (
+                    <p 
+                      className="text-xs sm:text-sm mt-1"
+                      style={{ color: '#E51414', backgroundColor: '#F9FAFB' }}
+                    >
+                      {errors.ownerName.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Website Owner's Email */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
-                <HiOutlineMail className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+              <label 
+                htmlFor="owner-email"
+                className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
+              >
+                <HiOutlineMail className="w-6 h-6 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: '#0052CC' }} />
                 <span>
                   {t('Common.license_owner.owner_email') ||
-                    "Website owner's email"}
+                    "Website owner's email"}{' '}
+                  <span className="text-red-600" aria-label="required">*</span>
                 </span>
               </label>
               <div className="md:col-span-1 lg:col-span-2">
                 <Input
+                  id="owner-email"
                   name="ownerEmail"
                   ref={register}
                   type="email"
+                  autoComplete="email"
                   placeholder={
                     t('Common.license_owner.enter_owner_email') ||
                     "Enter website owner's email"
                   }
+                  aria-label={`License owner ${t('Common.license_owner.owner_email') || 'Email'}`}
+                  aria-invalid={!!errors.ownerEmail}
+                  aria-describedby="owner-email-error"
                   className={errors.ownerEmail ? 'border-red-500' : ''}
                 />
-                {errors.ownerEmail && (
-                  <p className="text-red-500 text-xs sm:text-sm mt-1">
-                    {errors.ownerEmail.message}
-                  </p>
-                )}
+                <div
+                  id="owner-email-error"
+                  role="alert"
+                  aria-live="assertive"
+                  aria-atomic="true"
+                  aria-relevant="additions text"
+                >
+                  {errors.ownerEmail && (
+                    <p 
+                      className="text-xs sm:text-sm mt-1"
+                      style={{ color: '#E51414', backgroundColor: '#F9FAFB' }}
+                    >
+                      {errors.ownerEmail.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Phone Number */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 items-start md:items-start lg:items-center max-w-full min-w-0">
-              <label className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2">
-                <HiOutlinePhone className="w-6 h-6 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+              <label 
+                htmlFor="phone-number"
+                className="text-sm sm:text-base md:text-lg font-medium text-gray-700 flex items-center gap-2"
+              >
+                <HiOutlinePhone className="w-6 h-6 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: '#0052CC' }} />
                 <span>
-                  {t('Common.license_owner.phone_number') || 'Phone number'}
+                  {t('Common.license_owner.phone_number') || 'Phone number'}{' '}
+                  <span className="text-red-600" aria-label="required">*</span>
                 </span>
               </label>
               <div className="md:col-span-1 lg:col-span-2">
@@ -317,11 +372,19 @@ const LicenseOwnerInfo: React.FC = () => {
                     className="relative flex-shrink-0 md:w-1/3"
                     ref={dropdownRef}
                   >
+                    <label htmlFor="country-code" className="sr-only">
+                      License owner Country code
+                    </label>
                     <button
+                      id="country-code"
                       type="button"
                       onClick={() =>
                         setIsCountryDropdownOpen(!isCountryDropdownOpen)
                       }
+                      aria-label="License owner Country code"
+                      aria-expanded={isCountryDropdownOpen}
+                      aria-haspopup="listbox"
+                      aria-controls="country-code-listbox"
                       className="flex items-center gap-2 bg-light-gray border border-white-blue rounded-[10px] px-[10px] py-[10.5px] text-[13px] sm:text-[14px] md:text-[16px] text-white-gray w-full hover:border-light-primary transition-colors h-[42px]"
                     >
                       <span className="text-base sm:text-lg">
@@ -334,11 +397,17 @@ const LicenseOwnerInfo: React.FC = () => {
                     </button>
 
                     {isCountryDropdownOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto w-full">
+                      <div 
+                        id="country-code-listbox"
+                        role="listbox"
+                        className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto w-full"
+                      >
                         {countryCodes.map((country) => (
                           <button
                             key={country.code + country.name}
                             type="button"
+                            role="option"
+                            aria-selected={selectedCountry.code === country.code && selectedCountry.name === country.name}
                             onClick={() => handleCountrySelect(country)}
                             className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-2 hover:bg-gray-50 text-left transition-colors text-xs sm:text-sm md:text-base min-h-[44px] sm:min-h-[40px]"
                           >
@@ -357,21 +426,36 @@ const LicenseOwnerInfo: React.FC = () => {
                   {/* Phone Number Input */}
                   <div className="flex-1">
                     <Input
+                      id="phone-number"
                       name="phoneNumber"
                       ref={register}
                       placeholder={
                         t('Common.license_owner.enter_phone_number') ||
                         'Enter phone number'
                       }
+                      aria-label={`License owner ${t('Common.license_owner.phone_number') || 'Phone number'}`}
+                      aria-invalid={!!errors.phoneNumber}
+                      aria-describedby="phone-number-error"
                       className={`${
                         errors.phoneNumber ? 'border-red-500' : ''
                       } h-[42px]`}
                     />
-                    {errors.phoneNumber && (
-                      <p className="text-red-500 text-xs sm:text-sm mt-1">
-                        {errors.phoneNumber.message}
-                      </p>
-                    )}
+                    <div
+                      id="phone-number-error"
+                      role="alert"
+                      aria-live="assertive"
+                      aria-atomic="true"
+                      aria-relevant="additions text"
+                    >
+                      {errors.phoneNumber && (
+                        <p 
+                          className="text-xs sm:text-sm mt-1"
+                          style={{ color: '#E51414', backgroundColor: '#F9FAFB' }}
+                        >
+                          {errors.phoneNumber.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

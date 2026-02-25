@@ -21,6 +21,7 @@ import { RED_BG } from '@/utils/applyStatusClass';
 import MobileDomainCard from './MobileDomainCard';
 import notFoundImage from '@/assets/images/not_found_image.png';
 import { Site } from '@/generated/graphql';
+import PurchaseActionButton from '@/components/Common/PurchaseActionButton';
 import Pagination from '@/components/Common/Pagination';
 
 interface DomainTableProps {
@@ -50,17 +51,39 @@ const DomainTable: React.FC<DomainTableProps> = ({
   
   // Search and filter states (must be before useQuery)
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'disabled'>('all');
   const previousTabRef = useRef<'all' | 'active' | 'disabled'>('all');
+  const previousSearchRef = useRef<string>('');
   
-  // Reset offset when tab changes - compute synchronously to prevent race condition
+  // Debounce search term to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms debounce delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset pagination offset when search term changes
+  useEffect(() => {
+    if (debouncedSearchTerm !== previousSearchRef.current) {
+      setPaginationOffset(0);
+    }
+  }, [debouncedSearchTerm]);
+
+  // Reset offset when tab or search changes - compute synchronously to prevent race condition
   const currentOffset = useMemo(() => {
     if (activeTab !== previousTabRef.current) {
       previousTabRef.current = activeTab;
       return 0;
     }
+    if (debouncedSearchTerm !== previousSearchRef.current) {
+      previousSearchRef.current = debouncedSearchTerm;
+      return 0;
+    }
     return paginationOffset;
-  }, [activeTab, paginationOffset]);
+  }, [activeTab, paginationOffset, debouncedSearchTerm]);
   
   // Separate paginated query for DomainTable
   const getFilterValue = () => activeTab === 'all' ? 'all' : activeTab === 'active' ? 'active' : 'disabled';
@@ -68,11 +91,13 @@ const DomainTable: React.FC<DomainTableProps> = ({
     variables: { 
       limit: paginationLimit, 
       offset: currentOffset,
-      filter: getFilterValue()
+      filter: getFilterValue(),
+      search: debouncedSearchTerm || undefined
     },
     skip: false,
   });
   const { data: userData } = useSelector((state: RootState) => state.user);
+  const organization = useSelector((state: RootState) => state.organization.data);
   const [billingLoading, setBillingLoading] = useState(false);
   const [activePlan, setActivePlan] = useState('');
   const [isYearly, setIsYearly] = useState(false);
@@ -91,6 +116,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [monitoringStates, setMonitoringStates] = useState<{
     [key: number]: boolean;
   }>({});
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
   
   // State to track which domain's actions are visible
   const [openActionsMenuId, setOpenActionsMenuId] = useState<number | null>(null);
@@ -109,7 +135,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
         await refetchPaginated({ 
           limit: paginationLimit, 
           offset: paginationOffset,
-          filter: getFilterValue()
+          filter: getFilterValue(),
+          search: debouncedSearchTerm || undefined
         });
       }
     },
@@ -132,7 +159,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
         await refetchPaginated({ 
           limit: paginationLimit, 
           offset: paginationOffset,
-          filter: getFilterValue()
+          filter: getFilterValue(),
+          search: debouncedSearchTerm || undefined
         });
       }
     },
@@ -155,7 +183,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
         await refetchPaginated({ 
           limit: paginationLimit, 
           offset: paginationOffset,
-          filter: getFilterValue()
+          filter: getFilterValue(),
+          search: debouncedSearchTerm || undefined
         });
       }
     },
@@ -306,6 +335,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
   const [appSumoCount, setAppSumoCount] = useState(0);
   const [codeCount, setCodeCount] = useState(0);
   const [isStripeCustomer, setIsStripeCustomer] = useState(false);
+  const isAppSumoOrg =
+    organization?.id === (process.env.REACT_APP_CURRENT_ORG || '1');
 
   const handleSubscription = async (selectedDomain: Site) => {
     setBillingLoading(true);
@@ -388,16 +419,35 @@ const DomainTable: React.FC<DomainTableProps> = ({
     }
   }, [paginatedData, data]);
 
-  // Filter domains based on search term only (backend handles status filtering)
-  const filteredDomains = domains.filter((domain) => {
-    const matchesSearch =
-      (domain?.url ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  // No local filtering needed - backend handles search and filtering
+  const filteredDomains = domains;
   
   // The useEffect hook that was here has been removed to avoid redundant re-renders.
   // The `currentOffset` computed with `useMemo` already handles resetting the offset
   // for the GraphQL query when the active tab changes.
+
+  // Announce result counts to assistive tech when search/filter changes
+  useEffect(() => {
+    const term = debouncedSearchTerm.trim();
+    const tabLabel =
+      activeTab === 'active'
+        ? 'Active sites'
+        : activeTab === 'disabled'
+        ? 'Trial sites'
+        : 'All sites';
+
+    const count = filteredDomains.length;
+    const resultsText =
+      count === 0
+        ? 'No sites found'
+        : `${count} ${count === 1 ? 'site' : 'sites'} found`;
+
+    const message = term
+      ? `${resultsText} in ${tabLabel} for "${term}"`
+      : `${resultsText} in ${tabLabel}`;
+
+    setLiveAnnouncement(message);
+  }, [filteredDomains.length, debouncedSearchTerm, activeTab]);
 
   useEffect(() => {
     if (customerData) {
@@ -493,7 +543,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   className={`font-normal text-base pb-2 transition-colors ${
                     activeTab === 'all'
                       ? 'text-black'
-                      : 'text-gray-400 hover:text-gray-600'
+                      : 'text-[#646C7B] hover:text-gray-600'
                   }`}
                 >
                   All
@@ -503,7 +553,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   className={`font-normal text-base pb-2 transition-colors ${
                     activeTab === 'active'
                       ? 'text-black'
-                      : 'text-gray-400 hover:text-gray-600'
+                      : 'text-[#646C7B] hover:text-gray-600'
                   }`}
                 >
                   Active sites
@@ -513,7 +563,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   className={`font-normal text-base pb-2 transition-colors ${
                     activeTab === 'disabled'
                       ? 'text-black'
-                      : 'text-gray-400 hover:text-gray-600'
+                      : 'text-[#646C7B] hover:text-gray-600'
                   }`}
                 >
                   Trial sites
@@ -524,9 +574,29 @@ const DomainTable: React.FC<DomainTableProps> = ({
 
               {/* Search Bar - Right */}
               <div className="relative w-full md:w-80 md:max-w-md my-sites-search">
+              <div
+                className="sr-only"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                style={{
+                  position: 'absolute',
+                  width: '1px',
+                  height: '1px',
+                  padding: 0,
+                  margin: '-1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  whiteSpace: 'nowrap',
+                  border: 0,
+                }}
+              >
+                {liveAnnouncement}
+              </div>
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg
-                    className="h-4 w-4 text-gray-400"
+                    className="h-4 w-4"
+                    style={{ color: '#8D95A3' }}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -544,7 +614,7 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   placeholder="Search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-[#4A5568]"
                   style={{ border: '1px solid #A2ADF3' }}
                 />
               </div>
@@ -571,11 +641,16 @@ const DomainTable: React.FC<DomainTableProps> = ({
                 </div>
 
                 {/* Empty State Message */}
-                <div className="text-center mb-6">
+                <div
+                  className="text-center mb-6"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     You currently have no sites in this list
                   </h3>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[#656C79]">
                     {activeTab === 'all'
                       ? 'Add your first domain to get started with accessibility monitoring.'
                       : activeTab === 'active'
@@ -590,7 +665,11 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     onClick={() => {
                       openModal();
                     }}
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+                    aria-label="Add new domain"
+                    className="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-4 transition-all duration-200 shadow-sm"
+                    style={{ backgroundColor: '#0052CC' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0040A0'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                   >
                     Add new domain
                   </button>
@@ -598,56 +677,59 @@ const DomainTable: React.FC<DomainTableProps> = ({
               </div>
             ) : (
               <>
-                {/* Column Headers - Desktop Only */}
+                {/* Table - Desktop Only */}
                 <div className="hidden lg:block">
-                  <div className="flex items-center text-sm font-medium text-gray-700 mb-4 pr-8 my-sites-table-headers">
-                    <div className="flex-shrink-0 mr-2 w-6">
-                      {/* Empty space for favicon alignment */}
-                    </div>
-                    <div className="flex-1 min-w-0 mr-2 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Domain
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 mr-4 w-32 flex items-center">
-                      <Tooltip
-                        title="Domain ownership status and workspace sharing"
-                        placement="top"
-                      >
-                        <span
-                          className="uppercase cursor-help"
-                          style={{ color: '#445AE7' }}
-                        >
-                          Ownership
-                        </span>
-                      </Tooltip>
-                    </div>
-                    <div className="flex-shrink-0 mr-16 w-16 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Plan
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 mr-8 w-20 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Monitor
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 mr-3 w-24 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Status
-                      </span>
-                    </div>
-                    <div className="flex-shrink-0 w-56 flex items-center">
-                      <span className="uppercase" style={{ color: '#445AE7' }}>
-                        Actions
-                      </span>
-                    </div>
-                  </div>
-                  <div className="border-b border-gray-200 mb-4"></div>
-                </div>
-
-                {/* Desktop Cards */}
-                <div className="hidden lg:block space-y-2">
+                  <table className="w-full pr-8 my-sites-table-headers" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+                    <caption className="sr-only">Experience WebAbility PRO free for 7 days</caption>
+                    <thead>
+                      <tr className="text-sm font-medium text-gray-700 mb-4 pr-8" style={{ display: 'flex', alignItems: 'center', padding: '0 2rem 0 1.5rem' }}>
+                        <th scope="col" className="flex-shrink-0 mr-2 w-6" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          {/* Empty space for favicon alignment */}
+                        </th>
+                        <th scope="col" className="flex-1 min-w-0 mr-2" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Domain
+                          </span>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 mr-4 w-32" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <Tooltip
+                            title="Domain ownership status and workspace sharing"
+                            placement="top"
+                          >
+                            <span
+                              className="uppercase cursor-help flex items-center"
+                              style={{ color: '#445AE7' }}
+                            >
+                              Ownership
+                            </span>
+                          </Tooltip>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 mr-16 w-16" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Plan
+                          </span>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 mr-8 w-20" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Monitor
+                          </span>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 mr-3 w-24" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Status
+                          </span>
+                        </th>
+                        <th scope="col" className="flex-shrink-0 w-56" style={{ display: 'block', padding: 0, border: 'none', fontWeight: 'inherit' }}>
+                          <span className="uppercase flex items-center" style={{ color: '#445AE7' }}>
+                            Actions
+                          </span>
+                        </th>
+                      </tr>
+                      <tr aria-hidden="true" style={{ display: 'block' }}>
+                        <td colSpan={7} style={{ padding: 0, border: 'none', borderBottom: '1px solid #e5e7eb', marginBottom: '1rem', height: '1px' }}></td>
+                      </tr>
+                    </thead>
+                    <tbody className="space-y-2">
                   {filteredDomains.map((domain) => {
                     const isEditing = editingId === domain.id;
                     const domainStatus = getDomainStatus(
@@ -680,14 +762,13 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     };
 
                     return (
-                      <div
+                      <tr
                         key={domain.id}
                         className="bg-white border p-6 pr-8 hover:shadow-md transition-shadow rounded-lg min-h-[80px] my-sites-domain-row"
-                        style={{ borderColor: '#A2ADF3' }}
+                        style={{ borderColor: '#A2ADF3', display: 'flex' }}
                       >
-                        <div className="flex items-center">
-                          {/* Favicon */}
-                          <div className="flex-shrink-0 mr-2">
+                        {/* Favicon */}
+                        <td className="flex-shrink-0 mr-2" style={{ display: 'block', padding: 0, border: 'none' }}>
                             <img
                               src={getFaviconUrl(domain.url ?? '')}
                               alt={`${domain.url} favicon`}
@@ -697,10 +778,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 e.currentTarget.style.display = 'none';
                               }}
                             />
-                          </div>
+                        </td>
 
-                          {/* Domain Name */}
-                          <div className="flex-1 min-w-0 mr-2">
+                        {/* Domain Name */}
+                        <td className="flex-1 min-w-0 mr-2" style={{ display: 'block', padding: 0, border: 'none' }}>
                             {isEditing ? (
                               <input
                                 type="text"
@@ -718,10 +799,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                     .replace(/^www\./, '')}
                               </div>
                             )}
-                          </div>
+                        </td>
 
-                          {/* Ownership */}
-                          <div className="flex-shrink-0 mr-4 w-32">
+                        {/* Ownership */}
+                        <td className="flex-shrink-0 mr-4 w-32" style={{ display: 'block', padding: 0, border: 'none' }}>
                             <div className="flex flex-nowrap gap-1">
                               {!domain.is_owner &&
                                 !domain?.workspaces?.length && (
@@ -754,10 +835,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 />
                               )}
                             </div>
-                          </div>
+                        </td>
 
-                          {/* Plan Status */}
-                          <div className="flex-shrink-0 mr-16 w-16 my-sites-plan-status">
+                        {/* Plan Status */}
+                        <td className="flex-shrink-0 mr-16 w-16 my-sites-plan-status" style={{ display: 'block', padding: 0, border: 'none' }}>
                             <Tooltip
                               title={
                                 domainStatus === 'Life Time'
@@ -811,10 +892,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 {domainStatus}
                               </span>
                             </Tooltip>
-                          </div>
+                        </td>
 
-                          {/* Monitor Toggle */}
-                          <div className="flex-shrink-0 mr-8 w-20 my-sites-monitor-toggle">
+                        {/* Monitor Toggle */}
+                        <td className="flex-shrink-0 mr-8 w-20 my-sites-monitor-toggle" style={{ display: 'block', padding: 0, border: 'none' }}>
                             {(userData.isAdminOrOwnerOrSuper ||
                               domain.is_owner) && (
                               <Tooltip
@@ -846,26 +927,40 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                     monitoringStates[domain.id ?? 0] ??
                                     domain.monitor_enabled
                                       ? 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
-                                      : 'bg-gray-200 hover:bg-gray-300 focus:ring-gray-300'
+                                      : 'focus:ring-gray-300'
                                   }`}
+                                  style={
+                                    monitoringStates[domain.id ?? 0] ??
+                                    domain.monitor_enabled
+                                      ? {}
+                                      : { backgroundColor: '#E5E7EB' }
+                                  }
                                   disabled={isEditing}
                                 >
                                   <span
                                     aria-hidden="true"
-                                    className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-all duration-300 ${
+                                    className={`inline-block h-3 w-3 transform rounded-full shadow transition-all duration-300 ${
                                       monitoringStates[domain.id ?? 0] ??
                                       domain.monitor_enabled
-                                        ? 'translate-x-3'
+                                        ? 'translate-x-3 bg-white'
                                         : 'translate-x-0.5'
                                     }`}
+                                    style={
+                                      monitoringStates[domain.id ?? 0] ??
+                                      domain.monitor_enabled
+                                        ? {}
+                                        : { 
+                                            backgroundColor: '#374151'
+                                          }
+                                    }
                                   />
                                 </button>
                               </Tooltip>
                             )}
-                          </div>
+                        </td>
 
-                          {/* Status Indicator */}
-                          <div className="flex-shrink-0 mr-3 w-24 my-sites-status-indicator">
+                        {/* Status Indicator */}
+                        <td className="flex-shrink-0 mr-3 w-24 my-sites-status-indicator" style={{ display: 'block', padding: 0, border: 'none' }}>
                             {monitoringStates[domain.id ?? 0] ??
                             domain.monitor_enabled ? (
                               domain.is_currently_down !== null &&
@@ -882,12 +977,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                       }`}
                                       placement="top"
                                     >
-                                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-green-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-green-400">
+                                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg hover:shadow-xl transition-all duration-300 cursor-help border border-green-400" style={{ backgroundColor: '#178841', color: '#FFFFFF' }}>
                                         <span className="relative flex h-2 w-2 mr-2">
                                           <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-white opacity-60"></span>
                                           <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                                         </span>
-                                        <span className="text-white font-medium tracking-wide">
+                                        <span className="font-medium tracking-wide" style={{ color: '#FFFFFF' }}>
                                           ONLINE
                                         </span>
                                       </span>
@@ -980,10 +1075,10 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 </span>
                               </Tooltip>
                             )}
-                          </div>
+                        </td>
 
-                          {/* Actions Menu */}
-                          <div className="flex-shrink-0 w-56 flex items-center space-x-1 my-sites-actions">
+                        {/* Actions Menu */}
+                        <td className="flex-shrink-0 w-56 flex items-center space-x-1 my-sites-actions" style={{ display: 'flex', padding: 0, border: 'none' }}>
                             {isEditing ? (
                               <>
                                 <Tooltip title="Save changes" placement="top">
@@ -1020,7 +1115,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                           : domain.id ?? null,
                                       )
                                     }
-                                    className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                    className="p-1 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                    style={{ color: '#8D95A3' }}
                                     aria-label={`Actions for domain ${domain.url}`}
                                   >
                                     <FaCog className="w-4 h-4" />
@@ -1029,71 +1125,38 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 {openActionsMenuId === domain.id && (
                                   <>
                                     {/* Conditionally show Activate/Buy button for non-active domains */}
-                                    {domain.is_owner && (
-                                      <>
-                                        {(domainStatus === 'Trial' ||
-                                          domainStatus === 'Trial Expired') && (
-                                          <>
-                                            {activePlan !== '' && tierPlan ? (
-                                              <Tooltip
-                                                title="Activate subscription"
-                                                placement="top"
-                                              >
-                                                <button
-                                                  disabled={billingLoading}
-                                                  onClick={() =>
-                                                    handleSubscription(domain)
-                                                  }
-                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                                >
-                                                  {billingLoading
-                                                    ? 'Processing...'
-                                                    : 'Activate'}
-                                                </button>
-                                              </Tooltip>
-                                            ) : appSumoCount < codeCount ? (
-                                              <Tooltip
-                                                title="Activate with promo code"
-                                                placement="top"
-                                              >
-                                                <button
-                                                  onClick={() =>
-                                                    handleOpenActivateModal(domain)
-                                                  }
-                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                                >
-                                                  Activate
-                                                </button>
-                                              </Tooltip>
-                                            ) : (
-                                              <Tooltip
-                                                title="Buy license"
-                                                placement="top"
-                                              >
-                                                <button
-                                                  onClick={() => {
-                                                    setPaymentView(true);
-                                                    openModal();
-                                                    setOptionalDomain(
-                                                      domain.url ?? '',
-                                                    );
-                                                  }}
-                                                  className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm"
-                                                >
-                                                  Buy License
-                                                </button>
-                                              </Tooltip>
-                                            )}
-                                          </>
-                                        )}
-                                      </>
-                                    )}
+                                    {domain.is_owner &&
+                                      (domainStatus === 'Trial' ||
+                                        domainStatus === 'Trial Expired') && (
+                                        <PurchaseActionButton
+                                          isAppSumoOrg={isAppSumoOrg}
+                                          activePlan={activePlan}
+                                          tierPlan={tierPlan}
+                                          appSumoCount={appSumoCount}
+                                          codeCount={codeCount}
+                                          billingLoading={billingLoading}
+                                          onActivateSubscription={() =>
+                                            handleSubscription(domain)
+                                          }
+                                          onOpenActivateModal={() =>
+                                            handleOpenActivateModal(domain)
+                                          }
+                                          onBuyLicense={() => {
+                                            setPaymentView(true);
+                                            openModal();
+                                            setOptionalDomain(domain.url ?? '');
+                                          }}
+                                          className="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-medium rounded hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                          useTooltip
+                                        />
+                                      )}
                                     {(userData.isAdminOrOwnerOrSuper ||
                                       domain.is_owner) && (
                                       <Tooltip title="Edit domain" placement="top">
                                         <button
                                           onClick={() => handleEdit(domain)}
-                                          className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          className="p-1 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          style={{ color: '#8D95A3' }}
                                           aria-label={`Edit domain ${domain.url}`}
                                         >
                                           <FaPencilAlt className="w-4 h-4" />
@@ -1112,7 +1175,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                             setShowModal(true);
                                             setIsCancel(false);
                                           }}
-                                          className="text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          className="p-1 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 transition-all duration-200"
+                                          style={{ color: '#8D95A3' }}
                                           aria-label={`Delete domain ${domain.url}`}
                                         >
                                           <FaTrash className="w-4 h-4" />
@@ -1151,11 +1215,12 @@ const DomainTable: React.FC<DomainTableProps> = ({
                                 )}
                               </>
                             )}
-                          </div>
-                        </div>
-                      </div>
+                        </td>
+                      </tr>
                     );
                   })}
+                    </tbody>
+                  </table>
                 </div>
               </>
             )}
@@ -1176,11 +1241,16 @@ const DomainTable: React.FC<DomainTableProps> = ({
               </div>
 
               {/* Empty State Message */}
-              <div className="text-center mb-6">
+              <div
+                className="text-center mb-6"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   You currently have no sites in this list
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#656C79]">
                   {activeTab === 'all'
                     ? 'Add your first domain to get started with accessibility monitoring.'
                     : activeTab === 'active'
@@ -1196,7 +1266,11 @@ const DomainTable: React.FC<DomainTableProps> = ({
                     openModal();
                     setIsCancel(false);
                   }}
-                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+                  aria-label="Add new domain"
+                  className="inline-flex items-center px-6 py-3 text-white font-semibold rounded-lg focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-offset-4 transition-all duration-200 shadow-sm"
+                  style={{ backgroundColor: '#0052CC' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0040A0'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0052CC'}
                 >
                   Add new domain
                 </button>
@@ -1265,7 +1339,8 @@ const DomainTable: React.FC<DomainTableProps> = ({
                   refetchPaginated({ 
                     limit: paginationLimit, 
                     offset,
-                    filter: getFilterValue()
+                    filter: getFilterValue(),
+                    search: debouncedSearchTerm || undefined
                   });
                 }}
               />

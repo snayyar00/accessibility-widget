@@ -24,7 +24,12 @@ export type Organization = {
   favicon?: string
   toggle_referral_program?: boolean
   stripe_account_id?: string | null
-  agency_revenue_share_percent?: number // Platform's revenue share % (0-100), default 50
+  agency_revenue_share_percent?: number
+  smtp_host?: string | null
+  smtp_port?: number | null
+  smtp_secure?: boolean | null
+  smtp_user?: string | null
+  smtp_password?: string | null
   created_at?: string
   updated_at?: string
 }

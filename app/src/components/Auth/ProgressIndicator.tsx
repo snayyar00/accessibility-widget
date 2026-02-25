@@ -76,10 +76,13 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
                 
                 {/* Description */}
                 <div className="text-center">
-                  <p className={`step-text text-sm text-center transform
-                    ${isActive ? "active" : isCompleted ? "text-primary" : "text-gray-600"}
-                    ${isUpcoming && animDirection === 'forward' ? "opacity-50" : "translate-y-0 opacity-100"}
-                  `}>
+                  <p 
+                    className={`step-text text-sm text-center transform
+                      ${isActive ? "active" : ""}
+                      ${isUpcoming && animDirection === 'forward' ? "opacity-50" : "translate-y-0 opacity-100"}
+                    `}
+                    style={isActive ? { color: '#0052CC' } : isCompleted ? { color: '#0052CC' } : { color: '#475569' }}
+                  >
                     {t(step.description)}
                   </p>
                 </div>
@@ -108,7 +111,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path 
                         d="M9 6L15 12L9 18" 
-                        stroke={isCompleted ? "#007bff" : "#333"} 
+                        stroke={isCompleted ? "#0052CC" : "#333"} 
                         strokeWidth="2" 
                         strokeLinecap="round" 
                         strokeLinejoin="round" 
@@ -155,7 +158,10 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ steps, currentSte
                   <p className={`step-text text-sm font-medium ${isActive ? "active" : "text-gray-800"}`}>
                     {t(step.title)}
                   </p>
-                  <p className={`text-xs ${isActive || isCompleted ? "text-primary" : "text-gray-600"}`}>
+                  <p 
+                    className={`text-xs`}
+                    style={isActive || isCompleted ? { color: '#0052CC' } : { color: '#475569' }}
+                  >
                     {t(step.description)}
                   </p>
                 </div>

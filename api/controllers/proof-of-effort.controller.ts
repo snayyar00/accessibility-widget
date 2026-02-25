@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 
 import compileEmailTemplate from '../helpers/compile-email-template'
 import { EmailAttachment, sendMail } from '../services/email/email.service'
+import { getOrganizationSmtpConfig } from '../utils/organizationSmtp.utils'
 import { emailValidation } from '../validations/email.validation'
 
 interface SendToolkitEmailRequest {
@@ -33,6 +34,13 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
       })
     }
 
+    const user = (req as { user?: { current_organization_id?: number } }).user
+    const smtpConfig =
+      user?.current_organization_id != null
+        ? await getOrganizationSmtpConfig(user.current_organization_id)
+        : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+
     // Prepare template variables
     const templateVariables = {
       domain,
@@ -43,6 +51,7 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
         month: 'long',
         day: 'numeric',
       }),
+      organizationName,
     }
 
     // Compile the email template
@@ -84,8 +93,15 @@ export async function sendProofOfEffortToolkit(req: Request, res: Response) {
       name: `${domain}-proof-of-effort-toolkit.zip`,
     }
 
-    // Send the email
-    const emailSent = await sendMail(email, `Your Proof of Effort Toolkit for ${domain}`, emailHtml, [attachment], 'WebAbility Team')
+    const senderName = organizationName ? `${organizationName} Team` : 'WebAbility Team'
+    const emailSent = await sendMail(
+      email,
+      `Your Proof of Effort Toolkit for ${domain}`,
+      emailHtml,
+      [attachment],
+      senderName,
+      smtpConfig,
+    )
 
     if (emailSent) {
       res.status(200).json({

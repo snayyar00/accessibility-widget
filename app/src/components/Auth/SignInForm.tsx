@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useTranslation, Trans } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/config/store';
+import { Link, useHistory } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useMutation } from '@apollo/client';
+import { useSelector, useDispatch } from 'react-redux';
+import { GoogleLogin } from '@react-oauth/google';
 
+import { IS_LOCAL } from '@/config/env';
+import { RootState } from '@/config/store';
+import { setLastLoginMethod } from '@/features/auth/authPreferencesSlice';
+import { setAuthenticationCookie } from '@/utils/cookie';
 import FormControl from '@/components/Common/FormControl';
 import Input from '@/components/Common/Input/Input';
 import Checkbox from '@/components/Common/Input/InputCheckbox';
@@ -11,6 +16,7 @@ import Button from '@/components/Common/Button';
 import ErrorText from '@/components/Common/ErrorText';
 import Logo from '@/components/Common/Logo';
 import { ReactHookFormType } from '@/typeReactHookForm';
+import loginWithGoogleQuery from '@/queries/auth/loginWithGoogle';
 
 type Props = ReactHookFormType & {
   isSubmitting: boolean;
@@ -29,11 +35,79 @@ const SignInForm: React.FC<Props> = ({
   showForgotPasswordLink,
 }) => {
   const { t } = useTranslation();
+  const history = useHistory();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const [loginWithGoogleMutation] = useMutation(loginWithGoogleQuery);
   const organization = useSelector(
     (state: RootState) => state.organization.data,
   );
+  const lastLoginMethod = useSelector(
+    (state: RootState) => state.authPreferences?.lastLoginMethod ?? null,
+  );
   const organizationName = organization?.name || 'WebAbility';
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_KEY;
+
+  const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+    const credential = credentialResponse.credential;
+    setGoogleError(null);
+    if (!credential) {
+      setGoogleError('No credential received from Google. Please try again.');
+      return;
+    }
+    
+    // Basic validation: credential should be a JWT-like string
+    if (typeof credential !== 'string' || credential.length < 100) {
+      setGoogleError('Invalid credential format. Please try again.');
+      return;
+    }
+    
+    try {
+      const { data } = await loginWithGoogleMutation({ variables: { idToken: credential } });
+      if (data?.loginWithGoogle?.token && data?.loginWithGoogle?.url) {
+        // Validate URL before redirecting
+        try {
+          const targetUrl = new URL(data.loginWithGoogle.url);
+          if (targetUrl.protocol !== 'https:' && !IS_LOCAL) {
+            setGoogleError('Invalid redirect URL. Please contact support.');
+            return;
+          }
+        } catch {
+          setGoogleError('Invalid redirect URL. Please contact support.');
+          return;
+        }
+        
+        dispatch(setLastLoginMethod('google'));
+        setAuthenticationCookie(data.loginWithGoogle.token);
+        const currentHost = window.location.hostname;
+        const targetHost = new URL(data.loginWithGoogle.url).hostname;
+        if (currentHost !== targetHost && !IS_LOCAL) {
+          // Use fragment (#) instead of query (?) - fragment is never sent to server (avoids logs, referrers)
+          window.location.href = `${data.loginWithGoogle.url}/auth-redirect#token=${encodeURIComponent(data.loginWithGoogle.token)}`;
+        } else {
+          history.push('/');
+        }
+      } else {
+        setGoogleError('Invalid response from server. Please try again.');
+      }
+    } catch (e: unknown) {
+      const graphQLError = (e as { graphQLErrors?: Array<{ message?: string; extensions?: { code?: string } }> })?.graphQLErrors?.[0];
+      const errorCode = graphQLError?.extensions?.code;
+      const errorMessage = graphQLError?.message;
+      
+      // User-friendly error messages
+      let displayMessage = 'Google sign-in failed. Please try again.';
+      if (errorCode === 'UNAUTHENTICATED') {
+        displayMessage = errorMessage || 'Authentication failed. Please try again.';
+      } else if (errorMessage) {
+        // Use server message if available, but sanitize it
+        displayMessage = errorMessage.length > 200 ? 'An error occurred. Please try again.' : errorMessage;
+      }
+      
+      setGoogleError(displayMessage);
+    }
+  };
 
   return (
     <div className="bg-white max-w-[400px] w-[400px] mt-16">
@@ -49,41 +123,71 @@ const SignInForm: React.FC<Props> = ({
 
       <form onSubmit={onSubmit} className="mb-[24px]">
         <div>
+          <p className="text-xs text-gray-600 mb-4">
+            Fields marked with an asterisk (*) are required.
+          </p>
           <div className="mb-4 w-full block">
             <FormControl>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email <span className="text-red-600" aria-label="required">*</span>
+              </label>
               <Input
                 type="email"
-                placeholder="Email or Username"
+                id="email"
+                placeholder="Email"
                 name="email"
                 ref={register}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                autoComplete="username"
+                aria-required="true"
+                className="w-full p-3 border border-gray-300 rounded-lg"
+                onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                  e.currentTarget.style.borderColor = '#0052CC';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(0, 82, 204, 0.2)';
+                }}
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                  e.currentTarget.style.borderColor = '#d1d5db';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                aria-invalid={formErrors?.email ? 'true' : 'false'}
+                aria-describedby={formErrors?.email ? 'email-error' : undefined}
               />
               {formErrors?.email?.message && (
-                <ErrorText message={String(t(formErrors.email.message))} />
+                <ErrorText id="email-error" message={String(t(formErrors.email.message))} />
               )}
             </FormControl>
           </div>
           <div className="mb-4 w-full block">
             <FormControl>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password <span className="text-red-600" aria-label="required">*</span>
+              </label>
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
+                  id="password"
                   placeholder="Password"
                   name="password"
                   ref={register}
+                  autoComplete="current-password"
+                  aria-required="true"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                  aria-invalid={formErrors?.password ? 'true' : 'false'}
+                  aria-describedby={formErrors?.password ? 'password-error' : undefined}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-gray-600"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  style={{ color: '#6C7586' }}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
                     <svg
-                      className="h-5 w-5 text-gray-400"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      style={{ color: '#6C7586' }}
                     >
                       <path
                         strokeLinecap="round"
@@ -100,10 +204,11 @@ const SignInForm: React.FC<Props> = ({
                     </svg>
                   ) : (
                     <svg
-                      className="h-5 w-5 text-gray-400"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      style={{ color: '#6C7586' }}
                     >
                       <path
                         strokeLinecap="round"
@@ -116,7 +221,7 @@ const SignInForm: React.FC<Props> = ({
                 </button>
               </div>
               {formErrors?.password?.message && (
-                <ErrorText message={String(t(formErrors.password.message))} />
+                <ErrorText id="password-error" message={String(t(formErrors.password.message))} />
               )}
             </FormControl>
           </div>
@@ -132,20 +237,79 @@ const SignInForm: React.FC<Props> = ({
             </div>
             <Link
               to="/auth/forgot-password"
-              className="text-[14px] text-blue-600 hover:text-blue-800"
+              className="text-[14px] underline"
+              style={{ color: '#0052CC' }}
             >
               Forgot password?
             </Link>
           </div>
-          <Button
-            color="primary"
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full text-white font-medium py-3 px-4 rounded-lg transition-colors"
-            style={{ backgroundColor: '#3343ad' }}
-          >
-            {isSubmitting ? t('Common.text.please_wait') : 'Login'}
-          </Button>
+          <div className="relative">
+            <Button
+              color="primary"
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              style={{ backgroundColor: '#0052CC' }}
+            >
+              {isSubmitting ? t('Common.text.please_wait') : 'Login'}
+            </Button>
+            {lastLoginMethod === 'email' && (
+              <span
+                className="absolute -top-1 -right-1 px-2 py-0.5 text-xs font-medium rounded-full border whitespace-nowrap"
+                style={{
+                  backgroundColor: '#E0E5ED',
+                  borderColor: '#ADB9CE',
+                  color: '#4A5568',
+                }}
+                role="status"
+              >
+                {String(t('Sign_in.text.last_used'))}
+              </span>
+            )}
+          </div>
+          {googleClientId && (
+            <>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="px-2 bg-white text-sm text-gray-600">Or</span>
+                </div>
+              </div>
+              <div className="flex justify-center flex-col items-center gap-2">
+                <div className="relative inline-block">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => {
+                      setGoogleError('Google sign-in was cancelled or failed.');
+                    }}
+                    useOneTap={false}
+                    theme="outline"
+                    size="large"
+                    text="signin_with"
+                    width={352}
+                  />
+                  {lastLoginMethod === 'google' && (
+                    <span
+                      className="absolute -top-1 -right-1 px-2 py-0.5 text-xs font-medium rounded-full border whitespace-nowrap"
+                      style={{
+                        backgroundColor: '#E0E5ED',
+                        borderColor: '#ADB9CE',
+                        color: '#4A5568',
+                      }}
+                      role="status"
+                    >
+                      {String(t('Sign_in.text.last_used'))}
+                    </span>
+                  )}
+                </div>
+                {googleError && (
+                  <ErrorText message={googleError} position="center" />
+                )}
+              </div>
+            </>
+          )}
           {showForgotPasswordLink && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-center">
               <Link
@@ -173,7 +337,8 @@ const SignInForm: React.FC<Props> = ({
         New to {organizationName}?{' '}
         <Link
           to="/auth/signup"
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="font-medium underline"
+          style={{ color: '#0052CC' }}
         >
           Sign up
         </Link>

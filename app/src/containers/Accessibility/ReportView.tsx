@@ -150,12 +150,30 @@ const fullUrl = queryParams.get('domain') || '';
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   if (!url) return null;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      mode: 'cors',
+      credentials: 'omit',
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const blob = await response.blob();
     return await new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
+      reader.onloadend = () => {
+        try {
+          resolve(reader.result as string);
+        } catch (e) {
+          console.warn('Error processing image data:', e);
+          resolve(null);
+        }
+      };
+      reader.onerror = () => {
+        console.warn('FileReader error for image:', url);
+        resolve(null); // Resolve with null instead of rejecting
+      };
       reader.readAsDataURL(blob);
     });
   } catch (e) {
@@ -455,7 +473,7 @@ const ReportView: React.FC = () => {
           <span className="hidden sm:inline">
             <br />
           </span>
-          Get a detailed report on WCAG 2.1 violations and actionable steps to
+          Get a detailed report on WCAG 2.1 and WCAG 2.2 violations and actionable steps to
           protect your business.
         </p>
         {/* Trust indicators */}
@@ -463,7 +481,7 @@ const ReportView: React.FC = () => {
           <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
             <Check className="w-5 h-5 text-green-400" />
             <span className="font-medium text-blue-100">
-              WCAG 2.1 AA Compliant
+              WCAG 2.1,2.2 AA Compliant
             </span>
           </div>
           <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
@@ -1048,18 +1066,38 @@ const IssuesSummary: React.FC<IssuesSummaryProps> = ({
 };
 
 const ScanningPreview: React.FC<{ siteImg: string }> = ({ siteImg }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageSrc, setImageSrc] = useState(siteImg);
+
   // Only render if siteImg is available
   if (!siteImg) {
     return null;
   }
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.warn('Failed to load screenshot image:', siteImg);
+    setImageError(true);
+    // Prevent the error from bubbling up as unhandled
+    e.preventDefault();
+  };
+
   return (
     <div className="relative w-full rounded-lg overflow-hidden bg-gray-100 mb-8">
-      <img
-        src={siteImg}
-        alt="Screenshot of scanned website"
-        className="w-full h-auto"
-      />
+      {!imageError ? (
+        <img
+          src={imageSrc}
+          alt="Screenshot of scanned website"
+          className="w-full h-auto"
+          onError={handleImageError}
+        />
+      ) : (
+        <div className="w-full h-64 flex items-center justify-center bg-gray-200 text-gray-500">
+          <div className="text-center">
+            <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Screenshot unavailable</p>
+          </div>
+        </div>
+      )}
 
       {/* Scanning line animation */}
       <motion.div
@@ -1538,7 +1576,8 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             </select>
             <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
               <svg
-                className="w-4 h-4 text-gray-400"
+                className="w-4 h-4"
+                style={{ color: '#767676' }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

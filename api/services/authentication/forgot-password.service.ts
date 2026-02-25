@@ -8,6 +8,7 @@ import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { emailValidation } from '../../validations/email.validation'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { sendMail } from '../email/email.service'
 
 export async function forgotPasswordUser(email: string, organization: Organization): Promise<boolean> {
@@ -45,15 +46,18 @@ export async function forgotPasswordUser(email: string, organization: Organizati
       await updateUserTokenById(session.id, token)
     }
 
+    const smtpConfig = organization.id ? await getOrganizationSmtpConfig(organization.id) : null
+    const organizationName = smtpConfig?.organizationName ?? organization?.name ?? 'WebAbility'
+
     const template = await compileEmailTemplate({
       fileName: 'forgotPassword.mjml',
       data: {
         name: session.name,
         url: `${currentUrl}/auth/reset-password?&token=${token}`,
+        organizationName,
       },
     })
-
-    await sendMail(session.email, 'Reset Password from WebAbility', template, undefined, 'WebAbility Support')
+    await sendMail(session.email, 'Reset Password from WebAbility', template, undefined, 'WebAbility Support', smtpConfig)
 
     return true
   } catch (error) {

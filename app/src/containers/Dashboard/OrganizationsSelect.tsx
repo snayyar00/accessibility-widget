@@ -96,6 +96,8 @@ const OrganizationsSelect: React.FC = () => {
   return (
     <FormControl fullWidth>
       <Select
+        aria-label="Current organization"
+        inputProps={{ 'aria-label': 'Current organization' }}
         disabled={
           organizationsLoading || changeOrganizationLoading || profileLoading
         }

@@ -21,6 +21,7 @@
     "@mui/styled-engine-sc": "^6.0.0-alpha.12",
     "@mui/x-data-grid": "^5.17.26",
     "@radix-ui/react-select": "^2.2.5",
+    "@react-oauth/google": "^0.13.4",
     "@reduxjs/toolkit": "^1.9.7",
     "@sentry/react": "^5.27.6",
     "@sentry/tracing": "^5.27.6",

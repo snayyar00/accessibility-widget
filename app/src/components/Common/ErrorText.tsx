@@ -4,16 +4,21 @@ import classNames from 'classnames';
 interface Props {
   message?: string;
   position?: string;
+  id?: string;
   [key: string]: unknown;
 }
 
-const ErrorText: React.FC<Props> = ({ message = "", position = "left", ...props }) => (
+const ErrorText: React.FC<Props> = ({ message = "", position = "left", id, ...props }) => (
   <p
-    className={classNames('text-[12px] text-red mt-[5px] mb-[7px] block', {
+    id={id}
+    role="alert"
+    aria-live="assertive"
+    className={classNames('text-[12px] mt-[5px] mb-[7px] block', {
       'text-left': position === 'left',
       'text-center': position === 'center',
       'text-right': position === 'right'
     })}
+    style={{ color: '#E30661', backgroundColor: '#F9FAFB' }}
     {...props}
   >
     {message}

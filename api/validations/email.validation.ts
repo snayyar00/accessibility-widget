@@ -9,6 +9,10 @@ export function emailValidation(email: string | undefined, maxLength = 254): tru
     email: {
       type: 'email',
       max: maxLength,
+      messages: {
+        email: 'Please enter a valid email address (e.g., user@example.com)',
+        stringMax: `Email address must be no more than ${maxLength} characters`,
+      },
       custom: (value: string) => {
         if (!validateEmailNotAlias(value)) {
           return [{ type: 'custom', message: 'Invalid email address' }]

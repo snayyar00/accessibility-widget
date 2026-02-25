@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { LuCircleDollarSign } from 'react-icons/lu';
 import { PiNotebookBold, PiBookOpenBold } from 'react-icons/pi';
-import { MdLightbulbOutline } from 'react-icons/md';
-import { useState, useEffect, useRef } from 'react';
+import { MdLightbulbOutline, MdAnalytics } from 'react-icons/md';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { handleBilling } from '@/containers/Profile/BillingPortalLink';
 import { CircularProgress } from '@mui/material';
 import { baseColors } from '@/config/colors';
@@ -126,6 +126,9 @@ const Sidebar = () => {
   }, [isMobile, isOpen, lockedOpen, dispatch]);
 
   const { data: userData } = useSelector((state: RootState) => state.user);
+  const allowedOrgId = Number(process.env.REACT_APP_CURRENT_ORG || '1');
+  const showServiceRequests = userData?.current_organization_id === allowedOrgId;
+  const showAdminControls = Boolean(userData?.isAdminOrOwnerOrSuper);
 
   // Helper function to check if a route is active
   const isActiveRoute = (path: string) => {
@@ -142,6 +145,60 @@ const Sidebar = () => {
     }
 
     return false;
+  };
+
+  const navItems = useMemo(
+    () => {
+      const items = [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'installation', label: 'Installation' },
+        { id: 'customization', label: 'Customization' },
+        { id: 'my-sites', label: 'My sites' },
+        { id: 'scanner', label: 'Scanner' },
+        { id: 'issues', label: 'Issues' },
+        { id: 'domain-analyses', label: 'Auto-Fixes' },
+        { id: 'ai-statement', label: 'AI statement' },
+        { id: 'proof-of-effort', label: 'Proof of effort' },
+      ];
+
+      if (showServiceRequests) {
+        items.push({ id: 'service-requests', label: 'Service Requests' });
+      }
+
+      items.push({ id: 'ai-insights', label: 'AI insights' });
+
+      if (showAdminControls) {
+        items.push(
+          { id: 'users', label: 'Users' },
+          { id: 'workspaces', label: 'Workspaces' },
+          { id: 'organization', label: 'Organization' },
+        );
+      }
+
+      return items;
+    },
+    [showAdminControls, showServiceRequests],
+  );
+
+  const navItemPositions = useMemo(
+    () =>
+      navItems.reduce<
+        Record<string, { label: string; index: number; total: number }>
+      >((acc, item, idx) => {
+        acc[item.id] = {
+          label: item.label,
+          index: idx + 1,
+          total: navItems.length,
+        };
+        return acc;
+      }, {}),
+    [navItems],
+  );
+
+  const buildAriaLabel = (id: string) => {
+    const meta = navItemPositions[id];
+    if (!meta) return undefined;
+    return `${meta.label}. Item ${meta.index} of ${meta.total}`;
   };
   const organization = useSelector(
     (state: RootState) => state.organization.data,
@@ -206,7 +263,7 @@ const Sidebar = () => {
             <div className="p-4">
               <button
                 onClick={handleRedirect}
-                className="font-medium rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md w-full py-2 px-4 space-x-2"
+                className="font-medium rounded-lg flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md w-full py-2 px-4 space-x-2 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
                 style={{
                   backgroundColor: baseColors.black,
                   color: baseColors.white,
@@ -224,17 +281,18 @@ const Sidebar = () => {
             </div>
 
             {/* Navigation Section */}
-            <div className="flex-grow px-4">
-              <nav className="space-y-2">
+            <div className="flex-grow px-4 overflow-y-auto min-h-0">
+              <nav className="space-y-2" aria-label="Side">
                 {/* Dashboard */}
                 <NavLink
                   to="/dashboard"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('dashboard')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/dashboard')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#d0d5f9] text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#d0d5f9] text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -245,7 +303,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/dashboard')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -254,7 +312,7 @@ const Sidebar = () => {
                     <span
                       className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/dashboard')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -267,11 +325,12 @@ const Sidebar = () => {
                 <NavLink
                   to="/installation"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('installation')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/installation')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#d0d5f9] text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#d0d5f9] text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -282,7 +341,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/installation')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -291,7 +350,7 @@ const Sidebar = () => {
                     <span
                       className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/installation')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -304,13 +363,14 @@ const Sidebar = () => {
                 <NavLink
                   to="/widget-selection"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('customization')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/widget-selection') ||
                     isActiveRoute('/customize-widget') ||
                     isActiveRoute('/old-widget')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#d0d5f9] text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#d0d5f9] text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -323,7 +383,7 @@ const Sidebar = () => {
                         isActiveRoute('/widget-selection') ||
                         isActiveRoute('/customize-widget') ||
                         isActiveRoute('/old-widget')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -334,7 +394,7 @@ const Sidebar = () => {
                         isActiveRoute('/widget-selection') ||
                         isActiveRoute('/customize-widget') ||
                         isActiveRoute('/old-widget')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -347,11 +407,12 @@ const Sidebar = () => {
                 <NavLink
                   to="/add-domain"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('my-sites')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/add-domain')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -362,7 +423,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/add-domain')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -371,7 +432,7 @@ const Sidebar = () => {
                     <span
                       className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/add-domain')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -384,11 +445,12 @@ const Sidebar = () => {
                 <NavLink
                   to="/scanner"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('scanner')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/scanner')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -399,7 +461,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/scanner')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -408,7 +470,7 @@ const Sidebar = () => {
                     <span
                       className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/scanner')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -421,11 +483,12 @@ const Sidebar = () => {
                 <NavLink
                   to="/problem-reports"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('issues')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/problem-reports')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -436,7 +499,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/problem-reports')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -445,7 +508,7 @@ const Sidebar = () => {
                     <span
                       className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/problem-reports')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -454,15 +517,54 @@ const Sidebar = () => {
                   )}
                 </NavLink>
 
+                {/* Auto-Fixes */}
+                <NavLink
+                  to="/domain-analyses"
+                  onClick={closeSidebar}
+                  aria-label={buildAriaLabel('domain-analyses')}
+                  className={`flex items-center rounded-lg transition-all duration-200 ${
+                    isActiveRoute('/domain-analyses')
+                      ? isCollapsed
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
+                      : isCollapsed
+                      ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
+                      : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <MdAnalytics
+                      size={24}
+                      className={
+                        isActiveRoute('/domain-analyses')
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                  {!isCollapsed && (
+                    <span
+                      className={`text-sm whitespace-nowrap ${
+                        isActiveRoute('/domain-analyses')
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }`}
+                    >
+                      Auto-Fixes
+                    </span>
+                  )}
+                </NavLink>
+
                 {/* AI Statement */}
                 <NavLink
                   to="/statement-generator"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('ai-statement')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/statement-generator')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -473,7 +575,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/statement-generator')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -482,7 +584,7 @@ const Sidebar = () => {
                     <span
                       className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/statement-generator')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -491,15 +593,16 @@ const Sidebar = () => {
                   )}
                 </NavLink>
 
-                {/* Proof of effort */}
+                {/* Legal resources */}
                 <NavLink
                   to="/proof-of-effort-toolkit"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('proof-of-effort')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/proof-of-effort-toolkit')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -510,7 +613,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/proof-of-effort-toolkit')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -519,26 +622,26 @@ const Sidebar = () => {
                     <span
                       className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/proof-of-effort-toolkit')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
-                      Proof of effort
+                      Legal resources
                     </span>
                   )}
                 </NavLink>
 
                 {/* Service Requests - Only show for organization ID 1 or 87 */}
-                {(userData?.current_organization_id === 1 ||
-                  userData?.current_organization_id === 87) && (
+                {showServiceRequests && (
                   <NavLink
                     to="/service-requests"
                     onClick={closeSidebar}
+                    aria-label={buildAriaLabel('service-requests')}
                     className={`flex items-center rounded-lg transition-all duration-200 ${
                       isActiveRoute('/service-requests')
                         ? isCollapsed
-                          ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                         : isCollapsed
                         ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                         : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -549,7 +652,7 @@ const Sidebar = () => {
                         size={24}
                         className={
                           isActiveRoute('/service-requests')
-                            ? 'text-[#445AE7]'
+                            ? 'text-[#E4F2FF]'
                             : 'text-[#656565]'
                         }
                       />
@@ -558,7 +661,7 @@ const Sidebar = () => {
                       <span
                         className={`text-sm whitespace-nowrap ${
                           isActiveRoute('/service-requests')
-                            ? 'text-[#445AE7]'
+                            ? 'text-[#E4F2FF]'
                             : 'text-[#656565]'
                         }`}
                       >
@@ -572,11 +675,12 @@ const Sidebar = () => {
                 <NavLink
                   to="/ai-insights"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('ai-insights')}
                   className={`flex items-center rounded-lg transition-all duration-200 ${
                     isActiveRoute('/ai-insights')
                       ? isCollapsed
-                        ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                        : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : isCollapsed
                       ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                       : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -587,7 +691,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/ai-insights')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -596,7 +700,7 @@ const Sidebar = () => {
                     <span
                       className={`text-sm whitespace-nowrap ${
                         isActiveRoute('/ai-insights')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }`}
                     >
@@ -606,17 +710,18 @@ const Sidebar = () => {
                 </NavLink>
 
                 {/* Admin Controls - Only visible for admin/owner roles */}
-                {userData?.isAdminOrOwnerOrSuper && (
+                {showAdminControls && (
                   <>
                     {/* Users Management */}
                     <NavLink
                       to="/users"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('users')}
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/users')
                           ? isCollapsed
-                            ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                            : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                          ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : isCollapsed
                           ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                           : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -627,7 +732,7 @@ const Sidebar = () => {
                           size={24}
                           className={
                             isActiveRoute('/users')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }
                         />
@@ -636,7 +741,7 @@ const Sidebar = () => {
                         <span
                           className={`text-sm whitespace-nowrap ${
                             isActiveRoute('/users')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }`}
                         >
@@ -649,11 +754,12 @@ const Sidebar = () => {
                     <NavLink
                       to="/workspaces"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('workspaces')}
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/workspaces')
                           ? isCollapsed
-                            ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                            : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                          ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : isCollapsed
                           ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                           : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -664,7 +770,7 @@ const Sidebar = () => {
                           size={24}
                           className={
                             isActiveRoute('/workspaces')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }
                         />
@@ -673,7 +779,7 @@ const Sidebar = () => {
                         <span
                           className={`text-sm whitespace-nowrap ${
                             isActiveRoute('/workspaces')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }`}
                         >
@@ -686,11 +792,12 @@ const Sidebar = () => {
                     <NavLink
                       to="/organization"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('organization')}
                       className={`flex items-center rounded-lg transition-all duration-200 ${
                         isActiveRoute('/organization')
                           ? isCollapsed
-                            ? 'w-12 h-12 bg-[#D0D5F9]  text-[#445AE7] font-medium justify-center mx-auto'
-                            : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                          ? 'w-12 h-12 bg-[#0052CC] text-[#E4F2FF] font-medium justify-center mx-auto'
+                          : 'w-full h-12 space-x-3 justify-start px-3 py-2 bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : isCollapsed
                           ? 'w-12 h-12 justify-center mx-auto text-black hover:bg-gray-50 hover:text-gray-900'
                           : 'w-full h-12 space-x-3 justify-start px-3 py-2 text-black hover:bg-gray-50 hover:text-gray-900'
@@ -701,7 +808,7 @@ const Sidebar = () => {
                           size={24}
                           className={
                             isActiveRoute('/organization')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }
                         />
@@ -710,7 +817,7 @@ const Sidebar = () => {
                         <span
                           className={`text-sm whitespace-nowrap ${
                             isActiveRoute('/organization')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }`}
                         >
@@ -754,22 +861,24 @@ const Sidebar = () => {
             <div className="pt-4 mb-4">
               <button
                 onClick={handleRedirect}
-                className="bg-[#000000] hover:bg-[#000000] text-white font-medium rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md w-12 h-12 mx-auto"
+                className="bg-[#000000] hover:bg-[#000000] text-white font-medium rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md w-12 h-12 mx-auto focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Add new domain"
               >
                 <Plus size={24} className="text-white" />
               </button>
             </div>
 
             {/* Navigation Section */}
-            <div className="flex-grow">
-              <nav className="space-y-2">
+            <div className="flex-grow overflow-y-auto min-h-0">
+              <nav className="space-y-2" aria-label="Side">
                 {/* Dashboard */}
                 <NavLink
                   to="/dashboard"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('dashboard')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/dashboard')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -778,7 +887,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/dashboard')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -789,9 +898,10 @@ const Sidebar = () => {
                 <NavLink
                   to="/installation"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('installation')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/installation')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -800,7 +910,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/installation')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -811,11 +921,12 @@ const Sidebar = () => {
                 <NavLink
                   to="/widget-selection"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('customization')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/widget-selection') ||
                     isActiveRoute('/customize-widget') ||
                     isActiveRoute('/old-widget')
-                      ? 'bg-[#D0D5F9] text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -826,7 +937,7 @@ const Sidebar = () => {
                         isActiveRoute('/widget-selection') ||
                         isActiveRoute('/customize-widget') ||
                         isActiveRoute('/old-widget')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -837,9 +948,10 @@ const Sidebar = () => {
                 <NavLink
                   to="/add-domain"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('my-sites')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/add-domain')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -848,7 +960,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/add-domain')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -859,9 +971,10 @@ const Sidebar = () => {
                 <NavLink
                   to="/scanner"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('scanner')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/scanner')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -870,7 +983,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/scanner')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -881,9 +994,10 @@ const Sidebar = () => {
                 <NavLink
                   to="/problem-reports"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('issues')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/problem-reports')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -892,7 +1006,30 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/problem-reports')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
+                          : 'text-[#656565]'
+                      }
+                    />
+                  </div>
+                </NavLink>
+
+                {/* Auto-Fixes */}
+                <NavLink
+                  to="/domain-analyses"
+                  onClick={closeSidebar}
+                  aria-label={buildAriaLabel('domain-analyses')}
+                  className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
+                    isActiveRoute('/domain-analyses')
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
+                      : 'text-black hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <MdAnalytics
+                      size={24}
+                      className={
+                        isActiveRoute('/domain-analyses')
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -903,9 +1040,10 @@ const Sidebar = () => {
                 <NavLink
                   to="/statement-generator"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('ai-statement')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/statement-generator')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -914,20 +1052,21 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/statement-generator')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
                   </div>
                 </NavLink>
 
-                {/* Proof of effort */}
+                {/* Legal resources */}
                 <NavLink
                   to="/proof-of-effort-toolkit"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('proof-of-effort')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/proof-of-effort-toolkit')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -936,22 +1075,22 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/proof-of-effort-toolkit')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
                   </div>
                 </NavLink>
 
-                {/* Service Requests - Only show for organization ID 1 or 87 */}
-                {(userData?.current_organization_id === 1 ||
-                  userData?.current_organization_id === 87) && (
+                {/* Service Requests - Only show for allowed organization ID */}
+                {showServiceRequests && (
                   <NavLink
                     to="/service-requests"
                     onClick={closeSidebar}
+                    aria-label={buildAriaLabel('service-requests')}
                     className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                       isActiveRoute('/service-requests')
-                        ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                         : 'text-black hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
@@ -960,7 +1099,7 @@ const Sidebar = () => {
                         size={24}
                         className={
                           isActiveRoute('/service-requests')
-                            ? 'text-[#445AE7]'
+                            ? 'text-[#E4F2FF]'
                             : 'text-[#656565]'
                         }
                       />
@@ -972,9 +1111,10 @@ const Sidebar = () => {
                 <NavLink
                   to="/ai-insights"
                   onClick={closeSidebar}
+                  aria-label={buildAriaLabel('ai-insights')}
                   className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                     isActiveRoute('/ai-insights')
-                      ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                      ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                       : 'text-black hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
@@ -983,7 +1123,7 @@ const Sidebar = () => {
                       size={24}
                       className={
                         isActiveRoute('/ai-insights')
-                          ? 'text-[#445AE7]'
+                          ? 'text-[#E4F2FF]'
                           : 'text-[#656565]'
                       }
                     />
@@ -1013,15 +1153,16 @@ const Sidebar = () => {
                 </NavLink> */}
 
                 {/* Admin Controls - Only visible for admin/owner roles */}
-                {userData?.isAdminOrOwnerOrSuper && (
+                {showAdminControls && (
                   <>
                     {/* Users Management */}
                     <NavLink
                       to="/users"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('users')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/users')
-                          ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : 'text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
@@ -1030,7 +1171,7 @@ const Sidebar = () => {
                           size={24}
                           className={
                             isActiveRoute('/users')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }
                         />
@@ -1041,9 +1182,10 @@ const Sidebar = () => {
                     <NavLink
                       to="/workspaces"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('workspaces')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/workspaces')
-                          ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : 'text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
@@ -1052,7 +1194,7 @@ const Sidebar = () => {
                           size={24}
                           className={
                             isActiveRoute('/workspaces')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }
                         />
@@ -1063,9 +1205,10 @@ const Sidebar = () => {
                     <NavLink
                       to="/organization"
                       onClick={closeSidebar}
+                      aria-label={buildAriaLabel('organization')}
                       className={`flex items-center rounded-lg transition-all duration-200 w-12 h-12 justify-center mx-auto ${
                         isActiveRoute('/organization')
-                          ? 'bg-[#D0D5F9]  text-[#445AE7] font-medium'
+                        ? 'bg-[#0052CC] text-[#E4F2FF] font-medium'
                           : 'text-black hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
@@ -1074,7 +1217,7 @@ const Sidebar = () => {
                           size={24}
                           className={
                             isActiveRoute('/organization')
-                              ? 'text-[#445AE7]'
+                              ? 'text-[#E4F2FF]'
                               : 'text-[#656565]'
                           }
                         />
@@ -1093,12 +1236,14 @@ const Sidebar = () => {
                     href="https://webability.getrewardful.com/signup"
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label="Join Referral Program"
                     className="w-12 h-12 bg-white border border-[#C5D9E0] rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md mx-auto hover:bg-gray-50"
                   >
                     <div className="w-6 h-6 flex items-center justify-center">
                       <LuCircleDollarSign
                         size={24}
                         className="text-[#94BFFF]"
+                        aria-hidden="true"
                       />
                     </div>
                   </a>

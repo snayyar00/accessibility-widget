@@ -19,21 +19,7 @@
     <mj-section background-color="#1565C0" padding="32px 24px">
       <mj-column width="100%">
         <mj-text align="center">
-          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;">
-            <!-- Gmail-optimized logo with multiple fallbacks -->
-            <img 
-              src="{{logoUrl}}" 
-              alt="WebAbility - Making the web accessible for everyone" 
-              style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" 
-              width="150"
-              border="0"
-              onerror="this.onerror=null; this.src='{{fallbackLogoUrl}}'; if(this.onerror) { this.onerror=null; this.src='{{altFallbackUrl}}'; }"
-            />
-            <!-- Gmail-specific fallback using conditional comments -->
-            <!--[if mso]>
-            <img src="{{altFallbackUrl}}" alt="WebAbility Logo" style="width: 150px; height: 40px; display: block; margin: 0 auto;" width="150" height="40" />
-            <![endif]-->
-          </div>
+          <div style="background-color: #ffffff; border-radius: 8px; padding: 12px; display: inline-block; width: 200px;"><img src="{{logoUrl}}" alt="{{organizationName}}" style="width: 150px; max-width: 150px; height: auto; display: block; margin: 0 auto; border: 0; outline: none; text-decoration: none;" width="150" border="0" /></div>
         </mj-text>
       </mj-column>
     </mj-section>
@@ -64,7 +50,7 @@
             <span style="color: #374151; font-size: 16px;">
               <strong>What:</strong> Descriptive text that screen readers can announce for images.<br>
               <strong>Why:</strong> Blind and visually impaired users need descriptions to understand visual content.<br>
-              <strong>How WebAbility helps:</strong> We identify missing alt-text and suggest descriptions automatically.
+              <strong>How {{organizationName}} helps:</strong> We identify missing alt-text and suggest descriptions automatically.
             </span>
           </div>
         </mj-text>
@@ -76,7 +62,7 @@
             <span style="color: #374151; font-size: 16px;">
               <strong>What:</strong> Using H1, H2, H3 tags in logical order (like a table of contents).<br>
               <strong>Why:</strong> Screen reader users navigate pages by jumping between headings.<br>
-              <strong>How WebAbility helps:</strong> We scan your heading hierarchy and flag structure issues.
+              <strong>How {{organizationName}} helps:</strong> We scan your heading hierarchy and flag structure issues.
             </span>
           </div>
         </mj-text>
@@ -88,7 +74,7 @@
             <span style="color: #374151; font-size: 16px;">
               <strong>What:</strong> Sufficient contrast between text and background colors.<br>
               <strong>Why:</strong> Users with low vision need high contrast to read content easily.<br>
-              <strong>How WebAbility helps:</strong> We check all text-background combinations and suggest improvements.
+              <strong>How {{organizationName}} helps:</strong> We check all text-background combinations and suggest improvements.
             </span>
           </div>
         </mj-text>
@@ -147,11 +133,11 @@
     <mj-section background-color="#f9fafb" padding="32px 24px">
       <mj-column>
         <mj-text css-class="footer-text" align="center">
-          <strong>WebAbility</strong><br>
+          <strong>{{organizationName}}</strong><br>
           Making the web accessible for everyone
         </mj-text>
         <mj-text css-class="footer-text" align="center" padding="16px 0 0">
-          © {{year}} WebAbility. All rights reserved.
+          © {{year}} {{organizationName}}. All rights reserved.
         </mj-text>
         <mj-text css-class="footer-text" align="center" font-size="12px" padding="16px 0 0">
           You're mastering accessibility fundamentals - keep up the great work!

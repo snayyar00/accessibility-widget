@@ -8,6 +8,7 @@ import { findUser, updateUser } from '../../repository/user.repository'
 import { ApolloError, UserInputError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { changePasswordValidation } from '../../validations/authenticate.validation'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { sendMail } from '../email/email.service'
 
 dayjs.extend(utc)
@@ -43,15 +44,21 @@ export async function changePasswordUser(userId: number, currentPassword: string
 
     const newToken = sign({ email: user.email, name: user.name })
 
+    const smtpConfig =
+      user.current_organization_id != null
+        ? await getOrganizationSmtpConfig(user.current_organization_id)
+        : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+
     const template = await compileEmailTemplate({
       fileName: 'changePassword.mjml',
       data: {
         name: user.name,
         date: dayjs().format('dddd, MMMM D, YYYY h:mm A'),
+        organizationName,
       },
     })
-
-    await sendMail(user.email, 'Change Password from WebAbility', template, undefined, 'WebAbility Support')
+    await sendMail(user.email, 'Change Password from WebAbility', template, undefined, 'WebAbility Support', smtpConfig)
     return { token: newToken }
   } catch (error) {
     logger.error(error)

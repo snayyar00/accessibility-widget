@@ -21,16 +21,23 @@ export async function validateCoupon(req: Request & { user: UserLogined }, res: 
       return res.json({ valid: false, error: 'Promo Expired' })
     }
 
-    if (!APP_SUMO_COUPON_IDS.includes(promoCodeData.coupon.id)) {
-      return res.json({ valid: false, error: 'Invalid promo code Not from App Sumo' })
+    // Check if this is an AppSumo coupon
+    const isAppSumoCoupon = APP_SUMO_COUPON_IDS.includes(promoCodeData.coupon.id)
+
+    if (isAppSumoCoupon) {
+      // Return valid with appSumo flag
+      if (promoCodeData.coupon.percent_off) {
+        return res.json({ valid: true, discount: Number(promoCodeData.coupon.percent_off) / 100, id: promoCodeData.coupon.id, percent: true, appSumo: true })
+      }
+      return res.json({ valid: true, discount: Number(promoCodeData.coupon.amount_off) / 100, id: promoCodeData.coupon.id, percent: false, appSumo: true })
     }
 
+    // Handle regular promo coupons (including retention coupon)
     if (promoCodeData.coupon.percent_off) {
-      const coupon = await stripe.coupons.retrieve(promoCodeData.coupon.id, { expand: ['applies_to'] })
-      const product = await stripe.products.retrieve(coupon.applies_to.products[0])
-      return res.json({ valid: true, discount: Number(promoCodeData.coupon.percent_off) / 100, id: promoCodeData.coupon.id, percent: true, planName: product.name.toLowerCase() })
+      return res.json({ valid: true, discount: Number(promoCodeData.coupon.percent_off) / 100, id: promoCodeData.coupon.id, percent: true, appSumo: false })
     }
-    return res.json({ valid: true, discount: Number(promoCodeData.coupon.amount_off) / 100, id: promoCodeData.coupon.id, percent: false })
+    
+    return res.json({ valid: true, discount: Number(promoCodeData.coupon.amount_off) / 100, id: promoCodeData.coupon.id, percent: false, appSumo: false })
   } catch (error) {
     console.log('err', error)
     res.status(500).json({ error: error.message })

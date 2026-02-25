@@ -598,15 +598,15 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         'header-icons': colors.colorGroup1 || '#d0d5f8',
         'numbered-buttons': colors.colorGroup1 || '#d0d5f8',
 
-        // Color group 2: #465ce4 - Primary accent
-        'toggle-icon-color': colors.colorGroup2 || '#465ce4',
-        'report-issue-button-background': colors.colorGroup2 || '#465ce4',
-        'selected-items': colors.colorGroup2 || '#465ce4',
-        'footer-background': colors.colorGroup2 || '#465ce4',
-        'all-hover-states': colors.colorGroup2 || '#465ce4',
-        'selected-language': colors.colorGroup2 || '#465ce4',
-        'header-buttons-border': colors.colorGroup2 || '#465ce4',
-        'all-border-lines': colors.colorGroup2 || '#465ce4',
+        // Color group 2: #6678f0 - Primary accent
+        'toggle-icon-color': colors.colorGroup2 || '#6678f0',
+        'report-issue-button-background': colors.colorGroup2 || '#6678f0',
+        'selected-items': colors.colorGroup2 || '#6678f0',
+        'footer-background': colors.colorGroup2 || '#6678f0',
+        'all-hover-states': colors.colorGroup2 || '#6678f0',
+        'selected-language': colors.colorGroup2 || '#6678f0',
+        'header-buttons-border': colors.colorGroup2 || '#6678f0',
+        'all-border-lines': colors.colorGroup2 || '#6678f0',
 
         // Color group 3: #232e72 - Mid-tone background
         'report-issue-textbox-background': colors.colorGroup3 || '#232e72',
@@ -656,8 +656,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         // Color group 4: #232e72 - Footer background (same as group1)
         'footer-background': colors.colorGroup4 || '#232e72',
 
-        // Color group 5: #465ce4 - Header button borders
-        'header-buttons-border': colors.colorGroup5 || '#465ce4',
+        // Color group 5: #6577ec - Header button borders
+        'header-buttons-border': colors.colorGroup5 || '#6577ec',
 
         // Color group 6: #ffffff - White backgrounds
         'widget-background': colors.colorGroup6 || '#ffffff',
@@ -824,6 +824,110 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           : 'none';
       }
     });
+
+    // Hide empty section cards when all their profiles are turned off
+    const hasAccessibilityProfiles =
+      toggles.motorImpaired ||
+      toggles.blind ||
+      toggles.colorBlind ||
+      toggles.dyslexia ||
+      toggles.visuallyImpaired ||
+      toggles.cognitiveAndLearning ||
+      toggles.seizureAndEpileptic ||
+      toggles.adhd;
+
+    const hasContentAdjustments =
+      toggles.fontSize ||
+      toggles.highlightTitle ||
+      toggles.highlightLinks ||
+      toggles.dyslexiaFont ||
+      toggles.letterSpacing ||
+      toggles.lineHeight ||
+      toggles.fontWeight;
+
+    const hasColorAdjustments =
+      toggles.darkContrast ||
+      toggles.lightContrast ||
+      toggles.highContrast ||
+      toggles.highSaturation ||
+      toggles.lowSaturation ||
+      toggles.monochrome ||
+      toggles.textColor ||
+      toggles.titleColor ||
+      toggles.backgroundColor;
+
+    const hasTools =
+      toggles.screenReader ||
+      toggles.readingGuide ||
+      toggles.stopAnimations ||
+      toggles.bigCursor ||
+      toggles.voiceNavigation ||
+      toggles.keyboardNavigation ||
+      toggles.pageStructure ||
+      toggles.darkMode;
+
+    const sectionVisibility: Array<{ match: string; visible: boolean }> = [
+      { match: 'Accessibility Profiles', visible: hasAccessibilityProfiles },
+      { match: 'Content Adjustments', visible: hasContentAdjustments },
+      { match: 'Color Adjustments', visible: hasColorAdjustments },
+      { match: 'Tools', visible: hasTools },
+    ];
+
+    // Hide section cards by title
+    const cards = queryAllInWidget(iframeDoc, '.asw-card');
+    cards.forEach((card: Element) => {
+      const titleEl = card.querySelector('.asw-card-title');
+      const titleText = titleEl?.textContent?.trim();
+      if (titleText) {
+        for (const { match, visible } of sectionVisibility) {
+          if (titleText.includes(match)) {
+            (card as HTMLElement).style.display = visible ? '' : 'none';
+            break;
+          }
+        }
+      }
+    });
+
+    // Fallback: show/hide Accessibility Profiles section when card structure differs (e.g. collapsible header)
+    // Must run for BOTH states so we correctly show when profiles are enabled (undo any previous hide)
+    const setAccessibilityProfilesSectionVisibility = (visible: boolean) => {
+      const display = visible ? '' : 'none';
+      // Try via profile-grid's parent section (grid is inside the Accessibility Profiles card)
+      const profileGrid = queryInWidget(iframeDoc, '.profile-grid');
+      if (profileGrid) {
+        let sectionParent: Element | null =
+          profileGrid.closest('.asw-card') ||
+          profileGrid.closest('[class*="asw-section"]') ||
+          profileGrid.closest('[class*="asw-collapsible"]');
+        if (!sectionParent) {
+          sectionParent =
+            profileGrid.parentElement?.closest('.asw-card') ||
+            profileGrid.parentElement?.parentElement ||
+            profileGrid.parentElement;
+        }
+        if (sectionParent) {
+          (sectionParent as HTMLElement).style.display = display;
+        }
+      }
+      // Find element containing "Accessibility Profiles" and set its section parent visibility
+      const menuElements = queryAllInWidget(iframeDoc, '.asw-menu *');
+      for (const el of menuElements) {
+        const text = el.textContent?.trim();
+        if (text?.includes('Accessibility Profiles') && text.length < 50) {
+          const sectionParent =
+            el.closest('.asw-card') ||
+            el.closest('[class*="section"]') ||
+            el.closest('[class*="collapsible"]') ||
+            el.parentElement?.closest('.asw-card') ||
+            el.parentElement?.parentElement?.closest('.asw-card');
+          if (sectionParent) {
+            (sectionParent as HTMLElement).style.display = display;
+            break;
+          }
+        }
+      }
+    };
+    setAccessibilityProfilesSectionVisibility(hasAccessibilityProfiles);
   };
 
   // Generate widget HTML for iframe
@@ -1416,12 +1520,36 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       {/* Header */}
       <div className=" px-6 pb-4">
         {/* Tabs */}
-        <div className="flex space-x-8 mt-4 widget-tabs-section">
+        <div className="flex space-x-8 mt-4 widget-tabs-section" role="tablist">
           <button
             onClick={() => setActiveTab('appearance')}
-            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors appearance-tab ${
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setActiveTab('preference');
+                document.getElementById('preference-tab')?.focus();
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setActiveTab('preference');
+                document.getElementById('preference-tab')?.focus();
+              } else if (e.key === 'Home') {
+                e.preventDefault();
+                setActiveTab('appearance');
+                document.getElementById('appearance-tab')?.focus();
+              } else if (e.key === 'End') {
+                e.preventDefault();
+                setActiveTab('preference');
+                document.getElementById('preference-tab')?.focus();
+              }
+            }}
+            role="tab"
+            aria-selected={activeTab === 'appearance'}
+            aria-controls="appearance-tabpanel"
+            id="appearance-tab"
+            tabIndex={0}
+            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors appearance-tab focus:outline-none focus:ring-2 focus:ring-[#808EEB] focus:ring-offset-2 rounded-t ${
               activeTab === 'appearance'
-                ? 'border-[#4285F4] text-[#4285F4]'
+                ? 'border-[#0F64F1] text-[#0F64F1] bg-[#E8F2FE]'
                 : 'border-transparent text-[#666666] hover:text-[#4A4A4A]'
             }`}
           >
@@ -1429,9 +1557,33 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('preference')}
-            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors preference-tab ${
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setActiveTab('appearance');
+                document.getElementById('appearance-tab')?.focus();
+              } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setActiveTab('appearance');
+                document.getElementById('appearance-tab')?.focus();
+              } else if (e.key === 'Home') {
+                e.preventDefault();
+                setActiveTab('appearance');
+                document.getElementById('appearance-tab')?.focus();
+              } else if (e.key === 'End') {
+                e.preventDefault();
+                setActiveTab('preference');
+                document.getElementById('preference-tab')?.focus();
+              }
+            }}
+            role="tab"
+            aria-selected={activeTab === 'preference'}
+            aria-controls="preference-tabpanel"
+            id="preference-tab"
+            tabIndex={0}
+            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors preference-tab focus:outline-none focus:ring-2 focus:ring-[#808EEB] focus:ring-offset-2 rounded-t ${
               activeTab === 'preference'
-                ? 'border-[#4285F4] text-[#4285F4]'
+                ? 'border-[#0F64F1] text-[#0F64F1] bg-[#E8F2FE]'
                 : 'border-transparent text-[#666666] hover:text-[#4A4A4A]'
             }`}
           >
@@ -1450,17 +1602,51 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         >
           <div className="space-y-6">
             {activeTab === 'preference' && (
-              <>
+              <div
+                id="preference-tabpanel"
+                role="tabpanel"
+                aria-labelledby="preference-tab"
+                tabIndex={0}
+              >
                 {/* Live Preview Section */}
                 <div className="px-2">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-[#333333]">
+                    <h2 className="text-base sm:text-lg font-semibold text-[#333333]">
                       Live preview
-                    </h3>
+                    </h2>
                     <Switch
                       checked={livePreview}
                       onChange={(e) => setLivePreview(e.target.checked)}
-                      color="primary"
+                      inputProps={{
+                        'aria-label': 'Live preview',
+                        role: 'switch',
+                        'aria-checked': livePreview,
+                      }}
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          color: '#222D73',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: '#145DA6',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: '#82B2E7',
+                        },
+                        '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                          backgroundColor: '#878993 !important',
+                          opacity: '1 !important',
+                        },
+                        '& .MuiSwitch-track': {
+                          backgroundColor: '#878993 !important',
+                          opacity: '1 !important',
+                        },
+                        '& .MuiSwitch-switchBase:focus-visible': {
+                          outline: 'none',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                          outline: 'none',
+                        },
+                      }}
                     />
                   </div>
                 </div>
@@ -1469,7 +1655,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 <h3 className="text-base md:text-lg font-semibold text-[#333333] mb-2 px-2">
                   Toggle Features
                 </h3>
-                <p className="text-xs sm:text-sm md:text-sm text-[#757575] mb-4 px-2">
+                <p className="text-xs sm:text-sm md:text-sm mb-4 px-2" style={{ color: '#6D6D6D' }}>
                   Toggle which accessibility features you want to show or hide
                 </p>
                 <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 sm:p-3 md:p-4 toggle-features-panel">
@@ -1488,7 +1674,37 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               language: e.target.checked,
                             }))
                           }
+                          inputProps={{
+                            'aria-label': 'Language',
+                            role: 'switch',
+                            'aria-checked': toggles.language,
+                          }}
                           color="primary"
+                          sx={{
+                            '& .MuiSwitch-switchBase': {
+                              color: '#222D73',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#145DA6',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#82B2E7',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-switchBase:focus-visible': {
+                              outline: 'none',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                              outline: 'none',
+                            },
+                          }}
                         />
                       </div>
                     </div>
@@ -1507,7 +1723,37 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               oversizeWidget: e.target.checked,
                             }))
                           }
+                          inputProps={{
+                            'aria-label': 'Oversize widget',
+                            role: 'switch',
+                            'aria-checked': toggles.oversizeWidget,
+                          }}
                           color="primary"
+                          sx={{
+                            '& .MuiSwitch-switchBase': {
+                              color: '#222D73',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#145DA6',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#82B2E7',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-switchBase:focus-visible': {
+                              outline: 'none',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                              outline: 'none',
+                            },
+                          }}
                         />
                       </div>
                     </div>
@@ -1544,13 +1790,52 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 adhd: checked,
                               }));
                             }}
+                            inputProps={{
+                              'aria-label': 'Accessibility Profiles',
+                              role: 'switch',
+                              'aria-checked': Boolean(
+                                toggles.motorImpaired ||
+                                  toggles.blind ||
+                                  toggles.colorBlind ||
+                                  toggles.dyslexia ||
+                                  toggles.visuallyImpaired ||
+                                  toggles.cognitiveAndLearning ||
+                                  toggles.seizureAndEpileptic ||
+                                  toggles.adhd,
+                              ),
+                            }}
                             color="primary"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: '#222D73',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#145DA6',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#82B2E7',
+                              },
+                              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-switchBase:focus-visible': {
+                                outline: 'none',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                outline: 'none',
+                              },
+                            }}
                           />
                           <button
                             onClick={() =>
                               toggleSection('accessibilityProfiles')
                             }
-                            className="p-1"
+                            className="p-1 focus:outline-none focus:ring-2 focus:ring-[#808EEB] focus:ring-offset-2 rounded"
                           >
                             {expandedSections.accessibilityProfiles ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1597,8 +1882,38 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                     [key]: e.target.checked,
                                   }))
                                 }
+                                inputProps={{
+                                  'aria-label': label,
+                                  role: 'switch',
+                                  'aria-checked': Boolean(toggles[key as keyof Toggles]),
+                                }}
                                 color="primary"
                                 size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    color: '#222D73',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#145DA6',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#82B2E7',
+                                  },
+                                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-switchBase:focus-visible': {
+                                    outline: 'none',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                    outline: 'none',
+                                  },
+                                }}
                               />
                             </div>
                           ))}
@@ -1636,11 +1951,49 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 fontWeight: checked,
                               }));
                             }}
+                            inputProps={{
+                              'aria-label': 'Content Adjustments',
+                              role: 'switch',
+                              'aria-checked': Boolean(
+                                toggles.fontSize ||
+                                  toggles.highlightTitle ||
+                                  toggles.highlightLinks ||
+                                  toggles.dyslexiaFont ||
+                                  toggles.letterSpacing ||
+                                  toggles.lineHeight ||
+                                  toggles.fontWeight,
+                              ),
+                            }}
                             color="primary"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: '#222D73',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#145DA6',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#82B2E7',
+                              },
+                              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-switchBase:focus-visible': {
+                                outline: 'none',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                outline: 'none',
+                              },
+                            }}
                           />
                           <button
                             onClick={() => toggleSection('contentAdjustments')}
-                            className="p-1"
+                            className="p-1 focus:outline-none focus:ring-2 focus:ring-[#808EEB] focus:ring-offset-2 rounded"
                           >
                             {expandedSections.contentAdjustments ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1677,8 +2030,38 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                     [key]: e.target.checked,
                                   }))
                                 }
+                                inputProps={{
+                                  'aria-label': label,
+                                  role: 'switch',
+                                  'aria-checked': Boolean(toggles[key as keyof Toggles]),
+                                }}
                                 color="primary"
                                 size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    color: '#222D73',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#145DA6',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#82B2E7',
+                                  },
+                                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-switchBase:focus-visible': {
+                                    outline: 'none',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                    outline: 'none',
+                                  },
+                                }}
                               />
                             </div>
                           ))}
@@ -1720,11 +2103,51 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 backgroundColor: checked,
                               }));
                             }}
+                            inputProps={{
+                              'aria-label': 'Color Adjustments',
+                              role: 'switch',
+                              'aria-checked': Boolean(
+                                toggles.darkContrast ||
+                                  toggles.lightContrast ||
+                                  toggles.highContrast ||
+                                  toggles.highSaturation ||
+                                  toggles.lowSaturation ||
+                                  toggles.monochrome ||
+                                  toggles.textColor ||
+                                  toggles.titleColor ||
+                                  toggles.backgroundColor,
+                              ),
+                            }}
                             color="primary"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: '#222D73',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#145DA6',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#82B2E7',
+                              },
+                              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-switchBase:focus-visible': {
+                                outline: 'none',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                outline: 'none',
+                              },
+                            }}
                           />
                           <button
                             onClick={() => toggleSection('colorAdjustments')}
-                            className="p-1"
+                            className="p-1 focus:outline-none focus:ring-2 focus:ring-[#808EEB] focus:ring-offset-2 rounded"
                           >
                             {expandedSections.colorAdjustments ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1763,8 +2186,38 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                     [key]: e.target.checked,
                                   }))
                                 }
+                                inputProps={{
+                                  'aria-label': label,
+                                  role: 'switch',
+                                  'aria-checked': Boolean(toggles[key as keyof Toggles]),
+                                }}
                                 color="primary"
                                 size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    color: '#222D73',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#145DA6',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#82B2E7',
+                                  },
+                                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-switchBase:focus-visible': {
+                                    outline: 'none',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                    outline: 'none',
+                                  },
+                                }}
                               />
                             </div>
                           ))}
@@ -1804,11 +2257,50 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 voiceNavigation: checked,
                               }));
                             }}
+                            inputProps={{
+                              'aria-label': 'Tools',
+                              role: 'switch',
+                              'aria-checked': Boolean(
+                                toggles.pageStructure ||
+                                  toggles.keyboardNavigation ||
+                                  toggles.darkMode ||
+                                  toggles.screenReader ||
+                                  toggles.readingGuide ||
+                                  toggles.stopAnimations ||
+                                  toggles.bigCursor ||
+                                  toggles.voiceNavigation,
+                              ),
+                            }}
                             color="primary"
+                            sx={{
+                              '& .MuiSwitch-switchBase': {
+                                color: '#222D73',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#145DA6',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#82B2E7',
+                              },
+                              '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-track': {
+                                backgroundColor: '#878993 !important',
+                                opacity: '1 !important',
+                              },
+                              '& .MuiSwitch-switchBase:focus-visible': {
+                                outline: 'none',
+                              },
+                              '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                outline: 'none',
+                              },
+                            }}
                           />
                           <button
                             onClick={() => toggleSection('tools')}
-                            className="p-1"
+                            className="p-1 focus:outline-none focus:ring-2 focus:ring-[#808EEB] focus:ring-offset-2 rounded"
                           >
                             {expandedSections.tools ? (
                               <ChevronUp className="w-4 h-4" />
@@ -1852,8 +2344,38 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                     [key]: e.target.checked,
                                   }))
                                 }
+                                inputProps={{
+                                  'aria-label': label,
+                                  role: 'switch',
+                                  'aria-checked': Boolean(toggles[key as keyof Toggles]),
+                                }}
                                 color="primary"
                                 size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    color: '#222D73',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#145DA6',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#82B2E7',
+                                  },
+                                  '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    backgroundColor: '#878993 !important',
+                                    opacity: '1 !important',
+                                  },
+                                  '& .MuiSwitch-switchBase:focus-visible': {
+                                    outline: 'none',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                                    outline: 'none',
+                                  },
+                                }}
                               />
                             </div>
                           ))}
@@ -1875,7 +2397,37 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                               widgetPosition: e.target.checked,
                             }))
                           }
+                          inputProps={{
+                            'aria-label': 'Widget position',
+                            role: 'switch',
+                            'aria-checked': toggles.widgetPosition,
+                          }}
                           color="primary"
+                          sx={{
+                            '& .MuiSwitch-switchBase': {
+                              color: '#222D73',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#145DA6',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#82B2E7',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-switchBase:focus-visible': {
+                              outline: 'none',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                              outline: 'none',
+                            },
+                          }}
                         />
                       </div>
                     </div>
@@ -1886,34 +2438,69 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={onReset}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#2E3A9E] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Reset
                     </button>
                     <button
                       onClick={onSave}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-transparent rounded-md text-white focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#2E3A9E] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      style={{ backgroundColor: '#0052CC' }}
                     >
                       Save
                     </button>
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
             {activeTab === 'appearance' && (
-              <>
+              <div
+                id="appearance-tabpanel"
+                role="tabpanel"
+                aria-labelledby="appearance-tab"
+                tabIndex={0}
+              >
                 {/* Live Preview Section */}
                 <div className="px-2 live-preview-toggle">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base sm:text-lg font-semibold text-[#333333]">
+                    <h2 className="text-base sm:text-lg font-semibold text-[#333333]">
                       Live preview
-                    </h3>
+                    </h2>
                     <Switch
                       checked={livePreview}
                       onChange={(e) => setLivePreview(e.target.checked)}
-                      color="primary"
+                      inputProps={{
+                        'aria-label': 'Live preview',
+                        role: 'switch',
+                        'aria-checked': livePreview,
+                      }}
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          color: '#222D73',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: '#145DA6',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: '#82B2E7',
+                        },
+                        '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                          backgroundColor: '#878993 !important',
+                          opacity: '1 !important',
+                        },
+                        '& .MuiSwitch-track': {
+                          backgroundColor: '#878993 !important',
+                          opacity: '1 !important',
+                        },
+                        '& .MuiSwitch-switchBase:focus-visible': {
+                          outline: 'none',
+                        },
+                        '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                          outline: 'none',
+                        },
+                      }}
                     />
                   </div>
                 </div>
@@ -1922,10 +2509,12 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                 <h3 className="text-base md:text-lg font-semibold text-[#333333] mb-2 px-2">
                   Color Customization
                 </h3>
-                <p className="text-xs sm:text-sm md:text-sm text-[#757575] mb-4 px-2">
-                  Customize the appearance and colors of your accessibility
-                  widget to match your brand
-                </p>
+                <div className="bg-[#EBEFFD] border border-[#a3aef1] rounded-lg p-2 sm:p-3 md:p-4 mb-4">
+                  <p className="text-xs sm:text-sm md:text-sm text-[#6D6D6D]">
+                    Customize the appearance and colors of your accessibility
+                    widget to match your brand
+                  </p>
+                </div>
 
                 <div className="bg-[#ebeffd] border border-[#a3aef1] rounded-lg p-2 sm:p-3 md:p-4 color-customization-panel">
                   {/* Widget Button Color */}
@@ -1990,13 +2579,14 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             onChange={(e) =>
                               setColorMode(e.target.value as 'light' | 'dark')
                             }
-                            className="w-full pl-8 sm:pl-10 md:pl-10 pr-8 sm:pr-10 md:pr-10 py-2 sm:py-2.5 md:py-3 border border-[#D1D5DB] rounded-lg text-xs sm:text-sm md:text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white appearance-none cursor-pointer"
+                            aria-label="Choose Your Mode"
+                            className="w-full pl-8 sm:pl-10 md:pl-10 pr-8 sm:pr-10 md:pr-10 py-2 sm:py-2.5 md:py-3 border border-[#D1D5DB] rounded-lg text-xs sm:text-sm md:text-sm focus:ring-2 focus:ring-[#808EEB]/20 focus:border-[#808EEB] transition-colors duration-200 bg-white appearance-none cursor-pointer"
                           >
                             <option value="light">Light Mode</option>
                             <option value="dark">Dark Mode</option>
                           </select>
                           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:pr-3 md:pr-3 pointer-events-none">
-                            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 text-[#9CA3AF]" />
+                            <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 md:w-5 md:h-5 text-[#8D95A3]" />
                           </div>
                         </div>
                       </div>
@@ -2011,15 +2601,95 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         ({colorMode === 'light' ? 'Light' : 'Dark'} Mode)
                       </span>
                     </h3>
-                    <p className="text-sm text-[#757575] mb-6">
+                    <p className="text-sm text-[#757575] mb-4">
                       Customize colors for {colorMode} mode. Changes are saved
                       separately for each mode.
                     </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+                      <div className="flex items-start gap-2">
+                        <HelpCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-900 mb-1">
+                            WCAG Contrast Ratio
+                          </p>
+                          <p className="text-xs text-blue-700 leading-relaxed">
+                            Contrast ratios are displayed for all colors to ensure WCAG 2.1 AA compliance.
+                            For text colors, we check contrast against their backgrounds. For background colors,
+                            we check if the text that appears on them has sufficient contrast. Normal text requires
+                            a minimum contrast ratio of 4.5:1. Green checkmarks indicate the color combination
+                            meets accessibility standards.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                     <div className="space-y-4">
                       {colorPickers.map(({ key, label, description }) => {
                         const colorValue = colors[key as keyof typeof colors];
                         const defaultValue =
                           DefaultColors[key as keyof typeof DefaultColors];
+                        
+                        // Determine contrast checking parameters
+                        let backgroundColor: string | undefined;
+                        let foregroundColor: string | undefined;
+                        
+                        if (colorMode === 'light') {
+                            switch (key) {
+                              case 'colorGroup1':
+                                // Text color: check text (value) on white background (colorGroup6)
+                                backgroundColor = colors.colorGroup6 || DefaultColors.colorGroup6 || '#ffffff';
+                                break;
+                              case 'colorGroup2':
+                                // Header text: check text (value) on header background (colorGroup3)
+                                backgroundColor = colors.colorGroup3 || DefaultColors.colorGroup3 || '#111639';
+                                break;
+                              case 'colorGroup3':
+                                // Header background: check header text (colorGroup2) on this background (value)
+                                foregroundColor = colors.colorGroup2 || DefaultColors.colorGroup2 || '#e0eceb';
+                                break;
+                              case 'colorGroup4':
+                                // Footer background: check white text (static) on this background (value)
+                                // Footer uses white text, not colorGroup1, so check white on footer background
+                                foregroundColor = '#ffffff';
+                                break;
+                              case 'colorGroup5':
+                                // Border color: check border (value) on header background (colorGroup3)
+                                backgroundColor = colors.colorGroup3 || DefaultColors.colorGroup3 || '#111639';
+                                break;
+                              case 'colorGroup6':
+                                // White background: check primary text (colorGroup1) on this background (value)
+                                foregroundColor = colors.colorGroup1 || DefaultColors.colorGroup1 || '#232e72';
+                                break;
+                            }
+                          } else {
+                            // Dark mode
+                            switch (key) {
+                              case 'colorGroup1':
+                                // Light text: check text (value) on dark background (colorGroup4)
+                                backgroundColor = colors.colorGroup4 || DefaultColors.colorGroup4 || '#111639';
+                                break;
+                              case 'colorGroup2':
+                                // Primary accent: check accent (value) on widget background (colorGroup4)
+                                backgroundColor = colors.colorGroup4 || DefaultColors.colorGroup4 || '#111639';
+                                break;
+                              case 'colorGroup3':
+                                // Mid-tone background: check light text (colorGroup1) on this background (value)
+                                foregroundColor = colors.colorGroup1 || DefaultColors.colorGroup1 || '#d0d5f8';
+                                break;
+                              case 'colorGroup4':
+                                // Dark background: check light text (colorGroup1) on this background (value)
+                                foregroundColor = colors.colorGroup1 || DefaultColors.colorGroup1 || '#d0d5f8';
+                                break;
+                              case 'colorGroup5':
+                                // Light accent text: check text (value) on header background (colorGroup6)
+                                backgroundColor = colors.colorGroup6 || DefaultColors.colorGroup6 || '#333d7c';
+                                break;
+                              case 'colorGroup6':
+                                // Header background: check light accent text (colorGroup5) on this background (value)
+                                foregroundColor = colors.colorGroup5 || DefaultColors.colorGroup5 || '#e6f2f2';
+                                break;
+                            }
+                        }
+                        
                         return (
                           <ColorPicker
                             key={key}
@@ -2028,6 +2698,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             value={colorValue || defaultValue || '#000000'}
                             onChange={updateColor(key as keyof Colors)}
                             onReset={resetColor(key as keyof Colors)}
+                            backgroundColor={backgroundColor}
+                            foregroundColor={foregroundColor}
+                            isLargeText={false}
                           />
                         );
                       })}
@@ -2051,8 +2724,17 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     {/* File Upload Area */}
                     <div className="mb-6">
                       <div
-                        className="relative border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 text-center hover:border-[#445AE7] hover:bg-[#F8FAFF] transition-all duration-200 cursor-pointer group"
+                        className="relative border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 text-center hover:border-[#445AE7] hover:bg-[#F8FAFF] transition-all duration-200 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-[#808EEB] focus:ring-offset-2"
                         onClick={() => fileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="Choose file to upload widget logo"
                       >
                         <input
                           type="file"
@@ -2081,7 +2763,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           <p className="text-sm font-medium text-[#374151] mb-1">
                             Choose file
                           </p>
-                          <p className="text-xs text-[#9CA3AF]">
+                          <p className="text-xs text-[#6E7788]">
                             PNG, JPG, SVG up to 5MB
                           </p>
                         </div>
@@ -2109,7 +2791,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         <input
                           type="text"
                           placeholder="Or enter image URL"
-                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#808EEB]/20 focus:border-[#808EEB] transition-colors duration-200 bg-white placeholder:text-[#6E7788]"
                           ref={urlInputRef}
                           disabled={!isUrlInput}
                           onChange={(e) => {
@@ -2156,7 +2838,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <div className="flex gap-3">
                       <button
                         onClick={handleReset}
-                        className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                        className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 shadow-sm hover:shadow-md"
                       >
                         Reset
                       </button>
@@ -2180,7 +2862,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                             toast.error('Please provide a valid Image or URL.');
                           }
                         }}
-                        className="px-6 py-2.5 bg-[#445AE7] text-white rounded-lg text-sm font-medium hover:bg-[#3A4BC7] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:outline-none shadow-sm hover:shadow-md"
+                        className="px-6 py-2.5 text-white rounded-lg text-sm font-medium transition-all duration-200 focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 focus:outline-none shadow-sm hover:shadow-md"
+                        style={{ backgroundColor: '#0052CC' }}
                       >
                         Set Logo
                       </button>
@@ -2219,7 +2902,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         <input
                           type="text"
                           placeholder="Enter Logo Link URL (e.g., https://yourwebsite.com)"
-                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#808EEB]/20 focus:border-[#808EEB] transition-colors duration-200 bg-white placeholder:text-[#6E7788]"
                           value={logoUrl}
                           onChange={(e) => {
                             const url = e.target.value.trim();
@@ -2243,7 +2926,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         }));
                         setLogoUrl(DefaultColors.logoUrl);
                       }}
-                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
@@ -2281,7 +2964,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         <input
                           type="text"
                           placeholder="Enter URL (e.g., https://yourwebsite.com/statement or /accessibility)"
-                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#808EEB]/20 focus:border-[#808EEB] transition-colors duration-200 bg-white placeholder:text-[#6E7788]"
                           value={accessibilityStatementLinkUrl}
                           onChange={(e) => {
                             const inputValue = e.target.value.trim();
@@ -2340,7 +3023,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           DefaultColors.accessibilityStatementLinkUrl,
                         );
                       }}
-                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
@@ -2376,7 +3059,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           </svg>
                         </div>
                         <select
-                          className="w-full pl-10 pr-10 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white appearance-none cursor-pointer"
+                          className="w-full pl-10 pr-10 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#808EEB]/20 focus:border-[#808EEB] transition-colors duration-200 bg-white appearance-none cursor-pointer"
                           value={selectedFont}
                           onChange={(e) => setSelectedFont(e.target.value)}
                         >
@@ -2414,7 +3097,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                       onClick={() => {
                         setSelectedFont('auto');
                       }}
-                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
@@ -2452,7 +3135,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         <input
                           type="text"
                           placeholder="Enter footer text (e.g., Your Company Name)"
-                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] transition-colors duration-200 bg-white"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#808EEB]/20 focus:border-[#808EEB] transition-colors duration-200 bg-white placeholder:text-[#6E7788]"
                           value={footerText}
                           onChange={(e) => {
                             const text = e.target.value;
@@ -2474,7 +3157,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         }));
                         setFooterText(DefaultColors.footerText);
                       }}
-                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:ring-2 focus:ring-[#445AE7]/20 focus:border-[#445AE7] shadow-sm hover:shadow-md"
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >
                       Reset
                     </button>
@@ -2485,20 +3168,21 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     <button
                       onClick={onReset}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#2E3A9E] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                     >
                       Reset
                     </button>
                     <button
                       onClick={onSave}
                       disabled={buttonDisable}
-                      className="px-6 py-2 border border-transparent rounded-md text-white bg-[#445AE7] hover:bg-[#3A4BC7] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#445AE7] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      className="px-6 py-2 border border-transparent rounded-md text-white focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-[#2E3A9E] disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
+                      style={{ backgroundColor: '#0052CC' }}
                     >
                       Save
                     </button>
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

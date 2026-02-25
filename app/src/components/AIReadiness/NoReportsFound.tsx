@@ -19,7 +19,8 @@ const NoReportsFound: React.FC = () => {
       >
         <img
           src={notFoundImage}
-          alt="No reports found"
+          alt=""
+          role="presentation"
           className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain opacity-80"
         />
       </motion.div>
@@ -31,7 +32,7 @@ const NoReportsFound: React.FC = () => {
         transition={{ delay: 0.4, duration: 0.5 }}
         className="text-center"
       >
-        <p className="text-gray-400 text-base sm:text-lg md:text-xl font-normal">
+        <p className="text-gray-700 text-base sm:text-lg md:text-xl font-normal">
           No reports found matching your criteria.
         </p>
       </motion.div>

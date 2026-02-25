@@ -443,18 +443,18 @@ export class AIReadinessService {
         throw new Error('Invalid URL format')
       }
 
-      console.log('[AI-READY] Step 1/4: Starting Browserbase scrape...')
+      console.log('[AI-READY] Step 1/4: Starting SCRAPELESS scrape...')
       const scrapeStartTime = Date.now()
 
-      // Scrape the website using Browserbase
+      // Scrape the website using SCRAPELESS
       let scrapeResult
       try {
         console.log('[AI-READY] About to call browserbaseService.scrapeUrl...')
         scrapeResult = await this.browserbaseService.scrapeUrl(url)
-        console.log(`[AI-READY] Step 1/4: Browserbase scrape completed in ${Date.now() - scrapeStartTime}ms`)
+        console.log(`[AI-READY] Step 1/4: SCRAPELESS scrape completed in ${Date.now() - scrapeStartTime}ms`)
       } catch (scrapeError) {
         const error = scrapeError instanceof Error ? scrapeError : new Error('Unknown error')
-        console.error('[AI-READY] Browserbase scrape error details:', {
+        console.error('[AI-READY] SCRAPELESS scrape error details:', {
           message: error.message,
           stack: error.stack,
           name: error.name,
@@ -462,7 +462,7 @@ export class AIReadinessService {
         throw new Error(`Failed to scrape website. Please check the URL. Details: ${error.message}`)
       }
 
-      // Extract HTML and metadata from Browserbase result
+      // Extract HTML and metadata from SCRAPELESS result
       const html = scrapeResult.html
       const metadata = scrapeResult.metadata
 

@@ -4,6 +4,7 @@ import { normalizeEmail } from '../../helpers/string.helper'
 import { changePasswordUser } from '../../services/authentication/change-password.service'
 import { forgotPasswordUser } from '../../services/authentication/forgot-password.service'
 import { impersonateUser } from '../../services/authentication/impersonate.service'
+import { loginOrRegisterWithGoogle } from '../../services/authentication/google-auth.service'
 import { loginUser } from '../../services/authentication/login.service'
 import { registerUser } from '../../services/authentication/register.service'
 import { resetPasswordUser } from '../../services/authentication/reset-password.service'
@@ -14,6 +15,7 @@ import { getUserNotificationSettingsService, updateProfile, updateUserNotificati
 import { changeCurrentOrganization } from '../../services/user/update-user.service'
 import { isEmailAlreadyRegistered } from '../../services/user/user.service'
 import { allowedOrganization, isAuthenticated, isSuperAdmin } from './authorization.resolver'
+import { AuthenticationError } from '../../utils/graphql-errors.helper'
 
 type Register = {
   email: string
@@ -25,6 +27,10 @@ type Register = {
 type Login = {
   email: string
   password: string
+}
+
+type LoginWithGoogle = {
+  idToken: string
 }
 
 type ForgotPassword = {
@@ -70,6 +76,15 @@ const resolvers = {
     login: combineResolvers(allowedOrganization, async (_: unknown, { email, password }: Login, { organization }) => {
       const result = await loginUser(normalizeEmail(email), password, organization)
 
+      return result
+    }),
+
+    loginWithGoogle: combineResolvers(allowedOrganization, async (_: unknown, { idToken }: LoginWithGoogle, { organization }) => {
+      const result = await loginOrRegisterWithGoogle(idToken, organization)
+
+      if (result instanceof AuthenticationError) {
+        throw result
+      }
       return result
     }),
 

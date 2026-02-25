@@ -19,7 +19,7 @@ import { findVisitorByIp as findVisitorByIpClickHouse } from '../../repository/v
 import { findVisitorByIp as findVisitorByIpSQL } from '../../repository/visitors.repository'
 import { getCurrentDatabaseType, isClickHouseDisabled } from '../../utils/database.utils'
 import { getRootDomain, normalizeDomain } from '../../utils/domain.utils'
-import { ValidationError } from '../../utils/graphql-errors.helper'
+import { ApolloError, ForbiddenError, UserInputError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
 import { validateAddImpressionsURL, validateAddInteraction, validateAddProfileCount, validateFindImpressionsByURLAndDate, validateGetEngagementRates } from '../../validations/impression.validation'
 import { canAccessSite, findSite } from '../allowedSites/allowedSites.service'
@@ -91,13 +91,13 @@ export async function findImpressionsByURLAndDate(user: UserLogined, url: string
     const site = await findSiteByURL(domain)
 
     if (!site) {
-      throw new Error('Site not found')
+      throw new UserInputError('Site not found')
     }
 
     // Check if user has access to this site
     const hasAccess = await canAccessSite(user, site)
     if (!hasAccess) {
-      throw new Error('Access denied: You do not have permission to view this site')
+      throw new ForbiddenError('Access denied: You do not have permission to view this site')
     }
 
     // OPTIMIZATION: Use site_id directly (no JOIN needed)
@@ -112,14 +112,21 @@ export async function findImpressionsByURLAndDate(user: UserLogined, url: string
 
     return { impressions, count: impressions.length }
   } catch (e) {
+    // If it's already a GraphQLError (UserInputError, ForbiddenError, ValidationError), re-throw it
+    if (e instanceof UserInputError || e instanceof ForbiddenError || e instanceof ValidationError) {
+      throw e
+    }
+
+    // Log the error for debugging
     logger.error('Error finding impressions by URL and date', {
       userId: user.id,
       domain: domain.substring(0, 50),
       dateRange: `${startDate.toISOString()} to ${endDate.toISOString()}`,
-      error: e.message,
+      error: e instanceof Error ? e.message : String(e),
     })
 
-    throw new Error('Failed to fetch impressions data')
+    // For database/system errors, throw ApolloError with the original message
+    throw new ApolloError(`Failed to fetch impressions data: ${e instanceof Error ? e.message : 'Unknown error'}`)
   }
 }
 

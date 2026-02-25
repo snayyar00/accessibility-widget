@@ -4,6 +4,7 @@ import compileEmailTemplate from '../../helpers/compile-email-template'
 import { findSiteById } from '../../repository/sites_allowed.repository'
 import { findUserById, findUserNotificationByUserId } from '../../repository/user.repository'
 import logger from '../../utils/logger'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { sendMail } from '../email/email.service'
 
@@ -125,14 +126,16 @@ async function sendStatusChangeNotification(result: MonitoringResult, lastStatus
       unsubscribeLink: generateSecureUnsubscribeLink(userEmail, getUnsubscribeTypeForEmail('monitoring'), user.id),
     }
 
+    const smtpConfig =
+      site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
     const emailHtml = await compileEmailTemplate({
       fileName: templateName,
-      data: emailData,
+      data: { ...emailData, organizationName },
     })
 
     const subject = currentStatus === 'down' ? `🔴 WebAbility Alert: ${result.url} is DOWN` : `✅ WebAbility Recovery: ${result.url} is back UP`
-
-    const emailSent = await sendMail(userEmail, subject, emailHtml, undefined, 'WebAbility Monitoring')
+    const emailSent = await sendMail(userEmail, subject, emailHtml, undefined, 'WebAbility Monitoring', smtpConfig)
 
     if (emailSent) {
       logger.info(`✅ Email sent to ${userEmail} for site ${result.url}`)

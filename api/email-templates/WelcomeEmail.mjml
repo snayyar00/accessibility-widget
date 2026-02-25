@@ -1,20 +1,13 @@
 <mjml>
   <mj-body background-color="#f1f1f1">
-    <!-- Header Section with Image -->
-    <mj-section background-color="#fff">
-      <mj-column>
-        <mj-image width="500px" src="https://www.webability.io/images/section_1_right.png"></mj-image>
-      </mj-column>
-    </mj-section>
-
     <!-- Welcome Text Section -->
     <mj-section background-color="#fff">
       <mj-column>
         <mj-text font-size="30px" align="left" font-weight="bold">
-          Welcome to Web Ability
+          Welcome to {{organizationName}}
         </mj-text>
         <mj-text font-size="18px" align="left" color="#555" line-height="30px">
-          Hi {{name}}! We’re thrilled to have you join our community dedicated to making the web a more inclusive place for everyone. At Web Ability, we believe that the web should be accessible to all, regardless of ability, and with your help, we can continue to make this vision a reality.
+          Hi {{name}}! We’re thrilled to have you join our community dedicated to making the web a more inclusive place for everyone. At {{organizationName}}, we believe that the web should be accessible to all, regardless of ability, and with your help, we can continue to make this vision a reality.
         </mj-text>
 
         <!-- How to Get Started Section -->
@@ -32,7 +25,7 @@
 
         <!-- Call to Action Button -->
         <mj-button background-color="#06adef" border-radius="50px" color="white" font-size="15px" href="https://app.webability.io/" padding="15px 30px">
-          Web Ability Login
+          {{organizationName}} Login
         </mj-button>
         <!-- Divider -->
         <mj-divider border-color="#06adef" width="100%" padding="20px 0"></mj-divider>

@@ -197,6 +197,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   const [currentCheckIndex, setCurrentCheckIndex] = useState(-1);
   const [selectedCheck, setSelectedCheck] = useState<string | null>(null);
   const [hoveredCheck, setHoveredCheck] = useState<string | null>(null);
+  const [hoveredStatusIcon, setHoveredStatusIcon] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<
     'grid' | 'chart' | 'bars' | 'heatmap'
   >('grid');
@@ -276,6 +277,22 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       );
     }
   }, [currentCheckIndex, checks.length, isAnalyzing]);
+
+  const getStatusTooltip = (status: CheckItem['status']) => {
+    switch (status) {
+      case 'checking':
+        return 'Orange (Progress / Partial Completion): Analysis in progress';
+      case 'pass':
+        return 'Green (Success): All checks passed successfully';
+      case 'fail':
+        return 'Red (Error / Critical Issue): Critical issue found that needs immediate attention';
+      case 'warning':
+        return 'Yellow / Amber (Warning / Needs Attention): Issue detected that should be addressed';
+      case 'pending':
+      default:
+        return 'Grey (Neutral / Not Available / Informational): No data available, not applicable, or informational status';
+    }
+  };
 
   const getStatusIcon = (status: CheckItem['status']) => {
     switch (status) {
@@ -412,7 +429,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
           <div className="relative">
             {/* Icon with enhanced styling */}
             <motion.div
-              className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-3xl mb-6 shadow-2xl"
+              className="inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6 shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, #0052CC 0%, #003EB8 50%, #0052CC 100%)',
+              }}
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ type: 'spring', stiffness: 300 }}
             >
@@ -421,7 +441,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
             {/* Title with enhanced typography */}
             <motion.h2
-              className="text-4xl font-extrabold text-blue-700 mb-4"
+              className="text-4xl font-extrabold mb-4"
+              style={{ color: '#0052CC' }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -439,11 +460,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               <div className="px-3 sm:px-6 py-3 max-w-full overflow-hidden">
                 <p className="text-sm sm:text-lg text-gray-700 font-medium">
                   Single-page snapshot of {/* Mobile: Show truncated URL */}
-                  <span className="inline sm:hidden bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold break-all">
+                  <span className="inline sm:hidden font-bold break-all" style={{ color: '#0052CC' }}>
                     {getTruncatedUrl(url, 5)}
                   </span>
                   {/* Desktop: Show full URL */}
-                  <span className="hidden sm:inline bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold break-all">
+                  <span className="hidden sm:inline font-bold break-all" style={{ color: '#0052CC' }}>
                     {url}
                   </span>
                 </p>
@@ -459,40 +480,84 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="mt-6 mb-8 flex flex-row sm:flex-col justify-center gap-4"
+              className="mt-6 mb-8"
             >
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  viewMode === 'grid'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+              <div
+                role="tablist"
+                aria-label="View mode selection"
+                className="flex flex-row sm:flex-col justify-center gap-4"
+                onKeyDown={(e) => {
+                  const tabs = ['grid', 'chart', ...(heatmapData && getAvailableHeatmapCategories().length > 0 ? ['heatmap'] : [])];
+                  const currentIndex = tabs.indexOf(viewMode);
+                  
+                  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const nextIndex = (currentIndex + 1) % tabs.length;
+                    setViewMode(tabs[nextIndex] as 'grid' | 'chart' | 'heatmap');
+                  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+                    setViewMode(tabs[prevIndex] as 'grid' | 'chart' | 'heatmap');
+                  } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    setViewMode('grid');
+                  } else if (e.key === 'End') {
+                    e.preventDefault();
+                    setViewMode(tabs[tabs.length - 1] as 'grid' | 'chart' | 'heatmap');
+                  }
+                }}
               >
-                Grid View
-              </button>
-              <button
-                onClick={() => setViewMode('chart')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  viewMode === 'chart'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                Radar Chart
-              </button>
-              {heatmapData && getAvailableHeatmapCategories().length > 0 && (
                 <button
-                  onClick={() => setViewMode('heatmap')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    viewMode === 'heatmap'
-                      ? 'bg-blue-600 text-white shadow-md'
+                  role="tab"
+                  aria-selected={viewMode === 'grid' ? 'true' : 'false'}
+                  aria-controls="grid-tabpanel"
+                  id="grid-tab"
+                  tabIndex={viewMode === 'grid' ? 0 : -1}
+                  onClick={() => setViewMode('grid')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    viewMode === 'grid'
+                      ? 'text-white shadow-md'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
+                  style={viewMode === 'grid' ? { backgroundColor: '#0052CC' } : {}}
                 >
-                  Heatmap
+                  Grid View
                 </button>
-              )}
+                <button
+                  role="tab"
+                  aria-selected={viewMode === 'chart' ? 'true' : 'false'}
+                  aria-controls="chart-tabpanel"
+                  id="chart-tab"
+                  tabIndex={viewMode === 'chart' ? 0 : -1}
+                  onClick={() => setViewMode('chart')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    viewMode === 'chart'
+                      ? 'text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  style={viewMode === 'chart' ? { backgroundColor: '#0052CC' } : {}}
+                >
+                  Radar Chart
+                </button>
+                {heatmapData && getAvailableHeatmapCategories().length > 0 && (
+                  <button
+                    role="tab"
+                    aria-selected={viewMode === 'heatmap' ? 'true' : 'false'}
+                    aria-controls="heatmap-tabpanel"
+                    id="heatmap-tab"
+                    tabIndex={viewMode === 'heatmap' ? 0 : -1}
+                    onClick={() => setViewMode('heatmap')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      viewMode === 'heatmap'
+                        ? 'text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    style={viewMode === 'heatmap' ? { backgroundColor: '#0052CC' } : {}}
+                  >
+                    Heatmap
+                  </button>
+                )}
+              </div>
             </motion.div>
 
             <motion.div
@@ -501,7 +566,31 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               transition={{ type: 'spring', delay: 0.5 }}
               className="flex justify-center"
             >
-              <ScoreChart score={overallScore} size={180} />
+              <div
+                className="relative inline-block"
+                onMouseEnter={() => setHoveredStatusIcon('overall-score')}
+                onMouseLeave={() => setHoveredStatusIcon(null)}
+                onFocus={() => setHoveredStatusIcon('overall-score')}
+                onBlur={() => setHoveredStatusIcon(null)}
+                tabIndex={0}
+                role="button"
+                aria-label="Overall score: Orange indicates progress or partial completion"
+              >
+                <ScoreChart score={overallScore} size={180} />
+                <AnimatePresence>
+                  {hoveredStatusIcon === 'overall-score' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 5 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 bg-gray-900 text-white text-xs rounded shadow-lg z-50 pointer-events-none"
+                    >
+                      Orange (Progress / Partial Completion): Used in the circular progress indicator to show the overall AI readiness score
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-1 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </motion.div>
           </>
         )}
@@ -509,13 +598,23 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
 
       {/* Conditional rendering based on view mode */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-4 gap-4 mb-10 px-4 relative">
-          {combinedChecks.map((check, index) => {
+        <div
+          role="tabpanel"
+          id="grid-tabpanel"
+          aria-labelledby="grid-tab"
+        >
+          <ul
+            role="list"
+            aria-label={`AI Readiness Analysis checks, ${combinedChecks.length} items`}
+            className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-4 gap-4 mb-10 px-4 relative list-none"
+          >
+            {combinedChecks.map((check, index) => {
             const isActive = index === currentCheckIndex;
 
             return (
-              <motion.div
+              <motion.li
                 key={check.id}
+                role="listitem"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{
                   opacity: 1,
@@ -530,10 +629,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                    ${isActive ? 'border-orange-300 shadow-lg' : ''}
                    ${
                      check.status !== 'pending' && check.status !== 'checking'
-                       ? 'cursor-pointer hover:shadow-md'
+                       ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                        : ''
                    }
                  `}
+                aria-label={check.status !== 'pending' && check.status !== 'checking' ? `${check.label}: ${check.description}. Click for details.` : `${check.label}: ${check.description}`}
+                tabIndex={check.status !== 'pending' && check.status !== 'checking' ? 0 : undefined}
                 onClick={() => {
                   if (
                     check.status !== 'pending' &&
@@ -544,12 +645,48 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     );
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (
+                    check.status !== 'pending' &&
+                    check.status !== 'checking' &&
+                    (e.key === 'Enter' || e.key === ' ')
+                  ) {
+                    e.preventDefault();
+                    setSelectedCheck(
+                      selectedCheck === check.id ? null : check.id,
+                    );
+                  }
+                }}
                 onMouseEnter={() => setHoveredCheck(check.id)}
                 onMouseLeave={() => setHoveredCheck(null)}
               >
                 <div className="relative">
                   <div className="flex items-start justify-end mb-3">
-                    {getStatusIcon(check.status)}
+                    <div
+                      className="relative inline-block"
+                      onMouseEnter={() => setHoveredStatusIcon(check.id)}
+                      onMouseLeave={() => setHoveredStatusIcon(null)}
+                      onFocus={() => setHoveredStatusIcon(check.id)}
+                      onBlur={() => setHoveredStatusIcon(null)}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Status: ${getStatusTooltip(check.status)}`}
+                    >
+                      {getStatusIcon(check.status)}
+                      <AnimatePresence>
+                        {hoveredStatusIcon === check.id && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 5 }}
+                            className="absolute top-full right-0 mt-2 w-64 p-3 bg-gray-900 text-white text-xs rounded shadow-lg z-50 pointer-events-none"
+                          >
+                            {getStatusTooltip(check.status)}
+                            <div className="absolute bottom-full right-4 -mb-1 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
 
                   <h3 className="text-sm font-medium text-gray-900 mb-1 flex items-center gap-2">
@@ -612,7 +749,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.5 }}
-                        className="text-xs text-gray-400 mt-1 text-center"
+                        className="text-xs text-gray-600 mt-1 text-center"
                       >
                         Click for details
                       </motion.div>
@@ -679,15 +816,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </motion.li>
             );
           })}
+          </ul>
         </div>
       )}
 
       {/* Radar Chart View */}
       {viewMode === 'chart' && showResults && (
-        <div>
+        <div
+          role="tabpanel"
+          id="chart-tabpanel"
+          aria-labelledby="chart-tab"
+        >
           <motion.div
             className="flex justify-center gap-10 mb-10"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -758,6 +900,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       {/* Heatmap View */}
       {viewMode === 'heatmap' && showResults && heatmapData && (
         <motion.div
+          role="tabpanel"
+          id="heatmap-tabpanel"
+          aria-labelledby="heatmap-tab"
           className="px-4 mb-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -768,21 +913,28 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
               Available Heatmap Categories
             </h3>
-            <div className="flex flex-wrap gap-3 sm:gap-4 sm:justify-center">
+            <ul
+              role="list"
+              aria-label={`Available heatmap categories, ${getAvailableHeatmapCategories().length} items`}
+              className="flex flex-wrap gap-3 sm:gap-4 sm:justify-center list-none"
+            >
               {getAvailableHeatmapCategories().map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedHeatmapCategory(category.id)}
-                  className={`sm:w-full px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium transition-all duration-200 text-xs sm:text-base ${
-                    selectedHeatmapCategory === category.id
-                      ? 'bg-blue-500 text-white shadow-lg transform scale-105'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
-                  }`}
-                >
-                  {category.name}
-                </button>
+                <li key={category.id} role="listitem" className="sm:w-full">
+                  <button
+                    onClick={() => setSelectedHeatmapCategory(category.id)}
+                    aria-selected={selectedHeatmapCategory === category.id}
+                    className={`w-full px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium transition-all duration-200 text-xs sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      selectedHeatmapCategory === category.id
+                        ? 'text-white shadow-lg transform scale-105'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
+                    }`}
+                    style={selectedHeatmapCategory === category.id ? { backgroundColor: '#0052CC' } : {}}
+                  >
+                    {category.name}
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           {/* Selected Heatmap Display */}
@@ -819,18 +971,31 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </div>
               <div className="p-5 sm:p-7">
                 <div className="relative overflow-hidden rounded-lg shadow-lg">
-                  <img
-                    src={getSelectedHeatmapUrl() || '/placeholder.svg'}
-                    alt={`${
-                      getAvailableHeatmapCategories().find(
-                        (cat) => cat.id === selectedHeatmapCategory,
-                      )?.name
-                    } Heatmap`}
-                    className="w-full h-auto rounded-lg shadow-md cursor-pointer transition-transform duration-300 hover:scale-105"
+                  <button
                     onClick={() =>
                       window.open(getSelectedHeatmapUrl(), '_blank')
                     }
-                  />
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        window.open(getSelectedHeatmapUrl(), '_blank');
+                      }
+                    }}
+                    className="w-full h-auto focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg"
+                    aria-label={`View full size ${getAvailableHeatmapCategories().find(
+                      (cat) => cat.id === selectedHeatmapCategory,
+                    )?.name} heatmap in new window`}
+                  >
+                    <img
+                      src={getSelectedHeatmapUrl() || '/placeholder.svg'}
+                      alt={`${
+                        getAvailableHeatmapCategories().find(
+                          (cat) => cat.id === selectedHeatmapCategory,
+                        )?.name
+                      } Heatmap`}
+                      className="w-full h-auto rounded-lg shadow-md transition-transform duration-300 hover:scale-105"
+                    />
+                  </button>
                 </div>
               </div>
             </div>

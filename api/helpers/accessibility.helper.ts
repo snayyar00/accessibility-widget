@@ -233,7 +233,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
           url: domain,
           max_pages: fullSiteScan === false ? 1 : 20,
           crawl_depth: fullSiteScan === false ? 1 : 2,
-          use_cache: false,
+          use_cache: useCache !== undefined ? useCache : true,
         }),
       })
     //  use_cache: useCache !== undefined ? useCache : true,

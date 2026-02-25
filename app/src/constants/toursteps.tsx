@@ -1008,7 +1008,22 @@ export const proofOfEffortTourSteps: Step[] = [
     disableBeacon: true,
   },
   {
-    target: '.poe-left-panel',
+    target: '.poe-legal-resources-tabs',
+    content: (
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Legal Resources 📋</h3>
+        <p>
+          Use the &quot;Response documents&quot; tab to preview or download the Legal Action
+          Response Plan and Trusted Certification. Switch to &quot;Request legal support&quot; to
+          submit a request for legal assistance.
+        </p>
+      </div>
+    ),
+    placement: 'bottom' as Placement,
+    offset: 12,
+  },
+  {
+    target: '.poe-step-document-viewer-panel',
     content: (
       <div>
         <h3 className="text-lg font-semibold mb-2">Document Viewer Panel 📖</h3>
@@ -1020,6 +1035,20 @@ export const proofOfEffortTourSteps: Step[] = [
       </div>
     ),
     placement: 'right' as Placement,
+    offset: 12,
+    floaterProps: {
+      options: {
+        preventOverflow: {
+          boundariesElement: 'window',
+          padding: 16,
+        },
+      },
+      styles: {
+        floater: {
+          zIndex: 100000,
+        },
+      },
+    },
   },
   {
     target: '.poe-send-email-button',
@@ -1050,21 +1079,6 @@ export const proofOfEffortTourSteps: Step[] = [
       </div>
     ),
     placement: 'left' as Placement,
-  },
-  {
-    target: '.poe-documents-list',
-    content: (
-      <div>
-        <h3 className="text-lg font-semibold mb-2">Your Documents 📄</h3>
-        <p>
-          Your toolkit includes three essential documents: an intro guide
-          explaining the toolkit, your latest monthly audit report showing
-          accessibility compliance, and your accessibility statement
-          demonstrating your commitment.
-        </p>
-      </div>
-    ),
-    placement: 'top' as Placement,
   },
   {
     target: '.poe-document-card',

@@ -1,13 +1,5 @@
 <mjml>
   <mj-body background-color="#f1f1f1">
-    <mj-section>
-      <mj-column>
-        <mj-image
-          width="100px"
-          src="https://jslancer.com/assets/images/logo/jslancer.png"
-        ></mj-image>
-      </mj-column>
-    </mj-section>
     <mj-section background-color="#fff">
       <mj-column>
         <mj-text font-size="30px" align="center">

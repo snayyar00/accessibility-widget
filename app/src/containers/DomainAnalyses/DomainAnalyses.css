@@ -1,0 +1,257 @@
+/* Ensure no horizontal overflow for Auto-Fixes page */
+.domain-analyses-container {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.domain-analyses-container * {
+  box-sizing: border-box;
+}
+
+/* Smooth transitions for interactive elements */
+.domain-analyses-container button {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Enhanced sidebar styling */
+.domain-analyses-container aside > div {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+}
+
+/* Domain button hover effects */
+.domain-analyses-container .domain-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.domain-analyses-container .domain-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.domain-analyses-container .domain-button:hover::before {
+  left: 100%;
+}
+
+/* Page filter button enhancements */
+.domain-analyses-container .page-button {
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.domain-analyses-container .page-button:hover {
+  transform: translateX(2px);
+}
+
+/* Card enhancements with beautiful animations */
+.domain-analyses-container .fix-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.domain-analyses-container .fix-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Beautiful badge animations */
+.domain-analyses-container .badge {
+  animation: fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s ease;
+}
+
+.domain-analyses-container .badge:hover {
+  transform: scale(1.05);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Code block enhancements */
+.domain-analyses-container code {
+  transition: all 0.2s ease;
+}
+
+.domain-analyses-container .fix-card code:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+}
+
+/* Filter button enhancements */
+.domain-analyses-container .filter-button {
+  transition: all 0.2s ease-in-out;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+.domain-analyses-container .filter-button:hover {
+  transform: scale(1.05);
+}
+
+/* Input field enhancements */
+.domain-analyses-container input {
+  transition: all 0.2s ease-in-out;
+}
+
+.domain-analyses-container input:focus {
+  box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.15);
+}
+
+/* Scrollable pages list */
+.pages-list-scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: #A2ADF3 #e9ecfb;
+}
+
+.pages-list-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pages-list-scrollable::-webkit-scrollbar-track {
+  background: #e9ecfb;
+  border-radius: 3px;
+}
+
+.pages-list-scrollable::-webkit-scrollbar-thumb {
+  background: #A2ADF3;
+  border-radius: 3px;
+}
+
+.pages-list-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #0052CC;
+}
+
+/* Scrollable issues cards section */
+.issues-cards-scrollable {
+  scrollbar-width: thin;
+  scrollbar-color: #A2ADF3 #f8fafc;
+}
+
+.issues-cards-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.issues-cards-scrollable::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 3px;
+}
+
+.issues-cards-scrollable::-webkit-scrollbar-thumb {
+  background: #A2ADF3;
+  border-radius: 3px;
+}
+
+.issues-cards-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #0052CC;
+}
+
+/* Sticky sidebar on desktop */
+@media (min-width: 768px) {
+  .domain-analyses-container aside > div {
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
+  
+  .domain-analyses-container aside > div::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .domain-analyses-container aside > div::-webkit-scrollbar-track {
+    background: #e9ecfb;
+    border-radius: 3px;
+  }
+  
+  .domain-analyses-container aside > div::-webkit-scrollbar-thumb {
+    background: #A2ADF3;
+    border-radius: 3px;
+  }
+  
+  .domain-analyses-container aside > div::-webkit-scrollbar-thumb:hover {
+    background: #0052CC;
+  }
+
+  /* Match main content height with sidebar */
+  .domain-analyses-container main > div {
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
+
+  /* Custom scrollbar for main content */
+  .domain-analyses-container main > div::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .domain-analyses-container main > div::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 3px;
+  }
+  
+  .domain-analyses-container main > div::-webkit-scrollbar-thumb {
+    background: #A2ADF3;
+    border-radius: 3px;
+  }
+  
+  .domain-analyses-container main > div::-webkit-scrollbar-thumb:hover {
+    background: #0052CC;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .domain-analyses-container {
+    padding: 0;
+    overflow-x: hidden;
+  }
+  
+  /* Stack layout on mobile */
+  .domain-analyses-container aside {
+    position: relative;
+  }
+  
+  /* Full width cards on mobile */
+  .domain-analyses-container main .grid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Ensure main content doesn't overflow */
+  .domain-analyses-container main {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+  
+  .domain-analyses-container main > div {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+  
+  /* Fix card overflow on small screens */
+  .domain-analyses-container .fix-card {
+    min-width: 0;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  /* Ensure code blocks wrap on small screens */
+  .domain-analyses-container .fix-card code {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+}

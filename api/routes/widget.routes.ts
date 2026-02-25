@@ -24,7 +24,7 @@ router.post(
 router.post('/upload-logo', moderateLimiter, allowedOrganization, isAuthenticated, uploadMiddleware, uploadWidgetLogo)
 router.post('/delete-logo', moderateLimiter, allowedOrganization, isAuthenticated, deleteWidgetLogo)
 
-// Widget installation instructions endpoint
-router.post('/send-installation-instructions', moderateLimiter, sendWidgetInstallationInstructionsController)
+// Widget installation instructions endpoint (auth required so org SMTP is used when configured)
+router.post('/send-installation-instructions', moderateLimiter, allowedOrganization, isAuthenticated, sendWidgetInstallationInstructionsController)
 
 export default router

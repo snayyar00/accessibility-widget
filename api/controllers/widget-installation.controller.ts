@@ -34,13 +34,14 @@ export const sendWidgetInstallationInstructionsController = async (req: Request,
       })
     }
 
-    // Send the installation instructions
+    const user = (req as { user?: { current_organization_id?: number } }).user
     await sendWidgetInstallationInstructions({
       email,
       code,
       position,
       language,
       languageName,
+      organizationId: user?.current_organization_id,
     })
 
     logger.info(`Widget installation instructions sent to ${email}`)

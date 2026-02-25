@@ -23,7 +23,30 @@ export function validateAddOrganization(input: { name: string; domain: string; l
   return validator.validate(input, schema)
 }
 
-export function validateEditOrganization(input: { id: number | string; name?: string; domain?: string; logo_url?: string; settings?: any }): true | ValidationError[] | Promise<true | ValidationError[]> {
+// Allow null when clearing SMTP fields; reject CR/LF in smtp_user (header injection)
+const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const smtpUserValid = (v: unknown) => {
+  if (v == null || v === '') return true
+  if (typeof v !== 'string') return 'SMTP user must be a string or null'
+  const t = v.trim()
+  if (t.length > 255) return 'SMTP user is too long'
+  if (/[\r\n]/.test(v)) return 'SMTP user must not contain line breaks'
+  if (!emailLike.test(t)) return 'SMTP user must be a valid email address'
+  return true
+}
+
+export function validateEditOrganization(input: {
+  id: number | string
+  name?: string
+  domain?: string
+  logo_url?: string
+  settings?: any
+  smtp_host?: string | null
+  smtp_port?: number | null
+  smtp_secure?: boolean
+  smtp_user?: string | null
+  smtp_password?: string
+}): true | ValidationError[] | Promise<true | ValidationError[]> {
   const validator = new Validator()
 
   const schema = {
@@ -32,6 +55,29 @@ export function validateEditOrganization(input: { id: number | string; name?: st
     domain: { type: 'string', min: 3, max: 100, pattern: domainPattern, optional: true },
     logo_url: { type: 'string', optional: true, max: 500 },
     settings: { type: 'object', optional: true },
+    smtp_host: {
+      type: 'any',
+      optional: true,
+      custom: (v: unknown) =>
+        v == null || v === ''
+          ? true
+          : typeof v === 'string' && v.length <= 255 && !/[\r\n]/.test(v)
+            ? true
+            : 'SMTP host must be a string up to 255 characters with no line breaks',
+    },
+    smtp_port: {
+      type: 'any',
+      optional: true,
+      custom: (v: unknown) =>
+        v == null || v === ''
+          ? true
+          : typeof v === 'number' && v >= 1 && v <= 65535
+            ? true
+            : 'Port must be between 1 and 65535',
+    },
+    smtp_secure: { type: 'boolean', optional: true },
+    smtp_user: { type: 'any', optional: true, custom: smtpUserValid },
+    smtp_password: { type: 'string', optional: true, max: 512 },
   }
 
   return validator.validate(input, schema)
