@@ -16,6 +16,26 @@ const openrouter = new OpenAI({
   },
 })
 
+const WIDGET_CHAT_TIMEOUT_MS = 10_000
+
+const DEFAULT_TIMEOUT_REPLY = "I'm taking a bit longer than usual. Please try again in a moment."
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('WIDGET_CHAT_TIMEOUT')), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timer)
+        reject(err)
+      },
+    )
+  })
+}
+
 const PROFILE_KEYS = [
   'adhd',
   'seizure-epileptic',
@@ -307,29 +327,58 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     let rawReply = ''
 
     try {
-      // Primary model via OpenRouter
-      const completion = await openrouter.chat.completions.create({
-        model: 'google/gemini-2.5-flash-lite',
-        messages: messagesForModel,
-      })
+      // Primary model via OpenRouter (10s timeout)
+      const completion = await withTimeout(
+        openrouter.chat.completions.create({
+          model: 'google/gemini-2.5-flash-lite',
+          messages: messagesForModel,
+        }),
+        WIDGET_CHAT_TIMEOUT_MS,
+      )
 
       rawReply =
         completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string'
           ? completion.choices[0].message.content
           : ''
     } catch (primaryError) {
+      if ((primaryError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
+        console.warn('Widget chat: primary model request timed out')
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.status(200).json({
+          reply: DEFAULT_TIMEOUT_REPLY,
+          actions: [{ command: { type: 'none' }, reply: DEFAULT_TIMEOUT_REPLY }],
+        })
+        return
+      }
+
       console.warn('Primary model failed, falling back to openai/gpt-4o-mini for widget chat')
 
-      const fallbackCompletion = await openrouter.chat.completions.create({
-        model: 'openai/gpt-4o-mini',
-        messages: messagesForModel,
-      })
+      try {
+        const fallbackCompletion = await withTimeout(
+          openrouter.chat.completions.create({
+            model: 'openai/gpt-4o-mini',
+            messages: messagesForModel,
+          }),
+          WIDGET_CHAT_TIMEOUT_MS,
+        )
 
-      rawReply =
-        fallbackCompletion.choices?.[0]?.message?.content &&
-        typeof fallbackCompletion.choices[0].message.content === 'string'
-          ? fallbackCompletion.choices[0].message.content
-          : ''
+        rawReply =
+          fallbackCompletion.choices?.[0]?.message?.content &&
+          typeof fallbackCompletion.choices[0].message.content === 'string'
+            ? fallbackCompletion.choices[0].message.content
+            : ''
+      } catch (fallbackError) {
+        if ((fallbackError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
+          console.warn('Widget chat: fallback model request timed out')
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.status(200).json({
+            reply: DEFAULT_TIMEOUT_REPLY,
+            actions: [{ command: { type: 'none' }, reply: DEFAULT_TIMEOUT_REPLY }],
+          })
+          return
+        }
+        throw fallbackError
+      }
     }
 
     const actions = parseAndValidateActions(rawReply)
