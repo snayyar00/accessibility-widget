@@ -59,8 +59,17 @@ export async function checkCustomer(req: Request & { user: UserLogined }, res: R
         })
 
         const filteredTrialSubs = trial_subs.data.filter((sub: any) => sub.description != null && sub.description !== '')
-        const filteredSubscriptions = subscriptions.data.filter((sub: any) => sub.description != null && sub.description !== '')
+        let filteredSubscriptions = subscriptions.data.filter((sub: any) => sub.description != null && sub.description !== '')
+       
+        const hasTieredSubscription = subscriptions.data.some((sub: any) => {
+          const price = sub.items?.data?.[0]?.price
+          return price?.billing_scheme === 'tiered'
+        })
 
+        if (hasTieredSubscription) {
+          console.log('Customer have Tier Subscription')
+          filteredSubscriptions = subscriptions.data
+        }
         let price_id
         let price: Stripe.Price
 
