@@ -29,6 +29,36 @@ init({
   environment: process.env.REACT_APP_NODE_ENV,
   // Enable error captures including component boundaries
   attachStacktrace: true,
+  // Filter out benign ResizeObserver loop errors that don't affect functionality
+  beforeSend(event) {
+    const message =
+      event.exception?.values?.[0]?.value ??
+      event.message ??
+      '';
+    if (
+      message.includes('ResizeObserver loop') ||
+      message.includes('ResizeObserver loop completed with undelivered notifications')
+    ) {
+      return null;
+    }
+    return event;
+  },
+});
+
+// Suppress the benign ResizeObserver error from reaching window.onerror.
+// This error is triggered by third-party libraries (framer-motion, react-select,
+// Recharts ResponsiveContainer) when a ResizeObserver callback causes further
+// layout changes that cannot be delivered in the same animation frame.
+// It does not indicate broken functionality — the browser defers remaining
+// notifications to the next frame automatically.
+window.addEventListener('error', (e) => {
+  if (
+    e.message === 'ResizeObserver loop completed with undelivered notifications' ||
+    e.message === 'ResizeObserver loop limit exceeded'
+  ) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+  }
 });
 
 const render = () => {
