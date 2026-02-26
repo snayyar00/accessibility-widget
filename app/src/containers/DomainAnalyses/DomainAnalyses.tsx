@@ -98,7 +98,28 @@ const DomainAnalyses: React.FC = () => {
     analysisId: '',
     fixIndex: -1,
   });
+  // Page summary modal (View Summary)
+  const [summaryModal, setSummaryModal] = useState<{
+    isOpen: boolean;
+    url: string | null;
+    content: string | null;
+    loading: boolean;
+    error: string | null;
+  }>({ isOpen: false, url: null, content: null, loading: false, error: null });
+  const [summaryEditContent, setSummaryEditContent] = useState('');
+  const [summaryEditMode, setSummaryEditMode] = useState(false);
+  const [summarySaving, setSummarySaving] = useState(false);
+  const [summarySaveError, setSummarySaveError] = useState<string | null>(null);
   const isMounted = useRef(true);
+
+  // Sync editable summary when panel opens or when content loads
+  useEffect(() => {
+    if (summaryModal.isOpen) {
+      setSummaryEditContent(summaryModal.content ?? '');
+      setSummaryEditMode(false);
+      setSummarySaveError(null);
+    }
+  }, [summaryModal.isOpen, summaryModal.content]);
 
   // Fetch user sites for domain selector
   const { data: sitesData, loading: sitesLoading } = useQuery(GET_USER_SITES);
@@ -299,6 +320,101 @@ const DomainAnalyses: React.FC = () => {
     setCurrentFixIndex(0);
     setSwipingFix(null);
   }, []);
+
+  const handleCloseSummaryModal = useCallback(() => {
+    setSummaryModal({ isOpen: false, url: null, content: null, loading: false, error: null });
+  }, []);
+
+  const handleOpenSummaryModal = useCallback(async (url: string) => {
+    const analysis = analyses.find((a) => (a.url || a.domain || '') === url);
+    setSummaryModal({ isOpen: true, url, content: null, loading: true, error: null });
+
+    const params = new URLSearchParams({ url });
+    if (analysis?.url_hash) params.set('url_hash', analysis.url_hash);
+    const apiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/page-summary?${params.toString()}`;
+    const token = getAuthenticationCookie();
+
+    try {
+      const res = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const data = await res.json();
+      if (!isMounted.current) return;
+      if (!res.ok) {
+        setSummaryModal((prev) => ({
+          ...prev,
+          loading: false,
+          error: data?.message ?? data?.error ?? 'Failed to load summary',
+        }));
+        return;
+      }
+      setSummaryModal((prev) => ({
+        ...prev,
+        content: typeof data.summary === 'string' ? data.summary : null,
+        loading: false,
+        error: null,
+      }));
+    } catch (err) {
+      if (!isMounted.current) return;
+      setSummaryModal((prev) => ({
+        ...prev,
+        loading: false,
+        error: err instanceof Error ? err.message : 'Failed to load summary',
+      }));
+    }
+  }, [analyses]);
+
+  const handleSaveSummary = useCallback(async () => {
+    if (!summaryModal.url) return;
+    const analysis = analyses.find((a) => (a.url || a.domain || '') === summaryModal.url);
+    setSummarySaveError(null);
+    setSummarySaving(true);
+
+    const apiUrl = `${process.env.REACT_APP_BACKEND_URL}/domain-analyses/page-summary`;
+    const token = getAuthenticationCookie();
+    try {
+      const res = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          url: summaryModal.url,
+          url_hash: analysis?.url_hash ?? null,
+          summary: summaryEditContent,
+        }),
+      });
+      let data: { message?: string; error?: string } = {};
+      try {
+        const text = await res.text();
+        if (text) data = JSON.parse(text) as { message?: string; error?: string };
+      } catch {
+        data = { error: res.statusText || 'Request failed' };
+      }
+      if (!isMounted.current) return;
+      if (!res.ok) {
+        const message =
+          res.status === 404
+            ? 'No cached page found for this URL. Run a scan first.'
+            : data?.message ?? data?.error ?? `Failed to save summary (${res.status})`;
+        setSummarySaveError(message);
+        setSummarySaving(false);
+        return;
+      }
+      setSummaryModal((prev) => ({ ...prev, content: summaryEditContent }));
+      setSummaryEditMode(false);
+      setSummarySaving(false);
+    } catch (err) {
+      if (!isMounted.current) return;
+      setSummarySaveError(err instanceof Error ? err.message : 'Failed to save summary');
+      setSummarySaving(false);
+    }
+  }, [summaryModal.url, summaryEditContent, analyses]);
 
   // Handler for opening suggested fixes modal from URL table
   const handleOpenSuggestedFixesModal = useCallback(async (url: string) => {
@@ -1130,6 +1246,18 @@ const DomainAnalyses: React.FC = () => {
                       >
                         View Suggested
                       </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenSummaryModal(item.url);
+                        }}
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-white text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100 whitespace-nowrap"
+                        style={{ backgroundColor: '#6b7280' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6b7280'}
+                      >
+                        View Summary
+                      </button>
                     </div>
                   </div>
                 );
@@ -1221,6 +1349,18 @@ const DomainAnalyses: React.FC = () => {
                               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
                             >
                               View Suggested
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenSummaryModal(item.url);
+                              }}
+                              className="px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105"
+                              style={{ backgroundColor: '#6b7280' }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6b7280'}
+                            >
+                              View Summary
                             </button>
                           </div>
                         </td>
@@ -2876,6 +3016,144 @@ const DomainAnalyses: React.FC = () => {
           )}
         </div>
       </Modal>
+
+      {/* Page Summary Slider - Opens from Right (same as Auto Fixes) */}
+      {summaryModal.isOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 transition-opacity duration-300"
+            onClick={handleCloseSummaryModal}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="page-summary-slider-title"
+            aria-describedby="page-summary-slider-description"
+            className="fixed right-0 top-0 h-full bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out"
+            style={{
+              width: 'min(90vw, 1200px)',
+              height: '100vh',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Slider Header */}
+            <div className="flex items-center justify-between p-6 border-b flex-shrink-0" style={{ borderColor: '#A2ADF3' }}>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="p-2.5 rounded-lg shadow-md" style={{ backgroundColor: '#0052CC' }}>
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 id="page-summary-slider-title" className="text-xl md:text-2xl font-bold text-gray-900">
+                    Page Summary
+                  </h2>
+                  {summaryModal.url && (
+                    <p className="text-sm text-gray-600 mt-1 truncate" title={summaryModal.url}>
+                      {summaryModal.url}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleCloseSummaryModal}
+                className="p-2 rounded-full hover:bg-gray-100 transition-colors ml-4 flex-shrink-0"
+                aria-label="Close panel"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Slider Content - Read-only view or editable text box */}
+            <div id="page-summary-slider-description" className="flex-1 flex flex-col min-h-0 p-6">
+              {summaryModal.loading ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <CircularProgress size={40} style={{ color: '#0052CC' }} />
+                  <p className="mt-4 text-sm text-gray-600">Generating summary...</p>
+                </div>
+              ) : summaryModal.error ? (
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                  <p className="text-red-600 text-center mb-4">{summaryModal.error}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+                    {!summaryEditMode ? (
+                      <button
+                        type="button"
+                        onClick={() => setSummaryEditMode(true)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+                        aria-label="Edit summary"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleSaveSummary}
+                          disabled={summarySaving}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50"
+                          style={{ backgroundColor: '#0052CC' }}
+                          aria-label="Save changes"
+                        >
+                          {summarySaving ? (
+                            <>
+                              <CircularProgress size={16} style={{ color: 'white' }} />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Save changes
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setSummaryEditMode(false); setSummaryEditContent(summaryModal.content ?? ''); setSummarySaveError(null); }}
+                          disabled={summarySaving}
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                          aria-label="Cancel editing"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {summarySaveError && (
+                    <p className="text-red-600 text-sm mb-3 flex-shrink-0" role="alert">
+                      {summarySaveError}
+                    </p>
+                  )}
+                  {summaryEditMode ? (
+                    <textarea
+                      value={summaryEditContent}
+                      onChange={(e) => setSummaryEditContent(e.target.value)}
+                      className="flex-1 w-full min-h-[200px] p-4 text-sm text-gray-700 leading-relaxed rounded-lg border border-gray-200 focus:border-[#0052CC] focus:ring-2 focus:ring-[#0052CC]/20 outline-none resize-y bg-white"
+                      placeholder="Page summary. Edit and save to update."
+                      aria-label="Page summary - editable"
+                      style={{ minHeight: 'min(400px, 50vh)' }}
+                    />
+                  ) : (
+                    <div className="flex-1 overflow-y-auto p-4 rounded-lg border border-gray-200 bg-gray-50/50 text-gray-700 text-sm leading-relaxed whitespace-pre-wrap min-h-[200px]">
+                      {summaryEditContent || 'No summary yet.'}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

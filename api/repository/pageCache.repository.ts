@@ -80,6 +80,53 @@ async function runQuery(
   return { row, blob: buf }
 }
 
+/** Get page_summary for the latest page_cache row for url (or url_hash). Returns null if not found or column missing. */
+export async function getPageSummaryByUrl(
+  options: GetPageHtmlOptions | string
+): Promise<string | null> {
+  const url = typeof options === 'string' ? options : options?.url
+  const urlHash = typeof options === 'string' ? null : options?.urlHash ?? null
+  if (!url || typeof url !== 'string' || !url.trim()) return null
+
+  const trimmed = url.trim()
+  const useHash = urlHash && urlHash.trim()
+  const sql = useHash
+    ? `SELECT page_summary FROM page_cache WHERE url_hash = ? ORDER BY fetched_at DESC LIMIT 1`
+    : `SELECT page_summary FROM page_cache WHERE url = ? ORDER BY fetched_at DESC LIMIT 1`
+  const args = useHash ? [urlHash!.trim()] : [trimmed]
+
+  const result = await tursoClient.execute({ sql, args })
+  if (result.rows.length === 0) return null
+  const val = (result.rows[0] as Record<string, unknown>).page_summary
+  return typeof val === 'string' ? val : null
+}
+
+/** Update page_summary for the latest page_cache row for this url (or url_hash). Returns true if a row was updated, false if no row found. */
+export async function updatePageSummary(
+  options: { url: string; urlHash?: string | null; summary: string }
+): Promise<boolean> {
+  const { url, urlHash, summary } = options
+  if (!url || typeof url !== 'string' || !url.trim()) return false
+
+  const trimmed = url.trim()
+  const useHash = urlHash && urlHash.trim()
+  const selectSql = useHash
+    ? `SELECT rowid FROM page_cache WHERE url_hash = ? ORDER BY fetched_at DESC LIMIT 1`
+    : `SELECT rowid FROM page_cache WHERE url = ? ORDER BY fetched_at DESC LIMIT 1`
+  const selectArgs = useHash ? [urlHash!.trim()] : [trimmed]
+  const selectResult = await tursoClient.execute({ sql: selectSql, args: selectArgs })
+  if (selectResult.rows.length === 0) return false
+
+  const rowid = (selectResult.rows[0] as Record<string, unknown>).rowid
+  if (rowid == null) return false
+  const rowidVal = typeof rowid === 'number' ? rowid : Number(rowid)
+  await tursoClient.execute({
+    sql: `UPDATE page_cache SET page_summary = ? WHERE rowid = ?`,
+    args: [summary, rowidVal],
+  })
+  return true
+}
+
 export type GetPageHtmlOptions = {
   url: string
   urlHash?: string | null

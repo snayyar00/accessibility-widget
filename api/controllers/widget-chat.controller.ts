@@ -2,6 +2,7 @@ import OpenAI from 'openai'
 import { Request, Response } from 'express'
 
 import { WIDGET_CHAT_SYSTEM_PROMPT } from '../prompts/widget-chat.prompt'
+import { getPageSummaryByUrl } from '../repository/pageCache.repository'
 
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error('OPENROUTER_API_KEY environment variable is required for widget chat')
@@ -136,10 +137,35 @@ export interface WidgetChatRequestBody {
   message: string
   /** Optional conversation history for multi-turn. Each item: { role: 'user' | 'assistant', content: string } */
   messages?: Array<{ role: 'user' | 'assistant'; content: string }>
-  /** Optional site URL where the widget is embedded (for context). */
+  /** Current page URL (widget always sends this). Used for context and page summary lookup. */
+  currentUrl?: string
+  /** @deprecated Use currentUrl. Optional site URL where the widget is embedded (fallback if currentUrl not sent). */
   siteUrl?: string
   /** Optional language hint (e.g. 'en', 'es') so the model can respond in that language. */
   language?: string
+}
+
+/** Detect if the user is asking for a page summary (so we can fetch from DB and append it). */
+function isSummaryRequest(message: string): boolean {
+  const lower = message.trim().toLowerCase()
+  const summaryPhrases = [
+    'summary',
+    'summarize',
+    'summarise',
+    'summarize this page',
+    'summarise this page',
+    'page summary',
+    'what is this page about',
+    "what's this page about",
+    'what is the page about',
+    'describe this page',
+    'tell me about this page',
+    'what is on this page',
+    "what's on this page",
+    'overview of this page',
+    'brief this page',
+  ]
+  return summaryPhrases.some((p) => lower.includes(p))
 }
 
 function parseAndValidateActions(raw: string): WidgetChatAction[] {
@@ -290,7 +316,8 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
 export async function handleWidgetChatRequest(req: Request, res: Response) {
   try {
     const body = req.body as WidgetChatRequestBody
-    const { message, messages: history = [], siteUrl, language } = body
+    const { message, messages: history = [], currentUrl, siteUrl, language } = body
+    const pageUrl = typeof currentUrl === 'string' && currentUrl.trim() ? currentUrl.trim() : (typeof siteUrl === 'string' && siteUrl.trim() ? siteUrl.trim() : undefined)
 
     if (!message || typeof message !== 'string') {
       res.status(400).json({ error: 'Missing or invalid "message" in request body.' })
@@ -304,11 +331,22 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     }
 
     let systemPrompt = WIDGET_CHAT_SYSTEM_PROMPT
-    if (siteUrl) {
-      systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${siteUrl}. You can refer to "this site" when giving directions.`
+    if (pageUrl) {
+      systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${pageUrl}. You can refer to "this site" when giving directions.`
     }
     if (language) {
       systemPrompt += `\n\nPREFERRED LANGUAGE: Prefer responding in language code "${language}" if the user writes in that language.`
+    }
+
+    // Summary request: always append summary (if available) after AI commands.
+    // We start the DB lookup in parallel and do NOT send the summary text to the model.
+    const isSummary = Boolean(pageUrl && isSummaryRequest(trimmedMessage))
+    let summaryToAppend: string | null = null
+    let summaryPromise: Promise<string | null> | null = null
+
+    if (isSummary && pageUrl) {
+      summaryPromise = getPageSummaryByUrl({ url: pageUrl, urlHash: null })
+      systemPrompt += `\n\nIMPORTANT: The user asked for a page summary. The summary will be added to the response automatically — do NOT say you cannot summarize, cannot help with the summary, or mention the summary at all. Reply only with the appropriate widget command(s) the user requested (if any) and short confirmations of those actions (e.g. "Opening the menu." or "Done."). If the user only asked for a summary and no widget action, respond with { "command": { "type": "none" }, "reply": "Okay." } or a similar short acknowledgement.`
     }
 
     const chatMessages = [
@@ -381,10 +419,33 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       }
     }
 
-    const actions = parseAndValidateActions(rawReply)
+    // If a summary was requested, wait for the DB lookup result now (it was started in parallel above)
+    if (summaryPromise) {
+      const pageSummary = await summaryPromise
+      const summaryReplyText =
+        pageSummary && pageSummary.trim()
+          ? `Here's a quick summary of this page:\n\n${pageSummary.trim()}`
+          : "The page summary isn't available for this page right now. It may not have been generated yet."
+      summaryToAppend = summaryReplyText
+    }
+
+    let actions = parseAndValidateActions(rawReply)
+    // Derive a user-facing reply from the first non-empty action reply, not from the raw JSON string
+    const firstActionWithReply = actions.find(
+      (a) => typeof a.reply === 'string' && a.reply.trim().length > 0,
+    )
+    let replyToSend = firstActionWithReply?.reply?.trim() ?? ''
+
+    if (summaryToAppend) {
+      // Append summary as an extra "none" action, and include it in the top-level reply
+      actions = [...actions, { command: { type: 'none' as const }, reply: summaryToAppend }]
+      replyToSend = replyToSend
+        ? `${replyToSend}\n\n${summaryToAppend}`
+        : summaryToAppend
+    }
 
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
-    res.status(200).json({ reply: rawReply, actions })
+    res.status(200).json({ reply: replyToSend, actions })
   } catch (error) {
     console.error('Widget chat API error:', error)
     res.status(500).json({
