@@ -1125,7 +1125,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                         className="text-xs sm:text-sm leading-tight"
                         style={{ color: baseColors.blueStats }}
                       >
-                        Our scanner checks for WCAG 2.1 compliance across your
+                        Our scanner checks for WCAG 2.1 and WCAG 2.2 compliance across your
                         entire site.
                       </p>
                     </div>

@@ -30,6 +30,11 @@ export function dynamicCors(req: Request, res: Response, next: NextFunction) {
         return callback(null, true)
       }
 
+      // Allow widget chat from any origin (same as validateToken, addImpressionsURL, etc.)
+      if (req.path === '/widget/chat') {
+        return callback(null, true)
+      }
+
       // Allow GET requests to root without Origin (for health checks, browsers, etc.)
       if (!origin && req.method === 'GET' && req.path === '/') {
         return callback(null, true)
