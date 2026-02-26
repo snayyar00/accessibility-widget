@@ -425,7 +425,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       const summaryReplyText =
         pageSummary && pageSummary.trim()
           ? `Here's a quick summary of this page:\n\n${pageSummary.trim()}`
-          : "The page summary isn't available for this page right now. It may not have been generated yet."
+          : "The page summary isn't available for this page right now."
       summaryToAppend = summaryReplyText
     }
 
