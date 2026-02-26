@@ -128,6 +128,7 @@ const Sidebar = () => {
   const { data: userData } = useSelector((state: RootState) => state.user);
   const allowedOrgId = Number(process.env.REACT_APP_CURRENT_ORG || '1');
   const showServiceRequests = userData?.current_organization_id === allowedOrgId;
+  const showReferralProgram = userData?.current_organization_id === allowedOrgId;
   const showAdminControls = Boolean(userData?.isAdminOrOwnerOrSuper);
 
   // Helper function to check if a route is active
@@ -830,7 +831,7 @@ const Sidebar = () => {
               </nav>
             </div>
 
-            {!!userData?.currentOrganization?.toggle_referral_program && (
+            {showReferralProgram && (
               <>
                 {/* Billing Button - Always at the end */}
                 <div className="px-4 pb-4 mt-auto">
@@ -1228,7 +1229,7 @@ const Sidebar = () => {
               </nav>
             </div>
 
-            {!!userData?.currentOrganization?.toggle_referral_program && (
+            {showReferralProgram && (
               <>
                 {/* Billing Button - Collapsed - Always at the end */}
                 <div className="pb-4 mt-auto">
