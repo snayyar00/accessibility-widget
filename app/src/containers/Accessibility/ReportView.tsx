@@ -481,7 +481,7 @@ const ReportView: React.FC = () => {
           <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
             <Check className="w-5 h-5 text-green-400" />
             <span className="font-medium text-blue-100">
-              WCAG 2.1,2.2 AA Compliant
+              WCAG 2.1, 2.2 AA Compliant
             </span>
           </div>
           <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
