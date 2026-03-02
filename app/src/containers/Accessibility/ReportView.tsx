@@ -1488,6 +1488,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                   )}
                 </span>
               </button>
+              {/* Prospect report button removed from UI
               <button
                 onClick={handleShortReportDownload}
                 className="whitespace-nowrap w-full px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -1501,6 +1502,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                   )}
                 </span>
               </button>
+              */}
               <div className="relative w-full">
                 <select
                   value={currentLanguage}
@@ -1548,6 +1550,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               )}
             </span>
           </button>
+          {/* Prospect report button removed from UI
           <button
             onClick={handleShortReportDownload}
             className="whitespace-nowrap w-full xl:w-auto px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -1561,6 +1564,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               )}
             </span>
           </button>
+          */}
           <div className="relative w-full xl:w-auto">
             <select
               value={currentLanguage}

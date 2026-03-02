@@ -1609,6 +1609,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                         'Download Detailed Report'
                                       )}
                                     </button>
+                                    {/* Prospect report button removed from UI
                                     <button
                                       className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
                                       style={{ color: baseColors.grayDark2 }}
@@ -1673,6 +1674,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                         'Download Prospect Report'
                                       )}
                                     </button>
+                                    */}
                                   </div>
                                 )}
                               </div>
@@ -1914,6 +1916,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                     'Download Detailed Report'
                                   )}
                                 </button>
+                                {/* Prospect report button removed from UI
                                 <button
                                   className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
                                   style={{ color: baseColors.grayDark2 }}
@@ -1975,6 +1978,7 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                                     'Download Prospect Report'
                                   )}
                                 </button>
+                                */}
                               </div>
                               )}
                             </div>
