@@ -378,8 +378,21 @@ const ReportView: React.FC = () => {
 
   // Conditional rendering in the return statement
   if (loading || isProcessing || getProfileLoading) {
+    const loadingMessage = loading ? 'Scanning website...' : 'Processing results...';
     return (
-      <div className="min-h-screen w-full bg-gray-900 flex items-center justify-center">
+      <div
+        className="min-h-screen w-full bg-gray-900 flex items-center justify-center"
+        aria-busy="true"
+      >
+        {/* Screen reader announcement - announces loading state when it appears */}
+        <div
+          className="sr-only"
+          role="status"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          {loadingMessage}
+        </div>
         <div className="relative w-full h-full aspect-video overflow-hidden bg-gray-900">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-900/50 to-blue-950/50">
             <div className="h-full flex items-center justify-center">
@@ -391,7 +404,7 @@ const ReportView: React.FC = () => {
                 >
                   {/* Status text ABOVE the loader */}
                   <h3 className="text-xl font-semibold text-white mb-4">
-                    {loading ? 'Scanning website...' : 'Processing results...'}
+                    {loadingMessage}
                   </h3>
 
                   {/* Loader in the middle */}
@@ -493,7 +506,7 @@ const ReportView: React.FC = () => {
             <span className="font-medium text-blue-100">Detailed Reports</span>
           </div>
         </div>
-        <h1 className="mb-2">
+        <h2 className="mb-2">
           <span className="block text-base sm:text-3xl lg:text-4xl font-medium text-white leading-tight tracking-tight break-words">
             <br />
             Scan results for{' '}
@@ -502,7 +515,7 @@ const ReportView: React.FC = () => {
             </span>
             <br />
           </span>
-        </h1>
+        </h2>
       </header>
       <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -701,6 +714,7 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
                               }
                             }}
                             className="fix-with-ai-button"
+                            aria-label={`Fix with AI about ${issue.message || issue.help || 'Accessibility Issue'}`}
                           >
                             <Sparkles className="w-4 h-4" />
                             Fix with AI
@@ -835,6 +849,7 @@ WCAG: ${issue.code || issue.message || 'N/A'}`;
                             }
                           }}
                           className="fix-with-ai-button"
+                          aria-label={`Fix with AI about ${issue.message || issue.help || 'Accessibility Issue'}`}
                         >
                           <Sparkles className="w-4 h-4" />
                           Fix with AI
@@ -1153,12 +1168,14 @@ const FunctionTabs: React.FC<FunctionTabsProps> = ({
 
   return (
     <div className="bg-blue-900 w-full border-t border-blue-800">
-      <div className="flex flex-wrap">
+      <div className="flex flex-wrap" role="tablist">
         <button
+          role="tab"
+          aria-selected={active === 'all'}
           onClick={() => onChange('all')}
           className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 whitespace-nowrap ${
             active === 'all'
-              ? 'text-blue-400 border-b-2 border-blue-400'
+              ? 'text-white border-b-2 border-white'
               : 'text-blue-100 hover:text-white'
           }`}
         >
@@ -1168,10 +1185,12 @@ const FunctionTabs: React.FC<FunctionTabsProps> = ({
         {functionalityNames.map((name) => (
           <button
             key={name}
+            role="tab"
+            aria-selected={active === name}
             onClick={() => onChange(name)}
             className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               active === name
-                ? 'text-blue-400 border-b-2 border-blue-400'
+                ? 'text-white border-b-2 border-white'
                 : 'text-blue-100 hover:text-white'
             }`}
           >
@@ -1190,8 +1209,10 @@ const OrganizationTabs: React.FC<OrganizationTabsProps> = ({
 }) => {
   return (
     <div className="bg-blue-100 rounded-lg p-1 mb-0">
-      <div className="flex">
+      <div className="flex" role="tablist">
         <button
+          role="tab"
+          aria-selected={active === 'structure'}
           onClick={() => onChange('structure')}
           className={`py-3 px-6 flex-1 text-center rounded-lg transition-colors ${
             active === 'structure'
@@ -1202,6 +1223,8 @@ const OrganizationTabs: React.FC<OrganizationTabsProps> = ({
           By Structure
         </button>
         <button
+          role="tab"
+          aria-selected={active === 'function'}
           onClick={() => onChange('function')}
           className={`py-3 px-6 flex-1 text-center rounded-lg transition-colors ${
             active === 'function'
@@ -1230,14 +1253,16 @@ const StructureTabs: React.FC<StructureTabsProps> = ({ active, onChange }) => {
 
   return (
     <div className="bg-blue-900 w-full border-t border-blue-800">
-      <div className="flex flex-wrap">
+      <div className="flex flex-wrap" role="tablist">
         {tabs.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={active === tab.id}
             onClick={() => onChange(tab.id)}
             className={`px-4 py-2 text-sm transition-colors flex items-center gap-1.5 whitespace-nowrap ${
               active === tab.id
-                ? 'text-blue-400 border-b-2 border-blue-400'
+                ? 'text-white border-b-2 border-white'
                 : 'text-blue-100 hover:text-white'
             }`}
           >
@@ -1461,6 +1486,15 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
 
   return (
     <>
+      {/* Screen reader announcement for download loading state */}
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        {isDownloading ? 'Downloading report, please wait.' : ''}
+      </div>
       <div
         className={`${bgColor} rounded-lg shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center min-h-[120px]`}
       >
@@ -1477,12 +1511,16 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             <div className="w-full flex flex-col gap-3 pt-4">
               <button
                 onClick={handleDownloadSubmit}
-                className="whitespace-nowrap w-full px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="whitespace-nowrap w-full px-6 py-3 rounded-lg text-white font-medium bg-green-700 hover:bg-green-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 disabled={isDownloading}
+                aria-busy={isDownloading}
               >
                 <span className="flex justify-center items-center w-full">
                   {isDownloading ? (
-                    <CircularProgress size={22} sx={{ color: 'white' }} />
+                    <>
+                      <CircularProgress size={22} sx={{ color: 'white' }} />
+                      <span className="sr-only">Downloading report</span>
+                    </>
                   ) : (
                     'Get Report'
                   )}
@@ -1492,20 +1530,32 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                 onClick={handleShortReportDownload}
                 className="whitespace-nowrap w-full px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 disabled={isDownloading}
+                aria-busy={isDownloading}
               >
                 <span className="flex justify-center items-center w-full">
                   {isDownloading ? (
-                    <CircularProgress size={22} sx={{ color: 'white' }} />
+                    <>
+                      <CircularProgress size={22} sx={{ color: 'white' }} />
+                      <span className="sr-only">Downloading prospect report</span>
+                    </>
                   ) : (
                     'Prospect report'
                   )}
                 </span>
               </button>
               <div className="relative w-full">
+                <label
+                  htmlFor="language-select-mobile"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Language
+                </label>
                 <select
+                  id="language-select-mobile"
                   value={currentLanguage}
                   onChange={(e) => setCurrentLanguage(e.target.value)}
                   className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
+                  aria-label="Language"
                 >
                   <option value="en">English</option>
                   {Object.values(LANGUAGES).map((language) => (
@@ -1537,12 +1587,16 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
         <div className="hidden xl:flex relative mr-0 xl:mr-4 flex-col xl:flex-row items-stretch xl:items-center gap-3 xl:gap-4 w-full xl:w-auto pt-4 xl:pt-0">
           <button
             onClick={handleDownloadSubmit}
-            className="whitespace-nowrap w-full xl:w-auto px-6 py-3 rounded-lg text-white font-medium bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="whitespace-nowrap w-full xl:w-auto px-6 py-3 rounded-lg text-white font-medium bg-green-700 hover:bg-green-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={isDownloading}
+            aria-busy={isDownloading}
           >
             <span className="flex justify-center items-center w-full">
               {isDownloading ? (
-                <CircularProgress size={22} sx={{ color: 'white' }} />
+                <>
+                  <CircularProgress size={22} sx={{ color: 'white' }} />
+                  <span className="sr-only">Downloading report</span>
+                </>
               ) : (
                 'Get Detailed Report'
               )}
@@ -1552,20 +1606,33 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
             onClick={handleShortReportDownload}
             className="whitespace-nowrap w-full xl:w-auto px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             disabled={isDownloading}
+            aria-busy={isDownloading}
           >
             <span className="flex justify-center items-center w-full">
               {isDownloading ? (
-                <CircularProgress size={22} sx={{ color: 'white' }} />
+                <>
+                  <CircularProgress size={22} sx={{ color: 'white' }} />
+                  <span className="sr-only">Downloading prospect report</span>
+                </>
               ) : (
                 'Prospect report'
               )}
             </span>
           </button>
-          <div className="relative w-full xl:w-auto">
+          <div className="relative w-full xl:w-auto flex flex-col xl:flex-row xl:items-center gap-1 xl:gap-2">
+            <label
+              htmlFor="language-select-desktop"
+              className="text-sm font-medium text-gray-700 shrink-0"
+            >
+              Language
+            </label>
+            <div className="relative flex-1 xl:flex-initial">
             <select
+              id="language-select-desktop"
               value={currentLanguage}
               onChange={(e) => setCurrentLanguage(e.target.value)}
               className="appearance-none w-full xl:w-auto bg-white border border-gray-300 rounded-lg px-6 py-3 pr-8 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent h-[48px]"
+              aria-label="Language"
             >
               <option value="en">English</option>
               {Object.values(LANGUAGES).map((language) => (
@@ -1589,6 +1656,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                   d="M19 9l-7 7-7-7"
                 />
               </svg>
+            </div>
             </div>
           </div>
         </div>

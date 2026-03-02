@@ -59,7 +59,7 @@ export const baseColors = {
   grayText: '#434343',
   grayMuted: '#6B7484',
   grayDark2: '#111827',
-  grayPlaceholder: '#9ca3af',
+  grayPlaceholder: '#6b7280', // WCAG AA compliant: 4.54:1 contrast with white (was #9ca3af at 2.5:1)
   grayLabel: '#374151',
   grayInput: '#d1d5db',
   grayGrid: '#e5e7eb',

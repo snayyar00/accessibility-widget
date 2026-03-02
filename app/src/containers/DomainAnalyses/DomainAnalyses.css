@@ -188,27 +188,27 @@
   }
 
   /* Match main content height with sidebar */
-  .domain-analyses-container main > div {
+  .domain-analyses-container .domain-analyses-content > div {
     max-height: calc(100vh - 8rem);
     overflow-y: auto;
   }
 
   /* Custom scrollbar for main content */
-  .domain-analyses-container main > div::-webkit-scrollbar {
+  .domain-analyses-container .domain-analyses-content > div::-webkit-scrollbar {
     width: 6px;
   }
   
-  .domain-analyses-container main > div::-webkit-scrollbar-track {
+  .domain-analyses-container .domain-analyses-content > div::-webkit-scrollbar-track {
     background: #f8fafc;
     border-radius: 3px;
   }
   
-  .domain-analyses-container main > div::-webkit-scrollbar-thumb {
+  .domain-analyses-container .domain-analyses-content > div::-webkit-scrollbar-thumb {
     background: #A2ADF3;
     border-radius: 3px;
   }
   
-  .domain-analyses-container main > div::-webkit-scrollbar-thumb:hover {
+  .domain-analyses-container .domain-analyses-content > div::-webkit-scrollbar-thumb:hover {
     background: #0052CC;
   }
 }
@@ -226,17 +226,17 @@
   }
   
   /* Full width cards on mobile */
-  .domain-analyses-container main .grid {
+  .domain-analyses-container .domain-analyses-content .grid {
     grid-template-columns: 1fr;
   }
   
   /* Ensure main content doesn't overflow */
-  .domain-analyses-container main {
+  .domain-analyses-container .domain-analyses-content {
     min-width: 0;
     overflow-x: hidden;
   }
   
-  .domain-analyses-container main > div {
+  .domain-analyses-container .domain-analyses-content > div {
     min-width: 0;
     overflow-x: hidden;
   }
