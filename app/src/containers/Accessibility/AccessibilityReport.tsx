@@ -3,7 +3,7 @@ import './Accessibility.css'; // Ensure your CSS file includes styles for the ac
 import { AiFillCloseCircle } from 'react-icons/ai';
 import { FaGaugeSimpleHigh } from 'react-icons/fa6';
 import { FaUniversalAccess, FaCheckCircle, FaCircle, FaTimes, FaClock } from 'react-icons/fa';
-import { Zap, RefreshCw, BarChart3, ChevronDown } from 'lucide-react';
+import { Zap, RefreshCw, BarChart3, ChevronDown, PersonStanding } from 'lucide-react';
 import { TbZoomScanFilled } from 'react-icons/tb';
 import { Link } from 'react-router-dom';
 import getAccessibilityStats from '@/queries/accessibility/accessibility';
@@ -98,8 +98,11 @@ import getWidgetSettings from '@/utils/getWidgetSettings';
 import startAccessibilityReportJob from '@/queries/accessibility/startAccessibilityReportJob';
 import getAccessibilityReportByJobId from '@/queries/accessibility/getAccessibilityReportByJobId';
 import { baseColors } from '@/config/colors';
+
 const WEBABILITY_SCORE_BONUS = 45;
 const MAX_TOTAL_SCORE = 95;
+const ACCESSIBILITY_VISUALIZER_CHROME_URL =
+  'https://chromewebstore.google.com/detail/accessibility-visualizer/jbadkmdfkhibeigbahhbfhgfohfamihi';
 
 // Helper function to calculate enhanced scores
 function calculateEnhancedScore(baseScore: number) {
@@ -1268,6 +1271,72 @@ const AccessibilityReport = ({ currentDomain }: any) => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Chrome extension CTA: check issues in real time */}
+            <div className="w-full mt-6">
+              <div
+                className="rounded-2xl px-4 py-4 sm:px-6 sm:py-5 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 shadow-sm"
+                style={{
+                  backgroundColor: '#EAECFB',
+                  border: `1px solid ${baseColors.cardBorderPurple}`,
+                }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-full w-11 h-11 sm:w-12 sm:h-12 flex-shrink-0"
+                  style={{ backgroundColor: baseColors.white }}
+                  aria-hidden="true"
+                >
+                  <PersonStanding className="w-6 h-6" style={{ color: baseColors.brandPrimary }} />
+                </div>
+
+                <div className="flex-1">
+                  <h3
+                    className="text-base sm:text-lg font-semibold mb-1"
+                    style={{ color: baseColors.grayDark2 }}
+                  >
+                    See accessibility issues live in your browser
+                  </h3>
+                  <p
+                    className="text-sm sm:text-[15px] leading-relaxed"
+                    style={{ color: baseColors.grayDark }}
+                  >
+                    Install our free Accessibility Visualizer Chrome extension to overlay headings, landmarks,
+                    focus order, ARIA roles, and more on any page while you browse. Run WCAG audits alongside your
+                    automated scans.
+                  </p>
+                </div>
+
+                <div className="w-full md:w-auto">
+                  <a
+                    href={ACCESSIBILITY_VISUALIZER_CHROME_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full md:w-auto items-center justify-center gap-2 px-5 py-3 rounded-lg font-medium text-sm sm:text-base text-white transition-colors hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    style={{
+                      backgroundColor: '#0052CC',
+                    }}
+                    aria-label="Get Accessibility Visualizer Chrome extension (opens in new tab)"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5 12L10 17L19 8"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Get Accessibility Visualizer
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
