@@ -6,7 +6,6 @@ import {
   getPageHtml,
   postAddFix,
   postSuggestedFixes,
-  putPageSummary,
   updateAnalysisFixAction,
 } from '../controllers/analyses.controller'
 import { moderateLimiter } from '../middlewares/limiters.middleware'
@@ -16,7 +15,6 @@ const router = Router()
 router.get('/domain-analyses', moderateLimiter, getDomainAnalyses)
 router.get('/domain-analyses/page-html', moderateLimiter, getPageHtml)
 router.get('/domain-analyses/page-summary', moderateLimiter, getOrCreatePageSummary)
-router.put('/domain-analyses/page-summary', moderateLimiter, putPageSummary)
 router.put('/domain-analyses/fix-action', moderateLimiter, updateAnalysisFixAction)
 router.post('/domain-analyses/suggested-fixes', moderateLimiter, postSuggestedFixes)
 router.post('/domain-analyses/add-fix', moderateLimiter, postAddFix)

@@ -2,7 +2,15 @@ import OpenAI from 'openai'
 import { Request, Response } from 'express'
 
 import { WIDGET_CHAT_SYSTEM_PROMPT } from '../prompts/widget-chat.prompt'
-import { getPageSummaryByUrl } from '../repository/pageCache.repository'
+import {
+  getPageHtmlByUrl,
+  getPageSummaryByUrl,
+  updatePageSummary,
+} from '../repository/pageCache.repository'
+import {
+  extractTextFromHtml,
+  generatePageSummary,
+} from '../services/pageSummary/pageSummary.service'
 
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error('OPENROUTER_API_KEY environment variable is required for widget chat')
@@ -338,14 +346,22 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       systemPrompt += `\n\nPREFERRED LANGUAGE: Prefer responding in language code "${language}" if the user writes in that language.`
     }
 
-    // Summary request: always append summary (if available) after AI commands.
-    // We start the DB lookup in parallel and do NOT send the summary text to the model.
+    // Summary request from widget: fetch existing summary, or if HTML exists in DB generate and store one; if no HTML in DB return default.
     const isSummary = Boolean(pageUrl && isSummaryRequest(trimmedMessage))
     let summaryToAppend: string | null = null
     let summaryPromise: Promise<string | null> | null = null
 
     if (isSummary && pageUrl) {
-      summaryPromise = getPageSummaryByUrl({ url: pageUrl, urlHash: null })
+      summaryPromise = (async (): Promise<string | null> => {
+        const existing = await getPageSummaryByUrl({ url: pageUrl!, urlHash: null })
+        if (existing != null && existing.trim()) return existing.trim()
+        const html = await getPageHtmlByUrl({ url: pageUrl!, urlHash: null })
+        if (html == null) return null // no HTML in DB → caller will use default message
+        const textContent = extractTextFromHtml(html)
+        const summary = await generatePageSummary(textContent, pageUrl!)
+        await updatePageSummary({ url: pageUrl!, urlHash: null, summary })
+        return summary
+      })()
       systemPrompt += `\n\nIMPORTANT: The user asked for a page summary. The summary will be added to the response automatically — do NOT say you cannot summarize, cannot help with the summary, or mention the summary at all. Reply only with the appropriate widget command(s) the user requested (if any) and short confirmations of those actions (e.g. "Opening the menu." or "Done."). If the user only asked for a summary and no widget action, respond with { "command": { "type": "none" }, "reply": "Okay." } or a similar short acknowledgement.`
     }
 
@@ -419,11 +435,11 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       }
     }
 
-    // If a summary was requested, wait for the DB lookup result now (it was started in parallel above)
+    // If a summary was requested: we have either an existing summary, a newly generated one (stored in DB), or no HTML in DB → default message.
     if (summaryPromise) {
       const pageSummary = await summaryPromise
       const summaryReplyText =
-        pageSummary && pageSummary.trim()
+        pageSummary != null && pageSummary.trim()
           ? `Here's a quick summary of this page:\n\n${pageSummary.trim()}`
           : "The page summary isn't available for this page right now."
       summaryToAppend = summaryReplyText
@@ -437,11 +453,9 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     let replyToSend = firstActionWithReply?.reply?.trim() ?? ''
 
     if (summaryToAppend) {
-      // Append summary as an extra "none" action, and include it in the top-level reply
+      // When we have a summary, the main reply is the summary only (no generic model line)
       actions = [...actions, { command: { type: 'none' as const }, reply: summaryToAppend }]
-      replyToSend = replyToSend
-        ? `${replyToSend}\n\n${summaryToAppend}`
-        : summaryToAppend
+      replyToSend = summaryToAppend
     }
 
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
