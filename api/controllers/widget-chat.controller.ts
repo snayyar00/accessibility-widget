@@ -25,7 +25,9 @@ const openrouter = new OpenAI({
   },
 })
 
-const WIDGET_CHAT_TIMEOUT_MS = 10_000
+// Timeout for each model call (primary and fallback). Increased to reduce "request timed out" warnings
+// while still keeping the widget responsive for end users.
+const WIDGET_CHAT_TIMEOUT_MS = 20_000
 
 const DEFAULT_TIMEOUT_REPLY = "I'm taking a bit longer than usual. Please try again in a moment."
 
@@ -90,6 +92,12 @@ const WIDGET_POSITIONS = [
 const PAGE_COLOR_SECTIONS = ['text', 'title', 'background'] as const
 const PAGE_COLOR_VALUES = ['white', 'black', 'orange', 'blue', 'red', 'green', 'default'] as const
 
+type PageLink = {
+  href: string
+  text?: string
+  ariaLabel?: string
+}
+
 /** Allowed "mode" values for tools that have cycling options (CYCLING BUTTONS in prompt). */
 const TOOL_MODES: Record<string, readonly string[]> = {
   contrast: ['light-contrast', 'high-contrast', 'dark-contrast'],
@@ -108,6 +116,7 @@ type PageColorValue = (typeof PAGE_COLOR_VALUES)[number]
 type WidgetCommandType =
   | 'open_menu'
   | 'close_menu'
+  | 'navigate'
   | 'profile'
   | 'tool'
   | 'language'
@@ -123,6 +132,12 @@ type WidgetCommandType =
 type WidgetCommand =
   | { type: 'open_menu' }
   | { type: 'close_menu' }
+  /**
+   * Navigate the user to a specific link.
+   * Use "href" for full/relative URLs (including hash links for in-page navigation).
+   * "behavior" is optional; omit or use "smooth" unless "instant" is explicitly needed.
+   */
+  | { type: 'navigate'; href: string; behavior?: 'smooth' | 'instant' }
   | { type: 'profile'; value: ProfileKey; enabled: boolean }
   | { type: 'tool'; value: ToolKey; enabled: boolean; mode?: string }
   | { type: 'language'; value: string }
@@ -145,12 +160,55 @@ export interface WidgetChatRequestBody {
   message: string
   /** Optional conversation history for multi-turn. Each item: { role: 'user' | 'assistant', content: string } */
   messages?: Array<{ role: 'user' | 'assistant'; content: string }>
-  /** Current page URL (widget always sends this). Used for context and page summary lookup. */
+  /** Current page URL (widget always sends this as window.location.href). Used for context and page summary lookup. */
   currentUrl?: string
   /** @deprecated Use currentUrl. Optional site URL where the widget is embedded (fallback if currentUrl not sent). */
   siteUrl?: string
   /** Optional language hint (e.g. 'en', 'es') so the model can respond in that language. */
   language?: string
+  /**
+   * Optional list of links on the current page that the widget sends for navigation help.
+   * Frontend contract: prefers "links"; "pageLinks" is kept for backward compatibility.
+   */
+  pageLinks?: PageLink[]
+  links?: PageLink[]
+}
+
+/** Ensure replies are plain human-readable text (not JSON-looking). */
+function cleanReply(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined
+  const trimmed = raw.trim()
+  if (!trimmed) return undefined
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    return undefined
+  }
+  return trimmed
+}
+
+/** Heuristic: detect when the user is asking for navigation or page links. */
+function isNavigationIntent(message: string): boolean {
+  const lower = message.trim().toLowerCase()
+  if (!lower) return false
+
+  const keywords = [
+    'navigate',
+    'navigation',
+    'link',
+    'links',
+    'page',
+    'pages',
+    'open',
+    'go to',
+    'go back to',
+    'take me to',
+    'show me page links',
+    'what pages are available',
+    'what links are available',
+    'external links',
+    'help me navigate',
+  ]
+
+  return keywords.some((kw) => lower.includes(kw))
 }
 
 /** Detect if the user is asking for a page summary (so we can fetch from DB and append it). */
@@ -182,17 +240,53 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
     throw new Error('Empty AI response')
   }
 
-  let jsonText = trimmed
-
-  // If the model returned multiple objects back-to-back, join them into a JSON array
-  if (!trimmed.startsWith('[')) {
-    jsonText = `[${trimmed.replace(/}\s*{/g, '},{')}]`
-  }
-
   let parsed: unknown
   try {
-    parsed = JSON.parse(jsonText)
-  } catch (e) {
+    let candidate = trimmed
+
+    // Strip any leading/trailing noise so we keep only the outermost JSON region.
+    const firstBrace = candidate.indexOf('{')
+    const lastBrace = candidate.lastIndexOf('}')
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      candidate = candidate.slice(firstBrace, lastBrace + 1)
+    }
+
+    // Try parsing as-is first.
+    try {
+      parsed = JSON.parse(candidate)
+    } catch {
+      // If the model returned multiple objects back-to-back, join them into a JSON array.
+      try {
+        const multi = candidate.replace(/}\s*{/g, '},{')
+        const arrayCandidate = candidate.trim().startsWith('[')
+          ? multi
+          : `[${multi}]`
+        parsed = JSON.parse(arrayCandidate)
+      } catch {
+        // Fallback: extract all JSON object-like segments and parse them individually,
+        // ignoring any trailing stray braces or noise.
+        const objectMatches = candidate.match(/{[\s\S]*?}/g)
+        if (!objectMatches || objectMatches.length === 0) {
+          throw new Error('AI response is not valid JSON')
+        }
+        const parsedObjects: unknown[] = []
+        for (const part of objectMatches) {
+          try {
+            const obj = JSON.parse(part)
+            if (obj && typeof obj === 'object') {
+              parsedObjects.push(obj)
+            }
+          } catch {
+            // ignore invalid chunks
+          }
+        }
+        if (parsedObjects.length === 0) {
+          throw new Error('AI response is not valid JSON')
+        }
+        parsed = parsedObjects
+      }
+    }
+  } catch {
     throw new Error('AI response is not valid JSON')
   }
 
@@ -203,8 +297,16 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
       throw new Error(`AI response item at index ${index} is not an object`)
     }
 
-    const obj = item as { command?: any; reply?: unknown }
-    const { command, reply } = obj
+    let obj = item as { command?: any; reply?: unknown; type?: unknown }
+    let { command, reply } = obj
+
+    // Tolerate shorthand shape: { type: "none", reply: "..." } by wrapping into { command, reply }
+    if ((!command || typeof command !== 'object') && typeof obj.type === 'string') {
+      const { reply: itemReply, ...rest } = obj as any
+      command = rest
+      reply = itemReply
+      obj = { command, reply }
+    }
 
     if (!command || typeof command !== 'object') {
       throw new Error(`AI response item at index ${index} is missing a valid "command" object`)
@@ -218,6 +320,25 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
       case 'reset':
       case 'none':
         break
+      case 'navigate': {
+        const hasHref =
+          typeof command.href === 'string' && command.href.trim().length > 0
+        if (!hasHref) {
+          throw new Error(
+            `navigate command at index ${index} must include non-empty "href"`,
+          )
+        }
+        if (
+          command.behavior !== undefined &&
+          command.behavior !== 'smooth' &&
+          command.behavior !== 'instant'
+        ) {
+          throw new Error(
+            `navigate command behavior at index ${index} must be "smooth" or "instant" when provided`,
+          )
+        }
+        break
+      }
 
       case 'profile': {
         if (!PROFILE_KEYS.includes(command.value)) {
@@ -308,7 +429,7 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
         throw new Error(`Unknown command type "${String(type)}" at index ${index}`)
     }
 
-    const safeReply = typeof reply === 'string' ? reply : undefined
+    const safeReply = cleanReply(reply)
     return { command: command as WidgetCommand, reply: safeReply }
   })
 
@@ -324,7 +445,15 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
 export async function handleWidgetChatRequest(req: Request, res: Response) {
   try {
     const body = req.body as WidgetChatRequestBody
-    const { message, messages: history = [], currentUrl, siteUrl, language } = body
+    const {
+      message,
+      messages: history = [],
+      currentUrl,
+      siteUrl,
+      language,
+      pageLinks,
+      links,
+    } = body
     const pageUrl = typeof currentUrl === 'string' && currentUrl.trim() ? currentUrl.trim() : (typeof siteUrl === 'string' && siteUrl.trim() ? siteUrl.trim() : undefined)
 
     if (!message || typeof message !== 'string') {
@@ -342,6 +471,40 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     if (pageUrl) {
       systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${pageUrl}. You can refer to "this site" when giving directions.`
     }
+
+    const rawLinks: PageLink[] =
+      (Array.isArray(pageLinks) && pageLinks.length
+        ? pageLinks
+        : Array.isArray(links) && links.length
+          ? links
+          : []
+      ).filter(
+        (link): link is PageLink =>
+          !!link && typeof link.href === 'string' && !!link.href.trim(),
+      )
+
+    const shouldIncludeLinksInPrompt = isNavigationIntent(trimmedMessage)
+    const linksForPrompt = shouldIncludeLinksInPrompt ? rawLinks.slice(0, 50) : []
+
+    if (linksForPrompt.length > 0) {
+      systemPrompt += `\n\nPAGE LINKS:\n`
+      systemPrompt += linksForPrompt
+        .map((link, index) => {
+          const label =
+            typeof link.text === 'string' && link.text.trim().length
+              ? link.text.trim()
+              : typeof link.ariaLabel === 'string' && link.ariaLabel.trim().length
+                ? link.ariaLabel.trim()
+                : link.href.trim()
+          return `${index + 1}. ${label} -> ${link.href.trim()}`
+        })
+        .join('\n')
+      systemPrompt +=
+        `\n\nThe numbered PAGE LINKS above are real links on the current page. ` +
+        `You can help the user choose between them in your "reply", and when they clearly ask to open one of these links, ` +
+        `return a navigate command with the matching href, for example: { "command": { "type": "navigate", "href": "<one of the URLs above>" }, "reply": "Opening that page for you." }.`
+    }
+
     if (language) {
       systemPrompt += `\n\nPREFERRED LANGUAGE: Prefer responding in language code "${language}" if the user writes in that language.`
     }
@@ -445,12 +608,23 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       summaryToAppend = summaryReplyText
     }
 
-    let actions = parseAndValidateActions(rawReply)
+    let actions: WidgetChatAction[]
+    try {
+      actions = parseAndValidateActions(rawReply)
+    } catch (parseError) {
+      console.error('Widget chat: failed to parse AI response, falling back to safe reply.', {
+        error: (parseError as Error)?.message,
+        rawReply,
+      })
+
+      const cleaned = cleanReply(rawReply)
+      const safeText = cleaned ?? DEFAULT_TIMEOUT_REPLY
+
+      actions = [{ command: { type: 'none' }, reply: safeText }]
+    }
     // Derive a user-facing reply from the first non-empty action reply, not from the raw JSON string
-    const firstActionWithReply = actions.find(
-      (a) => typeof a.reply === 'string' && a.reply.trim().length > 0,
-    )
-    let replyToSend = firstActionWithReply?.reply?.trim() ?? ''
+    const firstActionWithReply = actions.find((a) => typeof a.reply === 'string' && a.reply.trim().length > 0)
+    let replyToSend = cleanReply(firstActionWithReply?.reply) ?? ''
 
     if (summaryToAppend) {
       // When we have a summary, the main reply is the summary only (no generic model line)
