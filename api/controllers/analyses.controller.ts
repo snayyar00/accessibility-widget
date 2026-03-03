@@ -183,8 +183,8 @@ export async function getOrCreatePageSummary(req: Request, res: Response) {
   const { url, url_hash: urlHash } = req.query
 
   try {
-    if (!url || typeof url !== 'string') {
-      return res.status(400).json({ error: 'URL parameter is required' })
+    if (!url || typeof url !== 'string' || !url.trim()) {
+      return res.status(400).json({ error: 'URL parameter is required and cannot be empty' })
     }
 
     const urlTrimmed = (url as string).trim()

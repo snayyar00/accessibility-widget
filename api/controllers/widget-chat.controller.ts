@@ -321,11 +321,20 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
       case 'none':
         break
       case 'navigate': {
-        const hasHref =
-          typeof command.href === 'string' && command.href.trim().length > 0
-        if (!hasHref) {
+        const href = typeof command.href === 'string' ? command.href.trim() : ''
+        if (!href) {
           throw new Error(
             `navigate command at index ${index} must include non-empty "href"`,
+          )
+        }
+        const lowerHref = href.toLowerCase()
+        const isUnsafeScheme =
+          lowerHref.startsWith('javascript:') ||
+          lowerHref.startsWith('data:') ||
+          lowerHref.startsWith('vbscript:')
+        if (isUnsafeScheme) {
+          throw new Error(
+            `navigate command at index ${index} has disallowed URI scheme in "href"`,
           )
         }
         if (
@@ -600,12 +609,18 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
 
     // If a summary was requested: we have either an existing summary, a newly generated one (stored in DB), or no HTML in DB → default message.
     if (summaryPromise) {
-      const pageSummary = await summaryPromise
-      const summaryReplyText =
-        pageSummary != null && pageSummary.trim()
-          ? `Here's a quick summary of this page:\n\n${pageSummary.trim()}`
-          : "The page summary isn't available for this page right now."
-      summaryToAppend = summaryReplyText
+      try {
+        const pageSummary = await summaryPromise
+        const summaryReplyText =
+          pageSummary != null && pageSummary.trim()
+            ? `Here's a quick summary of this page:\n\n${pageSummary.trim()}`
+            : "The page summary isn't available for this page right now."
+        summaryToAppend = summaryReplyText
+      } catch (summaryError) {
+        console.error('Widget chat: page summary generation failed (continuing without summary).', {
+          error: (summaryError as Error)?.message,
+        })
+      }
     }
 
     let actions: WidgetChatAction[]

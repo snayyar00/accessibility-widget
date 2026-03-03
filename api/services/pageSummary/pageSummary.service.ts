@@ -22,10 +22,22 @@ const MAX_CONTENT_LENGTH = 10_000
 export function extractTextFromHtml(html: string): string {
   let s = html
 
-  // Remove script, style, noscript
-  s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
-  s = s.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
-  s = s.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, '')
+  // Remove script, style, noscript (handle malformed closing tags and ensure complete removal)
+  let previous: string
+  do {
+    previous = s
+    s = s.replace(/<script\b[^>]*>[\s\S]*?<\/script(?:\s[^>]*)?>/gi, '')
+  } while (s !== previous)
+
+  do {
+    previous = s
+    s = s.replace(/<style\b[^>]*>[\s\S]*?<\/style(?:\s[^>]*)?>/gi, '')
+  } while (s !== previous)
+
+  do {
+    previous = s
+    s = s.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript(?:\s[^>]*)?>/gi, '')
+  } while (s !== previous)
 
   const parts: string[] = []
   const tagRegex = /<(p|h[1-6])\b[^>]*>([\s\S]*?)<\/\1>/gi
@@ -69,22 +81,45 @@ export async function generatePageSummary(pageContent: string, url: string): Pro
 
   const primaryModel = 'google/gemini-2.5-flash-lite'
   const fallbackModel = 'openai/gpt-4o-mini'
+  const SUMMARY_TIMEOUT_MS = 20_000
+
+  const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> => {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('PAGE_SUMMARY_TIMEOUT')), ms)
+      promise.then(
+        (value) => {
+          clearTimeout(timer)
+          resolve(value)
+        },
+        (err) => {
+          clearTimeout(timer)
+          reject(err)
+        },
+      )
+    })
+  }
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: primaryModel,
-      ...options,
-    })
+    const completion = await withTimeout(
+      openai.chat.completions.create({
+        model: primaryModel,
+        ...options,
+      }),
+      SUMMARY_TIMEOUT_MS,
+    )
     const content = completion.choices[0]?.message?.content?.trim()
     if (content) return content
   } catch {
     // Fall back to GPT-4o-mini
   }
 
-  const completion = await openai.chat.completions.create({
-    model: fallbackModel,
-    ...options,
-  })
+  const completion = await withTimeout(
+    openai.chat.completions.create({
+      model: fallbackModel,
+      ...options,
+    }),
+    SUMMARY_TIMEOUT_MS,
+  )
   const content = completion.choices[0]?.message?.content?.trim()
   if (content) return content
   throw new Error('AI returned no summary content')

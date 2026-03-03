@@ -110,21 +110,35 @@ export async function updatePageSummary(
 
   const trimmed = url.trim()
   const useHash = urlHash && urlHash.trim()
-  const selectSql = useHash
-    ? `SELECT rowid FROM page_cache WHERE url_hash = ? ORDER BY fetched_at DESC LIMIT 1`
-    : `SELECT rowid FROM page_cache WHERE url = ? ORDER BY fetched_at DESC LIMIT 1`
-  const selectArgs = useHash ? [urlHash!.trim()] : [trimmed]
-  const selectResult = await tursoClient.execute({ sql: selectSql, args: selectArgs })
-  if (selectResult.rows.length === 0) return false
 
-  const rowid = (selectResult.rows[0] as Record<string, unknown>).rowid
-  if (rowid == null) return false
-  const rowidVal = typeof rowid === 'number' ? rowid : Number(rowid)
-  await tursoClient.execute({
-    sql: `UPDATE page_cache SET page_summary = ? WHERE rowid = ?`,
-    args: [summary, rowidVal],
+  const whereClause = useHash ? 'url_hash = ?' : 'url = ?'
+  const arg = useHash ? urlHash!.trim() : trimmed
+
+  const result = await tursoClient.execute({
+    sql: `
+      UPDATE page_cache
+      SET page_summary = ?
+      WHERE rowid = (
+        SELECT rowid
+        FROM page_cache
+        WHERE ${whereClause}
+        ORDER BY fetched_at DESC
+        LIMIT 1
+      )
+    `,
+    args: [summary, arg],
   })
-  return true
+
+  const rowsAffected =
+    typeof result.rowsAffected === 'number'
+      ? result.rowsAffected
+      : Number((result as unknown as { rowsAffected?: number | string }).rowsAffected ?? 0)
+
+  if (!Number.isFinite(rowsAffected)) {
+    return false
+  }
+
+  return rowsAffected > 0
 }
 
 export type GetPageHtmlOptions = {
