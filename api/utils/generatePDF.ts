@@ -133,6 +133,71 @@ function getImageDimensions(base64Data: string): Promise<{ width: number; height
   })
 }
 
+// ── WCAG helpers (mirrors frontend logic in app/src/utils/generatePDF.ts) ──
+
+function getWcagKeyAndLabel(
+  rawWcagCode?: string,
+  rawFallbackCode?: string,
+): { key: string; label: string } {
+  const cleanedWcag = (rawWcagCode || '').replace(/undefined/gi, '').trim()
+  const cleanedFallback = (rawFallbackCode || '').replace(/undefined/gi, '').trim()
+
+  const extractCriterion = (value: string): string => {
+    if (!value) return ''
+    const criteriaMatch = value.match(/Criteria\s+(\d+\.\d+\.\d+)/i)
+    if (criteriaMatch) return criteriaMatch[1]
+    const tripleMatch = value.match(/(\d+\.\d+\.\d+)(?!.*\d+\.\d+\.\d+)/)
+    if (tripleMatch) return tripleMatch[1]
+    const anyTriple = value.match(/\b(\d+\.\d+\.\d+)\b/)
+    if (anyTriple) return anyTriple[1]
+    return ''
+  }
+
+  const numeric = extractCriterion(cleanedWcag) || extractCriterion(cleanedFallback)
+  if (!numeric) return { key: '', label: '' }
+  return { key: `WCAG2AA.${numeric}`, label: `WCAG 2.1 – ${numeric}` }
+}
+
+const WCAG_COMPLIANT_PREFIXES_PDF = [
+  'WCAG2AA.Principle 1.Guideline 1.1',
+  'WCAG2AA.Principle 2.Guideline 2.4',
+  'WCAG2AA.Principle 1.Guideline 1.3',
+  'WCAG2AA.Principle 2.Guideline 2.1',
+  'WCAG2AA.Principle 1.Guideline 1.4',
+]
+
+const WCAG_COMPLIANT_CODES_PDF = new Set([
+  'WCAG2AA.1.1.1', 'WCAG2AA.1.2.1', 'WCAG2AA.1.2.2', 'WCAG2AA.1.2.3',
+  'WCAG2AA.1.2.4', 'WCAG2AA.1.2.5', 'WCAG2AA.1.3.1', 'WCAG2AA.1.3.2',
+  'WCAG2AA.1.3.3', 'WCAG2AA.1.3.4', 'WCAG2AA.1.3.5', 'WCAG2AA.1.3.6',
+  'WCAG2AA.1.4.1', 'WCAG2AA.1.4.2', 'WCAG2AA.1.4.3', 'WCAG2AA.1.4.4',
+  'WCAG2AA.1.4.5', 'WCAG2AA.1.4.6', 'WCAG2AA.1.4.8', 'WCAG2AA.1.4.9',
+  'WCAG2AA.1.4.10', 'WCAG2AA.1.4.11', 'WCAG2AA.1.4.12', 'WCAG2AA.1.4.13',
+  'WCAG2AA.2.1.1', 'WCAG2AA.2.1.2', 'WCAG2AA.2.1.4',
+  'WCAG2AA.2.2.1', 'WCAG2AA.2.2.2', 'WCAG2AA.2.2.3', 'WCAG2AA.2.2.4', 'WCAG2AA.2.2.5', 'WCAG2AA.2.2.6',
+  'WCAG2AA.2.3.1', 'WCAG2AA.2.3.2', 'WCAG2AA.2.3.3',
+  'WCAG2AA.2.4.1', 'WCAG2AA.2.4.2', 'WCAG2AA.2.4.3', 'WCAG2AA.2.4.4', 'WCAG2AA.2.4.5',
+  'WCAG2AA.2.4.6', 'WCAG2AA.2.4.7', 'WCAG2AA.2.4.8', 'WCAG2AA.2.4.9', 'WCAG2AA.2.4.10',
+  'WCAG2AA.2.4.11', 'WCAG2AA.2.4.12', 'WCAG2AA.2.4.13',
+  'WCAG2AA.2.5.1', 'WCAG2AA.2.5.2', 'WCAG2AA.2.5.3', 'WCAG2AA.2.5.4', 'WCAG2AA.2.5.5',
+  'WCAG2AA.2.5.6', 'WCAG2AA.2.5.7', 'WCAG2AA.2.5.8',
+  'WCAG2AA.3.1.1', 'WCAG2AA.3.1.2', 'WCAG2AA.3.1.3', 'WCAG2AA.3.1.4', 'WCAG2AA.3.1.5', 'WCAG2AA.3.1.6',
+  'WCAG2AA.3.2.1', 'WCAG2AA.3.2.2', 'WCAG2AA.3.2.3', 'WCAG2AA.3.2.4', 'WCAG2AA.3.2.5', 'WCAG2AA.3.2.6',
+  'WCAG2AA.3.3.1', 'WCAG2AA.3.3.2', 'WCAG2AA.3.3.3', 'WCAG2AA.3.3.4', 'WCAG2AA.3.3.5', 'WCAG2AA.3.3.6',
+  'WCAG2AA.3.3.7', 'WCAG2AA.3.3.8',
+  'WCAG2AA.4.1.1', 'WCAG2AA.4.1.2', 'WCAG2AA.4.1.3',
+])
+
+function isWcagCodeCompliantPDF(code: string): boolean {
+  if (!code) return false
+  return (
+    WCAG_COMPLIANT_PREFIXES_PDF.some((prefix) => code.startsWith(prefix)) ||
+    [...WCAG_COMPLIANT_CODES_PDF].some((c) => code.startsWith(c))
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+
 export const generatePDF = async (reportData: any, currentLanguage: string, domain?: string): Promise<Blob> => {
   try {
     console.log('generatePDF called with:', {
@@ -433,7 +498,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
       outerRingColor = [34, 197, 94] // Bright green ring (green-500)
       innerFillColor = [240, 253, 244] // Light green fill (green-50)
       iconColor = [34, 197, 94] // Bright green checkmark (green-500)
-      progressPercentage = 0.95 // 95% filled
+      progressPercentage = 1.0 // full ring for compliant
     } else if (status === 'Partially Compliant') {
       outerRingColor = [202, 138, 4] // yellow-600
       innerFillColor = [254, 252, 232] // yellow-50
@@ -456,24 +521,27 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     doc.setFillColor(...innerFillColor)
     doc.circle(badgeCX, badgeCY, badgeR - 3, 'F')
 
-    // Draw progress arc based on status
+    // Draw progress arc / full ring
     doc.setDrawColor(...iconColor)
     doc.setLineWidth(2.5)
-    if ((doc as any).setLineCap) {
-      ;(doc as any).setLineCap('round')
-    }
 
-    // Draw progress arc (from top, clockwise)
-    const startAngle = -Math.PI / 2 // Start from top
-    const endAngle = startAngle + 2 * Math.PI * progressPercentage
-
-    // Draw the progress arc
-    for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
-      const x1 = badgeCX + Math.cos(angle) * (badgeR - 1.5)
-      const y1 = badgeCY + Math.sin(angle) * (badgeR - 1.5)
-      const x2 = badgeCX + Math.cos(angle + 0.1) * (badgeR - 1.5)
-      const y2 = badgeCY + Math.sin(angle + 0.1) * (badgeR - 1.5)
-      doc.line(x1, y1, x2, y2)
+    if (progressPercentage >= 1.0) {
+      // Full ring — plain circle stroke avoids the join artifact
+      // that the segmented-arc loop produces at the top where start meets end.
+      doc.circle(badgeCX, badgeCY, badgeR - 1.5, 'S')
+    } else {
+      if ((doc as any).setLineCap) {
+        ;(doc as any).setLineCap('round')
+      }
+      const startAngle = -Math.PI / 2
+      const endAngle = startAngle + 2 * Math.PI * progressPercentage
+      for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
+        const x1 = badgeCX + Math.cos(angle) * (badgeR - 1.5)
+        const y1 = badgeCY + Math.sin(angle) * (badgeR - 1.5)
+        const x2 = badgeCX + Math.cos(angle + 0.1) * (badgeR - 1.5)
+        const y2 = badgeCY + Math.sin(angle + 0.1) * (badgeR - 1.5)
+        doc.line(x1, y1, x2, y2)
+      }
     }
 
     // Draw status-specific icon in center - compact size
@@ -648,6 +716,48 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     doc.text(`${severityCounts.mild}`, severityCardX + severityCardWidth - 4, sevLineY, {
       align: 'right',
     })
+
+    // --- Auto-Fixed / Need Action counts ---
+    let fixedCount = 0
+    let needActionCount = 0
+    for (const issue of issues) {
+      const { key: wcagKey } = getWcagKeyAndLabel((issue as any).wcag_code, issue.code)
+      const rawWcagText = ((issue as any).wcag_code || '').replace(/undefined/gi, '').trim()
+      if (!wcagKey && !rawWcagText) continue
+      if (wcagKey && isWcagCodeCompliantPDF(wcagKey)) {
+        fixedCount += 1
+      } else {
+        needActionCount += 1
+      }
+    }
+
+    // --- Auto-Fixed / Need Action summary pills ---
+    if (fixedCount > 0 || needActionCount > 0) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(6.5)
+      sevLineY += 6
+      let pillX = sevLineX - 4
+      const pillH = 6
+
+      if (fixedCount > 0) {
+        const label = `${translatedAutoFixed}: ${fixedCount}`
+        const pillW = doc.getTextWidth(label) + 6
+        doc.setFillColor(22, 163, 74)
+        doc.roundedRect(pillX, sevLineY - 4, pillW, pillH, 2, 2, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.text(label, pillX + 3, sevLineY - 4 + pillH / 2, { baseline: 'middle' } as any)
+        pillX += pillW + 4
+      }
+
+      if (needActionCount > 0) {
+        const label = `${translatedNeedAction}: ${needActionCount}`
+        const pillW = doc.getTextWidth(label) + 6
+        doc.setFillColor(245, 158, 11)
+        doc.roundedRect(pillX, sevLineY - 4, pillW, pillH, 2, 2, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.text(label, pillX + 3, sevLineY - 4 + pillH / 2, { baseline: 'middle' } as any)
+      }
+    }
     // --- END HEADER AREA ---
 
     // Compute a reference Y for subsequent sections based on header
@@ -1614,7 +1724,25 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
         },
       ])
 
-      // Row 2: Issue content
+      // Row 2: Per-issue Auto-Fixed / Need Action pill
+      const { key: issueWcagKey } = getWcagKeyAndLabel((issue as any).wcag_code, issue.code)
+      const issueFixStatus = issueWcagKey && isWcagCodeCompliantPDF(issueWcagKey) ? 'autoFixed' : 'needAction'
+      groupBody.push([
+        {
+          content: '',
+          colSpan: 4,
+          pageBreak: 'avoid',
+          styles: {
+            cellPadding: { top: 2, right: 4, bottom: 2, left: 0 },
+            minCellHeight: 9,
+            lineWidth: 0,
+          },
+          _isFixStatusPill: true,
+          _fixStatus: issueFixStatus,
+        } as any,
+      ])
+
+      // Row 3: Issue content
       groupBody.push([
         {
           content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
@@ -1631,7 +1759,7 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
         },
       ])
 
-      // Row 3: Message header and content in single container (responsive height)
+      // Row 4: Message header and content in single container (responsive height)
       const messageCombinedText = `        ${translatedIssueMessage}\n${issue.message || ''}`
       const messageAvailableWidth = sumColumnsWidth(0, 4) - 4 // padding 2 + 2
       const messageMinH = estimateCellHeight(messageCombinedText, messageAvailableWidth, 12, 2, 2)
@@ -2093,23 +2221,39 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
             try {
               const impactIcon = (data.cell.raw as any)._impactIcon
               if (impactIcon) {
-                console.log('Adding impact icon to PDF...')
-                doc.addImage(
-                  impactIcon,
-                  'PNG',
-                  iconX,
-                  iconY,
-                  iconSize * 3, // Increase width by 50%
-                  iconSize, // Keep height the same
-                )
-                console.log('Impact icon added successfully')
-              } else {
-                console.warn('Impact icon not available')
+                doc.addImage(impactIcon, 'PNG', iconX, iconY, iconSize * 3, iconSize)
               }
             } catch (error) {
               console.warn('Failed to load impact icon:', error)
             }
           }
+
+          // ── Per-issue Auto-Fixed / Need Action pill ───────────────────────
+          if (data.cell.raw && (data.cell.raw as any)._isFixStatusPill) {
+            const { x, y, height } = data.cell
+            const status: 'autoFixed' | 'needAction' = (data.cell.raw as any)._fixStatus
+            const label = status === 'autoFixed' ? translatedAutoFixed : translatedNeedAction
+
+            doc.setFont('helvetica', 'normal')
+            doc.setFontSize(8)
+
+            const paddingX = 4
+            const textW = doc.getTextWidth(label)
+            const chipW = textW + paddingX * 2
+            const chipH = 5
+            const chipX = x - 2
+            const chipY = y + (height - chipH) / 2 - 2
+
+            doc.setFillColor(
+              status === 'autoFixed' ? 22 : 245,
+              status === 'autoFixed' ? 163 : 158,
+              status === 'autoFixed' ? 74 : 11,
+            )
+            doc.roundedRect(chipX, chipY, chipW, chipH, 2, 2, 'F')
+            doc.setTextColor(255, 255, 255)
+            doc.text(label, chipX + paddingX, chipY + chipH / 2, { baseline: 'middle' } as any)
+          }
+          // ─────────────────────────────────────────────────────────────────
         },
       }
 

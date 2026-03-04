@@ -26,6 +26,15 @@ const newsData: NewsItem[] = [
   {
     id: '0',
     type: 'App',
+    date: '2026.03.02',
+    title: 'New Accessibility Visualizer Chrome Extension',
+    description:
+      'Inspect accessibility in real time on any page with our new Accessibility Visualizer Chrome extension. See landmarks, headings, focus order, ARIA roles, and more directly in your browser while you browse.',
+    link: 'https://chromewebstore.google.com/detail/accessibility-visualizer/jbadkmdfkhibeigbahhbfhgfohfamihi',
+  },
+  {
+    id: '1',
+    type: 'App',
     date: '2026.01.26',
     title: 'AI Powered Auto Fixes',
     description:
@@ -33,7 +42,7 @@ const newsData: NewsItem[] = [
     link: '/domain-analyses',
   },
   {
-    id: '1',
+    id: '2',
     type: 'App',
     date: '2025.11.20',
     title: 'Premium Expert Services',
@@ -42,7 +51,7 @@ const newsData: NewsItem[] = [
     link: '/service-requests',
   },
   {
-    id: '2',
+    id: '3',
     type: 'Widget',
     date: '2025.10.15',
     title: 'New Widget Interface is Here',
@@ -51,7 +60,7 @@ const newsData: NewsItem[] = [
     link: '/widget-selection',
   },
   {
-    id: '3',
+    id: '4',
     type: 'App',
     date: '2025.10.15',
     title: 'Experience Our Refreshed App Design',
@@ -60,7 +69,7 @@ const newsData: NewsItem[] = [
     link: 'https://app.webability.io',
   },
   {
-    id: '4',
+    id: '5',
     type: 'App',
     date: '2025.10.20',
     title: 'Earn Rewards by Referring Others',

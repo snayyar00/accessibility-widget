@@ -58,7 +58,7 @@
           Your latest accessibility audit report dated {{ reportDate }}, showing current compliance status and identified issues.<br /><br />
 
           <strong>3. Accessibility Statement</strong><br />
-          A professionally formatted accessibility statement for your website that meets WCAG 2.1 and ADA requirements.
+          A professionally formatted accessibility statement for your website that meets WCAG 2.1, 2.2  and ADA requirements.
         </mj-text>
       </mj-column>
     </mj-section>

@@ -34,7 +34,7 @@
     <mj-section background-color="#f8f8f8" padding="20px">
       <mj-column>
         <mj-text font-size="20px" font-weight="bold" color="#007bff" align="center"> Accessibility Report for {{ url }} </mj-text>
-        <mj-text font-size="16px" color="#666666" align="center"> Evaluate your site's compliance with WCAG 2.1 and ADA standards. </mj-text>
+        <mj-text font-size="16px" color="#666666" align="center"> Evaluate your site's compliance with WCAG 2.1, 2.2  and ADA standards. </mj-text>
       </mj-column>
     </mj-section>
 

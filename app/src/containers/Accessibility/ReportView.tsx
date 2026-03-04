@@ -481,7 +481,7 @@ const ReportView: React.FC = () => {
           <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
             <Check className="w-5 h-5 text-green-400" />
             <span className="font-medium text-blue-100">
-              WCAG 2.1,2.2 AA Compliant
+              WCAG 2.1, 2.2 AA Compliant
             </span>
           </div>
           <div className="flex items-center gap-2 text-blue-200 bg-white/5 px-3 py-1.5 rounded-full text-xs sm:text-sm">
@@ -1488,6 +1488,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                   )}
                 </span>
               </button>
+              {/* Prospect report button removed from UI
               <button
                 onClick={handleShortReportDownload}
                 className="whitespace-nowrap w-full px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -1501,6 +1502,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
                   )}
                 </span>
               </button>
+              */}
               <div className="relative w-full">
                 <select
                   value={currentLanguage}
@@ -1548,6 +1550,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               )}
             </span>
           </button>
+          {/* Prospect report button removed from UI
           <button
             onClick={handleShortReportDownload}
             className="whitespace-nowrap w-full xl:w-auto px-6 py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
@@ -1561,6 +1564,7 @@ const ComplianceStatus: React.FC<ComplianceStatusProps> = ({
               )}
             </span>
           </button>
+          */}
           <div className="relative w-full xl:w-auto">
             <select
               value={currentLanguage}
