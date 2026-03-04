@@ -143,6 +143,71 @@ async function getImageDimensions(base64Data: string): Promise<{ width: number; 
   }
 }
 
+// ── WCAG helpers (mirrors frontend logic in app/src/utils/generatePDF.ts) ──
+
+function getWcagKeyAndLabel(
+  rawWcagCode?: string,
+  rawFallbackCode?: string,
+): { key: string; label: string } {
+  const cleanedWcag = (rawWcagCode || '').replace(/undefined/gi, '').trim()
+  const cleanedFallback = (rawFallbackCode || '').replace(/undefined/gi, '').trim()
+
+  const extractCriterion = (value: string): string => {
+    if (!value) return ''
+    const criteriaMatch = value.match(/Criteria\s+(\d+\.\d+\.\d+)/i)
+    if (criteriaMatch) return criteriaMatch[1]
+    const tripleMatch = value.match(/(\d+\.\d+\.\d+)(?!.*\d+\.\d+\.\d+)/)
+    if (tripleMatch) return tripleMatch[1]
+    const anyTriple = value.match(/\b(\d+\.\d+\.\d+)\b/)
+    if (anyTriple) return anyTriple[1]
+    return ''
+  }
+
+  const numeric = extractCriterion(cleanedWcag) || extractCriterion(cleanedFallback)
+  if (!numeric) return { key: '', label: '' }
+  return { key: `WCAG2AA.${numeric}`, label: `WCAG 2.1 – ${numeric}` }
+}
+
+const WCAG_COMPLIANT_PREFIXES = [
+  'WCAG2AA.Principle 1.Guideline 1.1',
+  'WCAG2AA.Principle 2.Guideline 2.4',
+  'WCAG2AA.Principle 1.Guideline 1.3',
+  'WCAG2AA.Principle 2.Guideline 2.1',
+  'WCAG2AA.Principle 1.Guideline 1.4',
+]
+
+const WCAG_COMPLIANT_CODES = new Set([
+  'WCAG2AA.1.1.1', 'WCAG2AA.1.2.1', 'WCAG2AA.1.2.2', 'WCAG2AA.1.2.3',
+  'WCAG2AA.1.2.4', 'WCAG2AA.1.2.5', 'WCAG2AA.1.3.1', 'WCAG2AA.1.3.2',
+  'WCAG2AA.1.3.3', 'WCAG2AA.1.3.4', 'WCAG2AA.1.3.5', 'WCAG2AA.1.3.6',
+  'WCAG2AA.1.4.1', 'WCAG2AA.1.4.2', 'WCAG2AA.1.4.3', 'WCAG2AA.1.4.4',
+  'WCAG2AA.1.4.5', 'WCAG2AA.1.4.6', 'WCAG2AA.1.4.8', 'WCAG2AA.1.4.9',
+  'WCAG2AA.1.4.10', 'WCAG2AA.1.4.11', 'WCAG2AA.1.4.12', 'WCAG2AA.1.4.13',
+  'WCAG2AA.2.1.1', 'WCAG2AA.2.1.2', 'WCAG2AA.2.1.4',
+  'WCAG2AA.2.2.1', 'WCAG2AA.2.2.2', 'WCAG2AA.2.2.3', 'WCAG2AA.2.2.4', 'WCAG2AA.2.2.5', 'WCAG2AA.2.2.6',
+  'WCAG2AA.2.3.1', 'WCAG2AA.2.3.2', 'WCAG2AA.2.3.3',
+  'WCAG2AA.2.4.1', 'WCAG2AA.2.4.2', 'WCAG2AA.2.4.3', 'WCAG2AA.2.4.4', 'WCAG2AA.2.4.5',
+  'WCAG2AA.2.4.6', 'WCAG2AA.2.4.7', 'WCAG2AA.2.4.8', 'WCAG2AA.2.4.9', 'WCAG2AA.2.4.10',
+  'WCAG2AA.2.4.11', 'WCAG2AA.2.4.12', 'WCAG2AA.2.4.13',
+  'WCAG2AA.2.5.1', 'WCAG2AA.2.5.2', 'WCAG2AA.2.5.3', 'WCAG2AA.2.5.4', 'WCAG2AA.2.5.5',
+  'WCAG2AA.2.5.6', 'WCAG2AA.2.5.7', 'WCAG2AA.2.5.8',
+  'WCAG2AA.3.1.1', 'WCAG2AA.3.1.2', 'WCAG2AA.3.1.3', 'WCAG2AA.3.1.4', 'WCAG2AA.3.1.5', 'WCAG2AA.3.1.6',
+  'WCAG2AA.3.2.1', 'WCAG2AA.3.2.2', 'WCAG2AA.3.2.3', 'WCAG2AA.3.2.4', 'WCAG2AA.3.2.5', 'WCAG2AA.3.2.6',
+  'WCAG2AA.3.3.1', 'WCAG2AA.3.3.2', 'WCAG2AA.3.3.3', 'WCAG2AA.3.3.4', 'WCAG2AA.3.3.5', 'WCAG2AA.3.3.6',
+  'WCAG2AA.3.3.7', 'WCAG2AA.3.3.8',
+  'WCAG2AA.4.1.1', 'WCAG2AA.4.1.2', 'WCAG2AA.4.1.3',
+])
+
+function isWcagCodeCompliant(code: string): boolean {
+  if (!code) return false
+  return (
+    WCAG_COMPLIANT_PREFIXES.some((prefix) => code.startsWith(prefix)) ||
+    [...WCAG_COMPLIANT_CODES].some((c) => code.startsWith(c))
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+
 export async function generateAccessibilityReportPDF(reportData: any, url: string): Promise<Buffer> {
   const doc = new jsPDF()
 
@@ -394,6 +459,20 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
     },
   ]
 
+  // --- WebAbility coverage: Auto-Fixed vs Need Action ---
+  let fixedCount = 0
+  let needActionCount = 0
+  for (const issue of issues) {
+    const { key: wcagKey } = getWcagKeyAndLabel((issue as any).wcag_code, issue.code)
+    const rawWcagText = ((issue as any).wcag_code || '').replace(/undefined/gi, '').trim()
+    if (!wcagKey && !rawWcagText) continue
+    if (wcagKey && isWcagCodeCompliant(wcagKey)) {
+      fixedCount += 1
+    } else {
+      needActionCount += 1
+    }
+  }
+
   let x = 20
   for (const box of summaryBoxes) {
     doc.setFillColor(box.color[0], box.color[1], box.color[2])
@@ -405,6 +484,34 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
     doc.setFontSize(10)
     doc.text(box.label, x + 4, yStart + 16)
     x += 60
+  }
+
+  // --- Auto-Fixed / Need Action summary pills ---
+  if (fixedCount > 0 || needActionCount > 0) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
+    let pillX = 20
+    const pillY = yStart + 26
+    const pillH = 6
+
+    if (fixedCount > 0) {
+      const label = `Auto-Fixed: ${fixedCount}`
+      const pillW = doc.getTextWidth(label) + 8
+      doc.setFillColor(22, 163, 74)
+      doc.roundedRect(pillX, pillY, pillW, pillH, 2, 2, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.text(label, pillX + 4, pillY + pillH / 2, { baseline: 'middle' } as any)
+      pillX += pillW + 4
+    }
+
+    if (needActionCount > 0) {
+      const label = `Need Action: ${needActionCount}`
+      const pillW = doc.getTextWidth(label) + 8
+      doc.setFillColor(245, 158, 11)
+      doc.roundedRect(pillX, pillY, pillW, pillH, 2, 2, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.text(label, pillX + 4, pillY + pillH / 2, { baseline: 'middle' } as any)
+    }
   }
 
   const yTable = yStart + 40
@@ -457,6 +564,24 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
           cellPadding: 8,
         },
       },
+    ])
+
+    // Per-issue Auto-Fixed / Need Action pill row
+    const { key: issueWcagKey } = getWcagKeyAndLabel((issue as any).wcag_code, issue.code)
+    const issueFixStatus = issueWcagKey && isWcagCodeCompliant(issueWcagKey) ? 'autoFixed' : 'needAction'
+    tableBody.push([
+      {
+        content: '',
+        colSpan: 4,
+        styles: {
+          fillColor: [255, 255, 255],
+          cellPadding: { top: 2, right: 4, bottom: 2, left: 4 },
+          minCellHeight: 9,
+          lineWidth: 0,
+        },
+        _isFixStatusPill: true,
+        _fixStatus: issueFixStatus,
+      } as any,
     ])
 
     // Row 1: Issue + Message with elegant code block styling
@@ -800,6 +925,32 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
       }
       if (data.cell.raw && data.cell.raw._isScreenshot) {
         console.log('didDrawCell for screenshot', data.cell.raw._screenshotBase64 ? 'has base64' : 'no base64')
+      }
+
+      // Per-issue Auto-Fixed / Need Action pill
+      if (data.cell.raw && (data.cell.raw as any)._isFixStatusPill) {
+        const { x, y, height } = data.cell
+        const status: 'autoFixed' | 'needAction' = (data.cell.raw as any)._fixStatus
+        const label = status === 'autoFixed' ? 'Auto-Fixed' : 'Need Action'
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
+
+        const paddingX = 4
+        const textW = doc.getTextWidth(label)
+        const chipW = textW + paddingX * 2
+        const chipH = 5
+        const chipX = x + 4
+        const chipY = y + (height - chipH) / 2 - 2
+
+        doc.setFillColor(
+          status === 'autoFixed' ? 22 : 245,
+          status === 'autoFixed' ? 163 : 158,
+          status === 'autoFixed' ? 74 : 11,
+        )
+        doc.roundedRect(chipX, chipY, chipW, chipH, 2, 2, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.text(label, chipX + paddingX, chipY + chipH / 2, { baseline: 'middle' } as any)
       }
     },
   })
