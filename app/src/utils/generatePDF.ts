@@ -173,6 +173,50 @@ function getImageDimensions(
   });
 }
 
+// Normalize WCAG codes for both logic (isCodeCompliant) and display.
+// - Cleans out "undefined"
+// - Tries to extract the numeric success criterion (e.g. 1.4.3)
+// - Returns a canonical key like "WCAG2AA.1.4.3" for logic
+// - And a human label like "WCAG 2.1 – 1.4.3" for display
+function getWcagKeyAndLabel(
+  rawWcagCode?: string,
+  rawFallbackCode?: string,
+): { key: string; label: string } {
+  const cleanedWcag = (rawWcagCode || '').replace(/undefined/gi, '').trim();
+  const cleanedFallback = (rawFallbackCode || '').replace(/undefined/gi, '').trim();
+
+  // Helper to extract the WCAG success criterion number (e.g. "1.4.3")
+  const extractCriterion = (value: string): string => {
+    if (!value) return '';
+
+    // 1) Explicit "Criteria 1.4.3" style
+    const criteriaMatch = value.match(/Criteria\s+(\d+\.\d+\.\d+)/i);
+    if (criteriaMatch) return criteriaMatch[1];
+
+    // 2) Codes like "WCAG2AA.Principle1.Guideline1_4.3.1" → capture last 3-part number
+    const tripleMatch = value.match(/(\d+\.\d+\.\d+)(?!.*\d+\.\d+\.\d+)/);
+    if (tripleMatch) return tripleMatch[1];
+
+    // 3) Fallback: any 3-part pattern
+    const anyTriple = value.match(/\b(\d+\.\d+\.\d+)\b/);
+    if (anyTriple) return anyTriple[1];
+
+    return '';
+  };
+
+  // Prefer wcag_code, then fallback code
+  const numeric =
+    extractCriterion(cleanedWcag) || extractCriterion(cleanedFallback);
+
+  if (!numeric) {
+    return { key: '', label: '' };
+  }
+
+  const key = `WCAG2AA.${numeric}`;
+  const label = `WCAG 2.1 – ${numeric}`;
+  return { key, label };
+}
+
 export const generatePDF = async (
   reportData: {
     score: number;
@@ -615,7 +659,7 @@ export const generatePDF = async (
     outerRingColor = [34, 197, 94]; // Bright green ring (green-500)
     innerFillColor = [240, 253, 244]; // Light green fill (green-50)
     iconColor = [34, 197, 94]; // Bright green checkmark (green-500)
-    progressPercentage = 0.95; // 95% filled
+    progressPercentage = 1.0; // full ring for compliant
   } else if (statusKey === 'partial') {
     outerRingColor = [202, 138, 4]; // yellow-600
     innerFillColor = [254, 252, 232]; // yellow-50
@@ -638,24 +682,27 @@ export const generatePDF = async (
   doc.setFillColor(...innerFillColor);
   doc.circle(badgeCX, badgeCY, badgeR - 3, 'F');
 
-  // Draw progress arc based on status
+  // Draw progress arc / full ring
   doc.setDrawColor(...iconColor);
   doc.setLineWidth(2.5);
-  if ((doc as any).setLineCap) {
-    (doc as any).setLineCap('round');
-  }
 
-  // Draw progress arc (from top, clockwise)
-  const startAngle = -Math.PI / 2; // Start from top
-  const endAngle = startAngle + 2 * Math.PI * progressPercentage;
-
-  // Draw the progress arc
-  for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
-    const x1 = badgeCX + Math.cos(angle) * (badgeR - 1.5);
-    const y1 = badgeCY + Math.sin(angle) * (badgeR - 1.5);
-    const x2 = badgeCX + Math.cos(angle + 0.1) * (badgeR - 1.5);
-    const y2 = badgeCY + Math.sin(angle + 0.1) * (badgeR - 1.5);
-    doc.line(x1, y1, x2, y2);
+  if (progressPercentage >= 1.0) {
+    // Full ring — use a plain circle stroke to avoid the join artifact
+    // that the segmented-arc loop produces at the top where start meets end.
+    doc.circle(badgeCX, badgeCY, badgeR - 1.5, 'S');
+  } else {
+    if ((doc as any).setLineCap) {
+      (doc as any).setLineCap('round');
+    }
+    const startAngle = -Math.PI / 2;
+    const endAngle = startAngle + 2 * Math.PI * progressPercentage;
+    for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
+      const x1 = badgeCX + Math.cos(angle) * (badgeR - 1.5);
+      const y1 = badgeCY + Math.sin(angle) * (badgeR - 1.5);
+      const x2 = badgeCX + Math.cos(angle + 0.1) * (badgeR - 1.5);
+      const y2 = badgeCY + Math.sin(angle + 0.1) * (badgeR - 1.5);
+      doc.line(x1, y1, x2, y2);
+    }
   }
 
   // Draw status-specific icon in center - compact size
@@ -811,6 +858,30 @@ export const generatePDF = async (
         issues.filter((i) => i.impact === 'moderate').length),
   } as const;
 
+  // --- WebAbility coverage summary (Auto-Fixed vs Need Action) ---
+  let fixedCount = 0;
+  let needActionCount = 0;
+
+  for (const issue of issues) {
+    const { key: wcagKey } = getWcagKeyAndLabel(
+      (issue as any).wcag_code,
+      issue.code,
+    );
+    const rawWcagText = ((issue as any).wcag_code || '')
+      .replace(/undefined/gi, '')
+      .trim();
+
+    if (!wcagKey && !rawWcagText) {
+      continue;
+    }
+
+    if (wcagKey && (await isCodeCompliant(wcagKey as any))) {
+      fixedCount += 1;
+    } else {
+      needActionCount += 1;
+    }
+  }
+
   const sevLineX = severityCardX + 4;
   let sevLineY = severityCardY + 5; // Further reduced starting position for compact height
   doc.setFontSize(8); // Increased font size for better readability
@@ -852,6 +923,36 @@ export const generatePDF = async (
       align: 'right',
     },
   );
+
+  // --- Auto-Fixed vs Need Action compact chips under severity ---
+  if (fixedCount > 0 || needActionCount > 0) {
+    sevLineY += 6;
+    const chipY = sevLineY;
+
+    doc.setFontSize(6.5);
+
+    // Auto-Fixed chip (green) — shifted left to align with card left edge
+    let chipX = sevLineX - 4;
+    if (fixedCount > 0) {
+      const fixedLabel = `${translatedAutoFixed}: ${fixedCount}`;
+      const fixedWidth = doc.getTextWidth(fixedLabel) + 6;
+      doc.setFillColor(22, 163, 74); // green-600
+      doc.setTextColor(255, 255, 255);
+      doc.roundedRect(chipX, chipY - 4, fixedWidth, 6, 2, 2, 'F');
+      doc.text(fixedLabel, chipX + 3, chipY);
+      chipX += fixedWidth + 4;
+    }
+
+    // Need Action chip (amber)
+    if (needActionCount > 0) {
+      const needLabel = `${translatedNeedAction}: ${needActionCount}`;
+      const needWidth = doc.getTextWidth(needLabel) + 6;
+      doc.setFillColor(245, 158, 11); // amber-500
+      doc.setTextColor(255, 255, 255);
+      doc.roundedRect(chipX, chipY - 4, needWidth, 6, 2, 2, 'F');
+      doc.text(needLabel, chipX + 3, chipY);
+    }
+  }
   // --- END HEADER AREA ---
 
   // Compute a reference Y for subsequent sections based on header
@@ -2102,6 +2203,7 @@ export const generatePDF = async (
             doc.setLineWidth(0.5);
             doc.line(x, y + height, x + width, y + height);
           }
+
           if (
             data.cell.raw &&
             data.cell.raw._isScreenshot &&
@@ -2169,21 +2271,38 @@ export const generatePDF = async (
       },
     ]);
 
-    // Row 2: Issue content
+    // Row 2: visual Auto-Fixed / Need Action pill only (no code+impact line)
+    // Compute per-issue fix status based on WCAG code mapping
+    const { key: wcagKey } = getWcagKeyAndLabel(
+      (issue as any).wcag_code,
+      issue.code,
+    );
+    const rawWcagText = ((issue as any).wcag_code || '')
+      .replace(/undefined/gi, '')
+      .trim();
+
+    // Default: show a pill for every issue.
+    // If WCAG key is compliant → Auto-Fixed, otherwise → Need Action.
+    let fixStatus: 'autoFixed' | 'needAction' = 'needAction';
+    if (wcagKey && (await isCodeCompliant(wcagKey as any))) {
+      fixStatus = 'autoFixed';
+    }
+
+    // Visual pill row — content is intentionally empty; the pill is drawn
+    // entirely in didDrawCell to avoid duplicate text from the default renderer.
     groupBody.push([
       {
-        content: `${issue.code ? `${issue.code} (${issue.impact})` : ''}`,
+        content: '',
         colSpan: 4,
-        pageBreak: 'avoid', // Keep with header
+        pageBreak: 'avoid',
         styles: {
-          fontSize: 12,
-          textColor: [30, 41, 59],
-          halign: 'left',
-          cellPadding: { top: 2, right: 0, bottom: 1, left: -2 }, // Reduced vertical padding
-          font: 'NotoSans_Condensed-Regular',
-          minCellHeight: 20, // Reduced minimum height
+          cellPadding: { top: 2, right: 4, bottom: 2, left: 0 },
+          minCellHeight: 9,
+          lineWidth: 0,
         },
-      },
+        _isFixStatusPill: true,
+        _fixStatus: fixStatus,
+      } as any,
     ]);
 
     // Row 3: Message header and content in single container (responsive height)
@@ -2765,6 +2884,37 @@ export const generatePDF = async (
           } catch (error) {
           }
         }
+
+        // ── Per-issue Auto-Fixed / Need Action pill ──────────────────────────
+        // cell.raw is the original cell object we pushed, so _isFixStatusPill
+        // is directly accessible and no text-matching is needed.
+        if (data.cell.raw && (data.cell.raw as any)._isFixStatusPill) {
+          const { x, y, height } = data.cell;
+          const status: 'autoFixed' | 'needAction' = (data.cell.raw as any)._fixStatus;
+          const label = status === 'autoFixed' ? translatedAutoFixed : translatedNeedAction;
+
+          doc.setFont('NotoSans_Condensed-Regular', 'normal');
+          doc.setFontSize(8);
+
+          const paddingX = 4;
+          const textW = doc.getTextWidth(label);
+          const chipW = textW + paddingX * 2;
+          const chipH = 5;
+          const chipX = x - 2; // align with the message box left edge
+          const chipY = y + (height - chipH) / 2 - 2; // slightly above centre
+
+          doc.setFillColor(
+            status === 'autoFixed' ? 22 : 245,
+            status === 'autoFixed' ? 163 : 158,
+            status === 'autoFixed' ? 74 : 11,
+          );
+          doc.roundedRect(chipX, chipY, chipW, chipH, 2, 2, 'F');
+
+          doc.setTextColor(255, 255, 255);
+          // jsPDF text baseline is ~70 % of cap-height; +2.8 shifts to visual centre
+          doc.text(label, chipX + paddingX, chipY + chipH / 2, { baseline: 'middle' } as any);
+        }
+        // ─────────────────────────────────────────────────────────────────────
       },
     };
 
@@ -3653,7 +3803,7 @@ export const generateShortPDF = async (
     outerRingColor = [34, 197, 94]; // Bright green ring (green-500)
     innerFillColor = [240, 253, 244]; // Light green fill (green-50)
     iconColor = [34, 197, 94]; // Bright green checkmark (green-500)
-    progressPercentage = 0.95; // 95% filled
+    progressPercentage = 1.0; // full ring for compliant
   } else if (statusKey === 'partial') {
     outerRingColor = [202, 138, 4]; // yellow-600
     innerFillColor = [254, 252, 232]; // yellow-50
@@ -3676,24 +3826,27 @@ export const generateShortPDF = async (
   doc.setFillColor(...innerFillColor);
   doc.circle(badgeCX, badgeCY, badgeR - 3, 'F');
 
-  // Draw progress arc based on status
+  // Draw progress arc / full ring
   doc.setDrawColor(...iconColor);
   doc.setLineWidth(2.5);
-  if ((doc as any).setLineCap) {
-    (doc as any).setLineCap('round');
-  }
 
-  // Draw progress arc (from top, clockwise)
-  const startAngle = -Math.PI / 2; // Start from top
-  const endAngle = startAngle + 2 * Math.PI * progressPercentage;
-
-  // Draw the progress arc
-  for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
-    const x1 = badgeCX + Math.cos(angle) * (badgeR - 1.5);
-    const y1 = badgeCY + Math.sin(angle) * (badgeR - 1.5);
-    const x2 = badgeCX + Math.cos(angle + 0.1) * (badgeR - 1.5);
-    const y2 = badgeCY + Math.sin(angle + 0.1) * (badgeR - 1.5);
-    doc.line(x1, y1, x2, y2);
+  if (progressPercentage >= 1.0) {
+    // Full ring — use a plain circle stroke to avoid the join artifact
+    // that the segmented-arc loop produces at the top where start meets end.
+    doc.circle(badgeCX, badgeCY, badgeR - 1.5, 'S');
+  } else {
+    if ((doc as any).setLineCap) {
+      (doc as any).setLineCap('round');
+    }
+    const startAngle = -Math.PI / 2;
+    const endAngle = startAngle + 2 * Math.PI * progressPercentage;
+    for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
+      const x1 = badgeCX + Math.cos(angle) * (badgeR - 1.5);
+      const y1 = badgeCY + Math.sin(angle) * (badgeR - 1.5);
+      const x2 = badgeCX + Math.cos(angle + 0.1) * (badgeR - 1.5);
+      const y2 = badgeCY + Math.sin(angle + 0.1) * (badgeR - 1.5);
+      doc.line(x1, y1, x2, y2);
+    }
   }
 
   // Draw status-specific icon in center - compact size
@@ -4952,91 +5105,30 @@ export const generateShortPDF = async (
     );
   });
 
-  // Function to parse WCAG codes and truncate at Guideline level
-  const parseWcagCode = (wcagCode: string, fallbackCode: string): string => {
-    // First try to use wcag_code if available
-    if (wcagCode) {
-      // Clean up the wcag_code format
-      let result = wcagCode.trim();
-
-      // If it's in format "WCAG AA 2.2 Criteria 1.4.3", extract the criteria part
-      if (result.includes('Criteria')) {
-        const criteriaMatch = result.match(/Criteria\s+(\d+\.\d+\.\d+)/);
-        if (criteriaMatch) {
-          return `WCAG2AA.${criteriaMatch[1]}`;
-        }
-      }
-
-      // If it's already in a good format, return as is
-      if (result.includes('WCAG')) {
-        return result;
-      }
-    }
-
-    // Fallback to parsing the original code field
-    if (!fallbackCode) return wcagCode || '';
-
-    // Extract WCAG2AA, Principle, and Guideline parts only
-    const parts = fallbackCode.split('.');
-    let result = '';
-    let wcagFound = false;
-    let principleFound = false;
-
-    for (let i = 0; i < parts.length; i++) {
-      if (parts[i] === 'WCAG2AA') {
-        // Found WCAG2AA, start building result
-        result = parts[i];
-        wcagFound = true;
-      } else if (wcagFound && parts[i].startsWith('Principle')) {
-        // Found Principle after WCAG2AA, add it
-        result += '.' + parts[i];
-        principleFound = true;
-      } else if (principleFound && parts[i].startsWith('Guideline')) {
-        // Found Guideline after Principle, add it and stop here
-        result += '.' + parts[i];
-        break;
-      }
-    }
-
-    // If no WCAG2AA, Principle, or Guideline found, return the original code up to the first comma
-    if (!result) {
-      result = fallbackCode.split(',')[0];
-    }
-
-    // Clean up and format the result
-    return result
-      .replace('Principle', 'Principle ')
-      .replace('Guideline', 'Guideline ')
-      .replace(/_/g, '.');
-  };
-
-  // Parse all codes and group by truncated version, keeping track of messages
+  // Parse all codes and group by canonical key, keeping track of messages
   const codeGroupsWithMessages: {
-    [key: string]: { count: number; messages: string[] };
+    [key: string]: { label: string; count: number; messages: string[] };
   } = {};
 
   wcagIssues.forEach((issue) => {
-    const parsedCode = parseWcagCode(issue.wcag_code || '', issue.code || '');
-    if (parsedCode) {
-      if (!codeGroupsWithMessages[parsedCode]) {
-        codeGroupsWithMessages[parsedCode] = { count: 0, messages: [] };
-      }
-      codeGroupsWithMessages[parsedCode].count += 1;
-      // Store unique messages for this code
-      const message = issue.message || '';
-      if (
-        message &&
-        !codeGroupsWithMessages[parsedCode].messages.includes(message)
-      ) {
-        codeGroupsWithMessages[parsedCode].messages.push(message);
-      }
+    const { key, label } = getWcagKeyAndLabel(issue.wcag_code, issue.code);
+    if (!key || !label) return;
+
+    if (!codeGroupsWithMessages[key]) {
+      codeGroupsWithMessages[key] = { label, count: 0, messages: [] };
+    }
+    codeGroupsWithMessages[key].count += 1;
+    // Store unique messages for this code
+    const msg = issue.message || '';
+    if (msg && !codeGroupsWithMessages[key].messages.includes(msg)) {
+      codeGroupsWithMessages[key].messages.push(msg);
     }
   });
 
   // Convert to array for display with sample message
   const groupedWcagCodes = Object.entries(codeGroupsWithMessages).map(
-    ([code, data]) => ({
-      code,
+    ([, data]) => ({
+      code: data.label,
       count: data.count,
       message: data.messages[0] || '', // Use first message as sample
     }),
@@ -5048,7 +5140,8 @@ export const generateShortPDF = async (
     // Create card data with compliance check based on WCAG codes
     let wcagCardData = groupedWcagCodes.map(
       (codeGroup: { code: string; count: number; message: string }) => {
-        const isFixedByWebability = isCodeCompliant(codeGroup.code);
+        const { key } = getWcagKeyAndLabel(codeGroup.code, '');
+        const isFixedByWebability = key ? isCodeCompliant(key as any) : false;
         return {
           code: codeGroup.code,
           count: codeGroup.count,

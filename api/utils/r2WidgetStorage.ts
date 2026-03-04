@@ -32,9 +32,11 @@ const s3 = new S3Client({
 export async function uploadWidgetLogoToR2(buffer: Buffer, contentType: string, siteId: number): Promise<string> {
   // Generate unique filename with original extension
   const fileExtension = getFileExtension(contentType)
-  // Ensure only one object exists per site: clear existing files then write deterministic key
+  // Ensure only one object exists per site: clear existing files first
   await deleteAllForSite(siteId)
-  const fileName = `${siteId}/logo.${fileExtension}`
+  // Use timestamped key so every upload has a fresh URL (avoids CDN/browser caching old content)
+  const timestamp = Date.now()
+  const fileName = `${siteId}/logo-${timestamp}.${fileExtension}`
 
   const command = new PutObjectCommand({
     Bucket: process.env.R2_BUCKET_WIDGET_CUSTOMIZATION!,

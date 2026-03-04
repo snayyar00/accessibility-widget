@@ -28,6 +28,7 @@ export interface Colors {
 
   // Keep existing properties for compatibility
   widgetBtnColor: string;
+  widgetIcon: string;
   logoImage: string;
   accessibilityStatementLinkUrl: string;
   logoUrl: string;
@@ -137,6 +138,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
 
     // Existing properties
     widgetBtnColor: '#111639',
+    widgetIcon: '',
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
@@ -154,6 +156,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
 
     // Existing properties (same as light mode)
     widgetBtnColor: '#111639',
+    widgetIcon: '',
     logoImage: '',
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
@@ -245,6 +248,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     'dark-mode-color-group-6': DefaultDarkColors.colorGroup6,
     // Common properties
     'widget-btn-color': DefaultLightColors.widgetBtnColor,
+    'widget-icon': DefaultLightColors.widgetIcon,
     logoImage: DefaultLightColors.logoImage,
     accessibilityStatementLinkUrl:
       DefaultLightColors.accessibilityStatementLinkUrl,
@@ -319,6 +323,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
       'dark-mode-color-group-6': darkModeColors.colorGroup6,
       // Common properties
       'widget-btn-color': lightModeColors.widgetBtnColor,
+      'widget-icon': lightModeColors.widgetIcon,
       logoImage: lightModeColors.logoImage,
       accessibilityStatementLinkUrl:
         lightModeColors.accessibilityStatementLinkUrl,
@@ -520,6 +525,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           widgetBtnColor:
             fetchedSettings['widget-btn-color'] ||
             DefaultLightColors.widgetBtnColor,
+          widgetIcon:
+            fetchedSettings['widget-icon'] || DefaultLightColors.widgetIcon,
           logoImage:
             fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
               ? fetchedSettings['logoImage']
@@ -555,6 +562,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           widgetBtnColor:
             fetchedSettings['widget-btn-color'] ||
             DefaultDarkColors.widgetBtnColor,
+          widgetIcon:
+            fetchedSettings['widget-icon'] || DefaultDarkColors.widgetIcon,
           logoImage:
             fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
               ? fetchedSettings['logoImage']
@@ -707,6 +716,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           widgetBtnColor:
             fetchedSettings['widget-btn-color'] ||
             DefaultLightColors.widgetBtnColor,
+          widgetIcon:
+            fetchedSettings['widget-icon'] || DefaultLightColors.widgetIcon,
           logoImage:
             fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
               ? fetchedSettings['logoImage']
@@ -742,6 +753,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           widgetBtnColor:
             fetchedSettings['widget-btn-color'] ||
             DefaultDarkColors.widgetBtnColor,
+          widgetIcon:
+            fetchedSettings['widget-icon'] || DefaultDarkColors.widgetIcon,
           logoImage:
             fetchedSettings['logoImage'] && fetchedSettings['logoImage'].length
               ? fetchedSettings['logoImage']

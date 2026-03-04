@@ -6,7 +6,11 @@ import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/config/store';
-import { uploadWidgetLogo, deleteWidgetLogo } from '@/utils/uploadLogo';
+import {
+  uploadWidgetLogo,
+  deleteWidgetLogo,
+  uploadWidgetIcon,
+} from '@/utils/uploadLogo';
 import {
   ChevronDown,
   ChevronUp,
@@ -467,8 +471,9 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     },
   ];
 
-  const fileInputRef = useRef<HTMLInputElement>(null); // Create a ref for the file input
-  const urlInputRef = useRef<HTMLInputElement>(null); // Create a ref for the URL input
+  const fileInputRef = useRef<HTMLInputElement>(null); // Logo file input
+  const urlInputRef = useRef<HTMLInputElement>(null); // Logo URL input
+  const iconFileInputRef = useRef<HTMLInputElement>(null); // Widget icon file input
 
   const handleReset = () => {
     setColors((prevColors) => ({
@@ -491,6 +496,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
   const [isFileInput, setIsFileInput] = useState(true);
   const [isUrlInput, setIsUrlInput] = useState(true);
   const [logoInput, setLogoInput] = useState('');
+  const [isIconFileInput, setIsIconFileInput] = useState(true);
+  const [iconPreview, setIconPreview] = useState(colors.widgetIcon || '');
   const [accessibilityStatementLinkUrl, setAccessibilityStatementLinkUrl] =
     useState(colors.accessibilityStatementLinkUrl);
   const [logoUrl, setLogoUrl] = useState(colors.logoUrl);
@@ -579,6 +586,68 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
         console.error('Error uploading logo:', error);
         toast.error('Failed to upload logo', { id: 'logo-upload' });
         e.target.value = ''; // Reset the input field
+      }
+    }
+  };
+
+  // Upload handler for widget launcher icon (SVG)
+  const handleIconFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+
+    if (file) {
+      // Restrict to SVG for launcher icon
+      if (file.type !== 'image/svg+xml') {
+        toast.error('Widget icon must be an SVG file.');
+        e.target.value = '';
+        return;
+      }
+
+      // Validate file size (should not exceed 75 KB)
+      if (file.size > 76800) {
+        toast.error('Widget icon file size should not exceed 75 KB.');
+        e.target.value = '';
+        return;
+      }
+
+      toast.loading('Uploading widget icon...', { id: 'widget-icon-upload' });
+
+      try {
+        if (!selectedSite) {
+          toast.error('Please select a site before uploading a widget icon.', {
+            id: 'widget-icon-upload',
+          });
+          return;
+        }
+        const siteUrl = selectedSite;
+
+        const result = await uploadWidgetIcon(file, siteUrl);
+
+        if (result.success && result.iconUrl) {
+          const cleanUrl = result.iconUrl.replace(/\/$/, '');
+
+          setIconPreview(cleanUrl);
+          setColors((prev) => ({
+            ...prev,
+            widgetIcon: cleanUrl,
+          }));
+
+          toast.success('Widget icon uploaded successfully!', {
+            id: 'widget-icon-upload',
+          });
+        } else {
+          toast.error(result.error || 'Failed to upload widget icon', {
+            id: 'widget-icon-upload',
+          });
+          e.target.value = '';
+        }
+      } catch (error) {
+        console.error('Error uploading widget icon:', error);
+        toast.error('Failed to upload widget icon', {
+          id: 'widget-icon-upload',
+        });
+        e.target.value = '';
       }
     }
   };
@@ -2528,6 +2597,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                     />
                   </div>
 
+
                   {/* Color Mode Toggle */}
                   <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-4 sm:p-5 md:p-6 mb-4">
                     <div
@@ -2866,6 +2936,121 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         style={{ backgroundColor: '#0052CC' }}
                       >
                         Set Logo
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Widget Launcher Icon (SVG) - mirrors Upload Widget Logo UI */}
+                  <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-6 mb-4">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-[#1a1a1a] mb-2">
+                        Widget Launcher Icon 
+                      </h3>
+                      <p className="text-sm text-[#666666] leading-relaxed">
+                        Upload a custom SVG icon for your accessibility widget
+                        launcher button.
+                      </p>
+                      <p className="mt-2 text-xs text-[#6B7280]">
+                        SVG only, maximum size 75 KB. For best results, use a
+                        square icon and rely on <code>currentColor</code> for
+                        fill so it can be tinted by the widget.
+                      </p>
+                    </div>
+
+                    {/* File Upload Area */}
+                    <div className="mb-6">
+                      <div
+                        className="relative border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 text-center hover:border-[#445AE7] hover:bg-[#F8FAFF] transition-all duration-200 cursor-pointer group focus:outline-none focus:ring-2 focus:ring-[#808EEB] focus:ring-offset-2"
+                        onClick={() => iconFileInputRef.current?.click()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            iconFileInputRef.current?.click();
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        aria-label="Choose file to upload widget icon"
+                      >
+                        <input
+                          type="file"
+                          accept="image/svg+xml"
+                          ref={iconFileInputRef}
+                          disabled={!isIconFileInput}
+                          className="hidden"
+                          onChange={handleIconFileChange}
+                        />
+                        <div className="flex flex-col items-center">
+                          <div className="w-12 h-12 bg-[#F3F4F6] rounded-lg flex items-center justify-center mb-3 group-hover:bg-[#445AE7]/10 transition-colors duration-200">
+                            <svg
+                              className="w-6 h-6 text-[#6B7280] group-hover:text-[#445AE7] transition-colors duration-200"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                              />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-medium text-[#374151] mb-1">
+                            Choose SVG file
+                          </p>
+                          <p className="text-xs text-[#6E7788]">
+                            SVG up to 75KB
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Icon Preview */}
+                    <div className="mb-4 max-w-xs">
+                      {iconPreview || colors.widgetIcon ? (
+                        <div className="inline-flex items-center">
+                          <img
+                            src={iconPreview || colors.widgetIcon}
+                            alt="Widget Icon Preview"
+                            className="w-20 h-20 object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center">
+                          <svg
+                            width="80"
+                            height="80"
+                            viewBox="0 0 80 80"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M40.5217 28.5478C39.7392 28.5478 39.0696 28.2722 38.5128 27.7209C37.9561 27.1697 37.6772 26.5062 37.6763 25.7304C37.6753 24.9547 37.9542 24.2917 38.5128 23.7414C39.0715 23.191 39.7411 22.9149 40.5217 22.9131C41.3024 22.9112 41.9725 23.1873 42.5321 23.7414C43.0917 24.2955 43.3701 24.9585 43.3672 25.7304C43.3644 26.5024 43.086 27.1659 42.5321 27.7209C41.9782 28.276 41.308 28.5516 40.5217 28.5478ZM37.6014 51.087C36.857 51.087 36.2535 50.4863 36.2535 49.7453V34.0089C36.2535 33.3109 35.7156 32.7313 35.0183 32.6579C33.9956 32.5502 32.9609 32.4128 31.9141 32.2457C30.912 32.0856 29.9428 31.8983 29.0068 31.6837C28.2886 31.5191 27.8613 30.7938 28.041 30.0824L28.0948 29.8692C28.2782 29.1428 29.0233 28.7089 29.7573 28.8743C31.2132 29.2024 32.7384 29.4519 34.3328 29.6227C36.4195 29.8462 38.4825 29.9575 40.5217 29.9565C42.561 29.9556 44.624 29.8438 46.7107 29.6213C48.3051 29.4512 49.8302 29.2022 51.2862 28.8742C52.0202 28.7089 52.7653 29.1428 52.9487 29.8692L53.0025 30.0824C53.1821 30.7938 52.7549 31.5191 52.0367 31.6837C51.1006 31.8983 50.1315 32.0856 49.1293 32.2457C48.0826 32.4128 47.0479 32.5502 46.0252 32.6579C45.3278 32.7313 44.79 33.3109 44.79 34.0089V49.7453C44.79 50.4863 44.1865 51.087 43.4421 51.087H43.2923C42.5479 51.087 41.9445 50.4863 41.9445 49.7453V43.9764C41.9445 43.2354 41.341 42.6348 40.5966 42.6348H40.4469C39.7025 42.6348 39.099 43.2354 39.099 43.9764V49.7453C39.099 50.4863 38.4955 51.087 37.7511 51.087H37.6014Z"
+                              fill="black"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          // Reset icon state
+                          setColors((prev) => ({
+                            ...prev,
+                            widgetIcon: '',
+                          }));
+                          if (iconFileInputRef.current) {
+                            (iconFileInputRef.current as any).value = '';
+                          }
+                          setIsIconFileInput(true);
+                          setIconPreview('');
+                        }}
+                        className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 shadow-sm hover:shadow-md"
+                      >
+                        Reset
                       </button>
                     </div>
                   </div>
