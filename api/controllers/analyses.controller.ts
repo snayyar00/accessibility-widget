@@ -5,8 +5,16 @@ import {
   getAnalysesByDomain,
   updateFixAction,
 } from '../repository/analyses.repository'
-import { getPageHtmlByUrl } from '../repository/pageCache.repository'
+import {
+  getPageHtmlByUrl,
+  getPageSummaryByUrl,
+  updatePageSummary,
+} from '../repository/pageCache.repository'
 import { getSuggestedFixes } from '../services/suggestedFixes/suggestedFixes.service'
+import {
+  extractTextFromHtml,
+  generatePageSummary,
+} from '../services/pageSummary/pageSummary.service'
 import { normalizeDomain } from '../utils/domain.utils'
 
 export async function getDomainAnalyses(req: Request, res: Response) {
@@ -166,6 +174,52 @@ export async function postAddFix(req: Request, res: Response) {
     })
     res.status(500).json({
       error: 'Cannot add fix',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    })
+  }
+}
+
+export async function getOrCreatePageSummary(req: Request, res: Response) {
+  const { url, url_hash: urlHash } = req.query
+
+  try {
+    if (!url || typeof url !== 'string' || !url.trim()) {
+      return res.status(400).json({ error: 'URL parameter is required and cannot be empty' })
+    }
+
+    const urlTrimmed = (url as string).trim()
+    const hash = typeof urlHash === 'string' ? urlHash.trim() || null : null
+
+    // 1) Return cached summary if present
+    const existing = await getPageSummaryByUrl({ url: urlTrimmed, urlHash: hash })
+    if (existing != null && existing.length > 0) {
+      return res.status(200).json({ summary: existing })
+    }
+
+    // 2) Fetch HTML from page_cache
+    const html = await getPageHtmlByUrl({ url: urlTrimmed, urlHash: hash })
+    if (html == null) {
+      return res.status(404).json({
+        error: 'Page not found',
+        message: 'No cached HTML found for this URL. Run a scan first.',
+      })
+    }
+
+    // 3) Extract p/h content and generate summary
+    const textContent = extractTextFromHtml(html)
+    const summary = await generatePageSummary(textContent, urlTrimmed)
+
+    // 4) Save to page_cache
+    await updatePageSummary({ url: urlTrimmed, urlHash: hash, summary })
+
+    res.status(200).json({ summary })
+  } catch (error) {
+    console.error('[DomainAnalyses] Error get-or-create page summary:', {
+      error: error instanceof Error ? error.message : String(error),
+      url: req.query?.url,
+    })
+    res.status(500).json({
+      error: 'Cannot get or create page summary',
       message: error instanceof Error ? error.message : 'Unknown error',
     })
   }

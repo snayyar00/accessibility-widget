@@ -2,6 +2,7 @@ import { Router } from 'express'
 
 import {
   getDomainAnalyses,
+  getOrCreatePageSummary,
   getPageHtml,
   postAddFix,
   postSuggestedFixes,
@@ -13,6 +14,7 @@ const router = Router()
 
 router.get('/domain-analyses', moderateLimiter, getDomainAnalyses)
 router.get('/domain-analyses/page-html', moderateLimiter, getPageHtml)
+router.get('/domain-analyses/page-summary', moderateLimiter, getOrCreatePageSummary)
 router.put('/domain-analyses/fix-action', moderateLimiter, updateAnalysisFixAction)
 router.post('/domain-analyses/suggested-fixes', moderateLimiter, postSuggestedFixes)
 router.post('/domain-analyses/add-fix', moderateLimiter, postAddFix)

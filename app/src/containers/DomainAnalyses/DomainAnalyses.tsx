@@ -2876,6 +2876,7 @@ const DomainAnalyses: React.FC = () => {
           )}
         </div>
       </Modal>
+
     </div>
   );
 };
