@@ -20,12 +20,12 @@ export async function verifyGoogleIdToken(idToken: string): Promise<GoogleTokenP
     })
     const payload = ticket.getPayload()
     if (!payload?.sub || !payload?.email) return null
-    
+
     // Require email to be verified for security
     if (!payload.email_verified) {
       return null
     }
-    
+
     return {
       sub: payload.sub,
       email: payload.email,

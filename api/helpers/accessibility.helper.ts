@@ -1,5 +1,5 @@
+import { SCANNER_MAX_POLLING_ATTEMPTS_FULL, SCANNER_MAX_POLLING_ATTEMPTS_SINGLE } from '../config/env'
 import { getPreprocessingConfig } from '../config/preprocessing.config'
-import { SCANNER_MAX_POLLING_ATTEMPTS_SINGLE, SCANNER_MAX_POLLING_ATTEMPTS_FULL } from '../config/env'
 import { readAccessibilityDescriptionFromDb } from '../services/accessibilityReport/accessibilityIssues.service'
 import { processAccessibilityIssuesWithFallback } from '../services/accessibilityReport/enhancedProcessing.service'
 
@@ -236,7 +236,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
           use_cache: useCache !== undefined ? useCache : true,
         }),
       })
-    //  use_cache: useCache !== undefined ? useCache : true,
+      //  use_cache: useCache !== undefined ? useCache : true,
       // Check if the response is successful
       if (!response.ok) {
         throw new Error(`Failed to start scanner job. Status: ${response.status}`)

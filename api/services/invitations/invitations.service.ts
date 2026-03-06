@@ -27,10 +27,10 @@ import { canManageOrganization, validateWorkspaceInvitePermissions } from '../..
 import formatDateDB from '../../utils/format-date-db'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { validateInviteWorkspaceMember } from '../../validations/workspace.validation'
 import { UserLogined } from '../authentication/get-user-logined.service'
 import { sendMail } from '../email/email.service'
-import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { addUserToOrganization, getUserOrganization } from '../organization/organization_users.service'
 
 type InvitationResponse = {

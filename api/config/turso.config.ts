@@ -11,7 +11,10 @@ if (typeof process !== 'undefined' && process.env) {
     console.warn('[TursoConfig] ⚠️  WARNING: TURSO environment variables not found at module load time.')
     console.warn('[TursoConfig] Make sure your .env file contains TURSO_DATABASE_URL and TURSO_AUTH_TOKEN')
     console.warn('[TursoConfig] If you just added them, RESTART YOUR SERVER to load them.')
-    console.warn('[TursoConfig] Current env keys with TURSO:', Object.keys(process.env).filter(k => k.includes('TURSO')))
+    console.warn(
+      '[TursoConfig] Current env keys with TURSO:',
+      Object.keys(process.env).filter((k) => k.includes('TURSO')),
+    )
   } else {
     console.log('[TursoConfig] ✅ TURSO environment variables found at module load time.')
   }
@@ -23,7 +26,7 @@ function getTursoClient(): Client {
     const tursoAuthToken = process.env.TURSO_AUTH_TOKEN
 
     // Debug: Log all environment variables that start with TURSO
-    const tursoEnvVars = Object.keys(process.env).filter(key => key.startsWith('TURSO'))
+    const tursoEnvVars = Object.keys(process.env).filter((key) => key.startsWith('TURSO'))
     console.log('[TursoConfig] Available TURSO environment variables:', tursoEnvVars)
     console.log('[TursoConfig] TURSO_DATABASE_URL exists:', !!tursoUrl)
     console.log('[TursoConfig] TURSO_AUTH_TOKEN exists:', !!tursoAuthToken)
@@ -33,7 +36,7 @@ function getTursoClient(): Client {
       console.error('[TursoConfig] Missing environment variables:', {
         hasUrl: !!tursoUrl,
         hasToken: !!tursoAuthToken,
-        allEnvKeys: Object.keys(process.env).filter(key => key.includes('TURSO') || key.includes('DATABASE')),
+        allEnvKeys: Object.keys(process.env).filter((key) => key.includes('TURSO') || key.includes('DATABASE')),
       })
       throw error
     }

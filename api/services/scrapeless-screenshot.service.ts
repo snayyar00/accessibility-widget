@@ -48,15 +48,7 @@ function getPreferredCountryFromURL(url: string): string {
       return 'DE'
     }
 
-    if (
-      hostname.endsWith('.com') ||
-      hostname.endsWith('.org') ||
-      hostname.endsWith('.net') ||
-      hostname.endsWith('.us') ||
-      hostname.endsWith('.edu') ||
-      hostname.endsWith('.gov') ||
-      hostname.endsWith('.io')
-    ) {
+    if (hostname.endsWith('.com') || hostname.endsWith('.org') || hostname.endsWith('.net') || hostname.endsWith('.us') || hostname.endsWith('.edu') || hostname.endsWith('.gov') || hostname.endsWith('.io')) {
       return 'US'
     }
 
@@ -123,17 +115,12 @@ export class ScrapelessScreenshotService {
   // Fetches HTML content using SCRAPELESS with ISP/residential proxy fallback strategy
   async getHTMLContent(url: string): Promise<string | null> {
     const normalizedUrl = this.normalizeURL(url)
-    
+
     const preferredCountry = getPreferredCountryFromURL(normalizedUrl)
     const hasISPForPreferred = this.ispProxies.has(preferredCountry)
 
     try {
-      const html = await this.getHTMLWithWebUnlocker(
-        normalizedUrl,
-        hasISPForPreferred,
-        hasISPForPreferred ? null : preferredCountry,
-        hasISPForPreferred ? this.ispProxies.get(preferredCountry) : undefined,
-      )
+      const html = await this.getHTMLWithWebUnlocker(normalizedUrl, hasISPForPreferred, hasISPForPreferred ? null : preferredCountry, hasISPForPreferred ? this.ispProxies.get(preferredCountry) : undefined)
       if (html) return html
     } catch (error: any) {
       const errorMsg = error?.message || ''
@@ -161,12 +148,7 @@ export class ScrapelessScreenshotService {
     }
   }
   // Internal method to fetch HTML via SCRAPELESS Web Unlocker API with proxy configuration
-  private async getHTMLWithWebUnlocker(
-    url: string,
-    useISPProxy: boolean,
-    proxyCountry: string | null,
-    ispProxy?: ISPProxy,
-  ): Promise<string | null> {
+  private async getHTMLWithWebUnlocker(url: string, useISPProxy: boolean, proxyCountry: string | null, ispProxy?: ISPProxy): Promise<string | null> {
     try {
       const proxyConfig: any = {}
 
@@ -211,18 +193,18 @@ export class ScrapelessScreenshotService {
       }
 
       const htmlResponse = await httpResponse.text()
-      
+
       if (htmlResponse.trim().startsWith('{')) {
         try {
           const jsonData = JSON.parse(htmlResponse)
-          const responseCode = jsonData.code !== undefined ? jsonData.code : (jsonData.statusCode || httpResponse.status)
-          
+          const responseCode = jsonData.code !== undefined ? jsonData.code : jsonData.statusCode || httpResponse.status
+
           if (responseCode === 200) {
             if (jsonData.data) {
-              return typeof jsonData.data === 'string' ? jsonData.data : (jsonData.data.html || jsonData.data.data || '')
+              return typeof jsonData.data === 'string' ? jsonData.data : jsonData.data.html || jsonData.data.data || ''
             }
             if (jsonData.result) {
-              return typeof jsonData.result === 'string' ? jsonData.result : (jsonData.result.html || jsonData.result.data || '')
+              return typeof jsonData.result === 'string' ? jsonData.result : jsonData.result.html || jsonData.result.data || ''
             }
           } else {
             const errorMsg = jsonData.error || jsonData.message || `Code ${responseCode}`
@@ -236,7 +218,7 @@ export class ScrapelessScreenshotService {
           // If it's a JSON parse error, continue to return raw HTML response below
         }
       }
-      
+
       return htmlResponse || null
     } catch (error: any) {
       return null
@@ -244,11 +226,7 @@ export class ScrapelessScreenshotService {
   }
   // Detects accessibility widget scripts in HTML by parsing script tags for widget URLs
   private detectWidgetsFromHTML(html: string): { found: boolean; scripts: Array<{ url: string; isExactMatch: boolean }> } {
-    const widgetUrls = [
-      'https://widget.access-widget.com/widget.min.js',
-      'https://widget.webability.io/widget.min.js',
-      'https://widget-v2.webability.io/widget.min.js',
-    ]
+    const widgetUrls = ['https://widget.access-widget.com/widget.min.js', 'https://widget.webability.io/widget.min.js', 'https://widget-v2.webability.io/widget.min.js']
 
     const foundWidgets: Array<{ url: string; isExactMatch: boolean }> = []
 
@@ -276,12 +254,7 @@ export class ScrapelessScreenshotService {
   }
 
   // Captures screenshot as base64 PNG via SCRAPELESS Web Unlocker API with proxy support
-  private async captureWithWebUnlocker(
-    url: string,
-    useISPProxy: boolean,
-    proxyCountry: string | null,
-    ispProxy?: ISPProxy,
-  ): Promise<string | null> {
+  private async captureWithWebUnlocker(url: string, useISPProxy: boolean, proxyCountry: string | null, ispProxy?: ISPProxy): Promise<string | null> {
     try {
       const proxyConfig: any = {}
 
@@ -340,7 +313,7 @@ export class ScrapelessScreenshotService {
         }
       }
 
-      const responseCode = data.code !== undefined ? data.code : (data.statusCode || httpResponse.status)
+      const responseCode = data.code !== undefined ? data.code : data.statusCode || httpResponse.status
 
       if (responseCode === 200) {
         let screenshotData: string | null = null
@@ -353,7 +326,7 @@ export class ScrapelessScreenshotService {
                 const errorObj = JSON.parse(dataStr)
                 if (errorObj.statusCode && errorObj.statusCode !== 200) {
                   const errorMsg = errorObj.message || errorObj.error || `Status ${errorObj.statusCode}`
-                  
+
                   if (errorMsg.includes('ERR_ABORTED')) {
                     throw new Error(`Request aborted: ${errorMsg}`)
                   }
@@ -363,7 +336,7 @@ export class ScrapelessScreenshotService {
                   if (errorMsg.includes('ERR_TUNNEL_CONNECTION_FAILED') || errorMsg.includes('TUNNEL_CONNECTION_FAILED')) {
                     throw new Error(`Proxy tunnel connection failed: ${errorMsg}`)
                   }
-                  
+
                   throw new Error(`API error in data field: ${errorMsg}`)
                 }
               } catch (parseError: any) {
@@ -454,9 +427,7 @@ export class ScrapelessScreenshotService {
   }
 
   // Captures screenshot and detects widgets using proxy fallback strategy (ISP → US ISP → Residential)
-  private async captureSingleWithWidgetDetection(
-    url: string,
-  ): Promise<{ screenshot: string | null; widgetDetection: { found: boolean; scripts: Array<{ url: string; isExactMatch: boolean }> } }> {
+  private async captureSingleWithWidgetDetection(url: string): Promise<{ screenshot: string | null; widgetDetection: { found: boolean; scripts: Array<{ url: string; isExactMatch: boolean }> } }> {
     const normalizedUrl = this.normalizeURL(url)
     const preferredCountry = getPreferredCountryFromURL(normalizedUrl)
     const hasISPForPreferred = this.ispProxies.has(preferredCountry)
@@ -465,20 +436,10 @@ export class ScrapelessScreenshotService {
     let screenshot: string | null = null
 
     try {
-      screenshot = await this.captureWithWebUnlocker(
-        normalizedUrl,
-        hasISPForPreferred,
-        hasISPForPreferred ? null : preferredCountry,
-        hasISPForPreferred ? this.ispProxies.get(preferredCountry) : undefined,
-      )
+      screenshot = await this.captureWithWebUnlocker(normalizedUrl, hasISPForPreferred, hasISPForPreferred ? null : preferredCountry, hasISPForPreferred ? this.ispProxies.get(preferredCountry) : undefined)
 
       if (screenshot) {
-        const html = await this.getHTMLWithWebUnlocker(
-          normalizedUrl,
-          hasISPForPreferred,
-          hasISPForPreferred ? null : preferredCountry,
-          hasISPForPreferred ? this.ispProxies.get(preferredCountry) : undefined,
-        )
+        const html = await this.getHTMLWithWebUnlocker(normalizedUrl, hasISPForPreferred, hasISPForPreferred ? null : preferredCountry, hasISPForPreferred ? this.ispProxies.get(preferredCountry) : undefined)
         if (html) {
           widgetDetection = this.detectWidgetsFromHTML(html)
         }
@@ -603,7 +564,7 @@ export class ScrapelessScreenshotService {
           } else {
             result = await this.captureSingle(request.url)
           }
-          
+
           this.processedCount++
           request.resolve(result)
         } catch (error) {
@@ -613,7 +574,7 @@ export class ScrapelessScreenshotService {
     } finally {
       // Always reset processing flag, even if an error occurs
       this.isProcessing = false
-      
+
       // If there are more items in queue after processing, start processing again
       // This handles the case where new items were added while processing
       if (this.requestQueue.length > 0) {
@@ -669,8 +630,7 @@ export class ScrapelessScreenshotService {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath)
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 }
 

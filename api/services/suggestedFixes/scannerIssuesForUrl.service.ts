@@ -1,6 +1,6 @@
 import { getR2KeysByParams } from '../../repository/accessibilityReports.repository'
-import { fetchReportFromR2 } from '../../utils/r2Storage'
 import { normalizeDomain } from '../../utils/domain.utils'
+import { fetchReportFromR2 } from '../../utils/r2Storage'
 
 /** Normalize URL for comparison (trim, lowercase, strip query/fragments, strip trailing slash). Avoids regex on user input to prevent ReDoS. */
 function normalizeUrlForMatch(url: string): string {
@@ -39,10 +39,7 @@ export interface ScannerIssueForUrl {
  * then return all scanner issues (axe + htmlcs) where Affected Pages includes the page URL.
  * Used so suggested-fixes can send both HTML and scanner report issues to GPT.
  */
-export async function getScannerIssuesForPageUrl(
-  pageUrl: string,
-  domain?: string
-): Promise<ScannerIssueForUrl[]> {
+export async function getScannerIssuesForPageUrl(pageUrl: string, domain?: string): Promise<ScannerIssueForUrl[]> {
   if (!pageUrl || typeof pageUrl !== 'string' || pageUrl.trim().length === 0) {
     return []
   }
@@ -86,16 +83,10 @@ export async function getScannerIssuesForPageUrl(
 
     function includesPageUrl(pagesAffected: string[] | undefined): boolean {
       if (!Array.isArray(pagesAffected) || pagesAffected.length === 0) return false
-      return pagesAffected.some(
-        (p) => typeof p === 'string' && normalizeUrlForMatch(p) === normalizedPageUrl
-      )
+      return pagesAffected.some((p) => typeof p === 'string' && normalizeUrlForMatch(p) === normalizedPageUrl)
     }
 
-    function collect(
-      source: 'axe' | 'htmlcs',
-      severity: 'error' | 'warning' | 'notice',
-      list: any[] | undefined
-    ) {
+    function collect(source: 'axe' | 'htmlcs', severity: 'error' | 'warning' | 'notice', list: any[] | undefined) {
       if (!Array.isArray(list)) return
       list.forEach((issue) => {
         if (!issue || !includesPageUrl(issue.pages_affected)) return

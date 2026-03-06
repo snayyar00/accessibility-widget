@@ -80,8 +80,7 @@ function buildExistingFixesSummary(existingFixes: AutoFixItem[]): string {
   }
 
   const selectorList = selectors.map((s) => `  - "${s}"`).join('\n')
-  const issueTypesLine =
-    issueTypes.length > 0 ? `\nIssue types already addressed (sample): ${issueTypes.join(', ')}.` : ''
+  const issueTypesLine = issueTypes.length > 0 ? `\nIssue types already addressed (sample): ${issueTypes.join(', ')}.` : ''
   const result = `EXISTING FIXES SUMMARY (DO NOT suggest fixes for these selectors):
 Total: ${existingFixes.length} existing fix(es).
 Selectors:
@@ -169,19 +168,13 @@ function applyAllFilters(f: AutoFixItem): boolean {
 
   // --- HEADINGS: role="heading" on div/span/p requires aria-level; incomplete fix is invalid ---
   const targetsNonHeading = /\b(div|span|p)\b/.test(sel)
-  if (
-    targetsNonHeading &&
-    attrsObj.role === 'heading' &&
-    (attrsObj['aria-level'] == null || attrsObj['aria-level'] === '')
-  )
-    return false
+  if (targetsNonHeading && attrsObj.role === 'heading' && (attrsObj['aria-level'] == null || attrsObj['aria-level'] === '')) return false
 
   // --- SEMANTIC ELEMENTS: Don't add redundant aria-label (footer, main, header already announce) ---
   const ariaLabelVal = attrsObj['aria-label']
   if (typeof ariaLabelVal === 'string') {
     const label = ariaLabelVal.trim().toLowerCase()
-    const redundantForElement = (elem: string, ...redundant: string[]) =>
-      sel.includes(elem) && redundant.some((r) => label === r || label.replace(/\s+/g, ' ') === r)
+    const redundantForElement = (elem: string, ...redundant: string[]) => sel.includes(elem) && redundant.some((r) => label === r || label.replace(/\s+/g, ' ') === r)
     const redundantLabels = ['header', 'main content area', 'main', 'footer', 'banner']
     if (
       redundantForElement('footer', 'footer', 'contentinfo') ||
@@ -194,24 +187,13 @@ function applyAllFilters(f: AutoFixItem): boolean {
   }
 
   // --- NAVIGATION: Don't add role="dialog" or aria-modal to nav overlay - it's a panel, not a modal ---
-  if (
-    attrsObj.role === 'dialog' &&
-    (sel.includes('wp-block-navigation__responsive') || sel.includes('navigation'))
-  )
-    return false
-  if (
-    attrsObj['aria-modal'] === true ||
-    attrsObj['aria-modal'] === 'true'
-  ) {
+  if (attrsObj.role === 'dialog' && (sel.includes('wp-block-navigation__responsive') || sel.includes('navigation'))) return false
+  if (attrsObj['aria-modal'] === true || attrsObj['aria-modal'] === 'true') {
     if (sel.includes('wp-block-navigation__responsive')) return false
   }
 
   // --- NAVIGATION: Don't add role="menu"/"menuitem" to link-based nav - use list semantics ---
-  if (
-    (attrsObj.role === 'menu' || attrsObj.role === 'menuitem') &&
-    sel.includes('wp-block-navigation')
-  )
-    return false
+  if ((attrsObj.role === 'menu' || attrsObj.role === 'menuitem') && sel.includes('wp-block-navigation')) return false
 
   // --- REDUNDANT ROLES: role="link" on <a>, role="form" on <form>, role="button" on <button>, role="navigation" on nav ---
   if ((sel.includes('a[') || sel.startsWith('a.')) && attrsObj.role === 'link') return false
@@ -220,17 +202,12 @@ function applyAllFilters(f: AutoFixItem): boolean {
   if (sel.includes('nav') && attrsObj.role === 'navigation') return false
 
   // --- ROLE: Don't remove role="group" or role="region" from div - they add valid semantics ---
-  const isRemovingRole =
-    attrsObj.role === '' || attrsObj.role === null || attrsObj.role === undefined
+  const isRemovingRole = attrsObj.role === '' || attrsObj.role === null || attrsObj.role === undefined
   const currentRole = String(f.current_value ?? '').toLowerCase()
   if (isRemovingRole && sel.includes('div') && /^(group|region)$/.test(currentRole)) return false
 
   // --- ROLE="region": Requires aria-label; unnamed regions clutter screen reader navigation ---
-  if (
-    attrsObj.role === 'region' &&
-    (attrsObj['aria-label'] == null || String(attrsObj['aria-label']).trim() === '')
-  )
-    return false
+  if (attrsObj.role === 'region' && (attrsObj['aria-label'] == null || String(attrsObj['aria-label']).trim() === '')) return false
 
   // --- ROLE="text": Wrong for p, div, span ---
   if (attrsObj.role === 'text') return false
@@ -240,21 +217,15 @@ function applyAllFilters(f: AutoFixItem): boolean {
     const targetsImgOrArea = /\bimg\b|\barea\b|\[type=['"]?image['"]?\]/.test(sel)
     if (!targetsImgOrArea) return false
     if (sel.includes('figure')) return false
-    if (sel.includes("img") && (sel.includes("alt=''") || sel.includes('alt=""'))) return false
-    if (typeof altVal === 'string' && /descriptive\s+text\s+for\s+(the\s+)?image/i.test(altVal))
-      return false
+    if (sel.includes('img') && (sel.includes("alt=''") || sel.includes('alt=""'))) return false
+    if (typeof altVal === 'string' && /descriptive\s+text\s+for\s+(the\s+)?image/i.test(altVal)) return false
   }
 
   // --- IMAGES: missing_alt_text when alt already exists ---
   if (attrsObj.alt != null && /missing_alt|alt_text|non_descriptive_alt/i.test(issueType)) {
     // img[alt], img[alt='...'], img[alt="..."] = alt attribute exists (img[alt] doesn't specify value)
-    const hasAltInSelector =
-      /img\[alt\]/.test(sel) ||
-      (/img\[alt=['"]/.test(sel) && !/img\[alt=''\]|img\[alt=""\]/.test(sel))
-    const missingAltButHasValue =
-      /missing_alt/i.test(issueType) &&
-      typeof f.current_value === 'string' &&
-      f.current_value.trim().length > 2
+    const hasAltInSelector = /img\[alt\]/.test(sel) || (/img\[alt=['"]/.test(sel) && !/img\[alt=''\]|img\[alt=""\]/.test(sel))
+    const missingAltButHasValue = /missing_alt/i.test(issueType) && typeof f.current_value === 'string' && f.current_value.trim().length > 2
     if (hasAltInSelector || missingAltButHasValue) return false
   }
 
@@ -289,55 +260,35 @@ function applyAllFilters(f: AutoFixItem): boolean {
   }
 
   // --- LISTS: Don't add aria-label to ul inside nav - parent nav already has aria-label ---
-  if (
-    hasAriaLabel &&
-    sel.includes('ul') &&
-    (sel.includes('wp-block-navigation') || sel.includes('nav'))
-  )
-    return false
+  if (hasAriaLabel && sel.includes('ul') && (sel.includes('wp-block-navigation') || sel.includes('nav'))) return false
 
   // --- BUTTONS/NAV: Never remove or change aria-label (they need it) ---
   if (hasAriaLabel && (isButton || sel.includes('nav'))) {
     const ariaLabelVal = attrsObj['aria-label']
     const isRemoving = ariaLabelVal === '' || ariaLabelVal === null || ariaLabelVal === undefined
-    const isGenericPlaceholder =
-      typeof ariaLabelVal === 'string' && /accessible\s+name|generic|placeholder/i.test(ariaLabelVal)
-    const isRedundantOnNav =
-      sel.includes('nav') && /redundant_aria_label|redundant.*label/i.test(issueType)
+    const isGenericPlaceholder = typeof ariaLabelVal === 'string' && /accessible\s+name|generic|placeholder/i.test(ariaLabelVal)
+    const isRedundantOnNav = sel.includes('nav') && /redundant_aria_label|redundant.*label/i.test(issueType)
     if (isRemoving || isGenericPlaceholder || isRedundantOnNav) return false
   }
 
   // --- IFRAME/IMG: Don't add aria-label when title exists (title provides name) ---
-  if (
-    hasAriaLabel &&
-    (sel.includes('iframe') || sel.includes('img')) &&
-    sel.includes('title=')
-  ) {
+  if (hasAriaLabel && (sel.includes('iframe') || sel.includes('img')) && sel.includes('title=')) {
     return false
   }
 
   // --- ARIA-HASPOPUP: Never on close buttons; never remove from menu buttons ---
   if (attrsObj['aria-haspopup'] != null && /close|dismiss|chiudi/i.test(sel)) return false
-  if (
-    Object.keys(attrsObj).some((k) => k.toLowerCase() === 'aria-haspopup') &&
-    isButton &&
-    (attrsObj['aria-haspopup'] === '' ||
-      attrsObj['aria-haspopup'] === null ||
-      attrsObj['aria-haspopup'] === undefined)
-  )
-    return false
+  if (Object.keys(attrsObj).some((k) => k.toLowerCase() === 'aria-haspopup') && isButton && (attrsObj['aria-haspopup'] === '' || attrsObj['aria-haspopup'] === null || attrsObj['aria-haspopup'] === undefined)) return false
 
   // --- ARIA-CONTROLS: Never on close buttons; never placeholder IDs ---
   if (attrsObj['aria-controls'] != null && /close|dismiss|chiudi/i.test(sel)) return false
   const ariaControlsVal = attrsObj['aria-controls']
-  if (typeof ariaControlsVal === 'string' && /^submenu-id$/i.test(ariaControlsVal.trim()))
-    return false
+  if (typeof ariaControlsVal === 'string' && /^submenu-id$/i.test(ariaControlsVal.trim())) return false
 
   // --- ARIA-DESCRIBEDBY / ARIA-LABELLEDBY: Reject placeholder IDs ---
   const ariaDescribedBy = attrsObj['aria-describedby']
   const ariaLabelledBy = attrsObj['aria-labelledby']
-  const placeholderId = (v: unknown) =>
-    typeof v === 'string' && /^(element-id|target-id|label-id|placeholder)$/i.test(v.trim())
+  const placeholderId = (v: unknown) => typeof v === 'string' && /^(element-id|target-id|label-id|placeholder)$/i.test(v.trim())
   if (placeholderId(ariaDescribedBy) || placeholderId(ariaLabelledBy)) return false
 
   return true
@@ -366,10 +317,7 @@ export async function getSuggestedFixes(input: GetSuggestedFixesInput): Promise<
   }
 
   // Start scanner fetch in parallel with prompt building (skips R2 when domain has no report)
-  const scannerPromise =
-    domain?.trim() && scannerReportIssuesInput === undefined
-      ? getScannerIssuesForPageUrl(url.trim(), domain.trim())
-      : Promise.resolve(scannerReportIssuesInput ?? [])
+  const scannerPromise = domain?.trim() && scannerReportIssuesInput === undefined ? getScannerIssuesForPageUrl(url.trim(), domain.trim()) : Promise.resolve(scannerReportIssuesInput ?? [])
 
   const existingFixesSummary = buildExistingFixesSummary(existingFixes)
   const htmlSnippet = shrinkHtmlForAccessibility(html)
@@ -437,9 +385,7 @@ RULES (ALL enforced by post-processing; violations are rejected):
         }
       })
     : []
-  const scannerIssuesSection = hasScannerIssues
-    ? `\n\nSCANNER ISSUES (use with HTML to prioritize fixes):\n${JSON.stringify(slimScannerIssues)}\n`
-    : ''
+  const scannerIssuesSection = hasScannerIssues ? `\n\nSCANNER ISSUES (use with HTML to prioritize fixes):\n${JSON.stringify(slimScannerIssues)}\n` : ''
 
   const userPrompt = `URL: ${url}
 
@@ -469,7 +415,7 @@ ${htmlSnippet}
   if (fixes.length === 0) return []
 
   const normalized = fixes.map(normalizeFix)
-  
+
   // Filter out fixes that duplicate existing fixes by selector
   // Normalize selectors for comparison (trim, lowercase, remove extra spaces)
   const normalizeSelector = (sel: string | undefined): string => {
@@ -477,11 +423,7 @@ ${htmlSnippet}
     return sel.trim().toLowerCase().replace(/\s+/g, ' ')
   }
 
-  const existingSelectors = new Set(
-    existingFixes
-      .map((f) => normalizeSelector(f.selector))
-      .filter((s) => s.length > 0)
-  )
+  const existingSelectors = new Set(existingFixes.map((f) => normalizeSelector(f.selector)).filter((s) => s.length > 0))
 
   const withoutDuplicates = normalized.filter((f) => {
     const normalizedSel = normalizeSelector(f.selector)
@@ -500,9 +442,7 @@ ${htmlSnippet}
     return true
   })
 
-  const withAttributes = withoutSelectorAttrDuplicates.filter((f) =>
-    applyAllFilters(f)
-  )
+  const withAttributes = withoutSelectorAttrDuplicates.filter((f) => applyAllFilters(f))
 
   console.log('[SuggestedFixes] Completed', {
     url,
@@ -512,21 +452,7 @@ ${htmlSnippet}
   return withAttributes
 }
 
-const VALID_CATEGORIES = [
-  'animations',
-  'buttons',
-  'aria',
-  'duplicate_ids',
-  'focus',
-  'headings',
-  'tables',
-  'forms',
-  'links',
-  'icons',
-  'images',
-  'keyboard',
-  'media',
-] as const
+const VALID_CATEGORIES = ['animations', 'buttons', 'aria', 'duplicate_ids', 'focus', 'headings', 'tables', 'forms', 'links', 'icons', 'images', 'keyboard', 'media'] as const
 
 // FixCategory type is kept for internal use and potential future exports
 type FixCategory = (typeof VALID_CATEGORIES)[number]
@@ -535,20 +461,7 @@ function isValidCategory(c: string): c is FixCategory {
   return (VALID_CATEGORIES as readonly string[]).includes(c)
 }
 
-const EXACT_FORMAT_KEYS = [
-  'selector',
-  'issue_type',
-  'wcag_criteria',
-  'action',
-  'attributes',
-  'impact',
-  'description',
-  'current_value',
-  'confidence',
-  'wcag',
-  'suggested_fix',
-  'category',
-] as const
+const EXACT_FORMAT_KEYS = ['selector', 'issue_type', 'wcag_criteria', 'action', 'attributes', 'impact', 'description', 'current_value', 'confidence', 'wcag', 'suggested_fix', 'category'] as const
 
 function inferCategory(issueType: string | undefined): FixCategory {
   if (!issueType || typeof issueType !== 'string') return 'aria'
@@ -592,7 +505,7 @@ function inferImpact(f: AutoFixItem): 'minor' | 'moderate' | 'serious' | 'critic
 
   // Serious issues - significant barriers
   if (
-    /missing.*alt|no.*alt|image.*alt|1\.1\.1/.test(issueType) && !/decorative/.test(description) ||
+    (/missing.*alt|no.*alt|image.*alt|1\.1\.1/.test(issueType) && !/decorative/.test(description)) ||
     /missing.*label|no.*label|unlabeled|3\.3\.2/.test(issueType) ||
     /missing.*aria.*label|no.*aria.*label/.test(issueType) ||
     /form.*label|input.*label/.test(issueType) ||
@@ -617,10 +530,7 @@ function inferImpact(f: AutoFixItem): 'minor' | 'moderate' | 'serious' | 'critic
   }
 
   // Minor issues - cosmetic or low impact
-  if (
-    /redundant.*text|redundant.*sr/.test(issueType) ||
-    /aria.*redundant/.test(description)
-  ) {
+  if (/redundant.*text|redundant.*sr/.test(issueType) || /aria.*redundant/.test(description)) {
     return 'minor'
   }
 
@@ -683,15 +593,7 @@ function inferAttributes(f: AutoFixItem): Record<string, unknown> {
 function extractAltFromSuggestedFix(s: string | undefined): string | null {
   if (!s || typeof s !== 'string') return null
   // Try multiple patterns: "e.g., 'Portrait of...'", "alt to '...'", "use '...'", "change to '...'", "alt='...'"
-  const patterns = [
-    /e\.g\.\s*,\s*["']([^"']+)["']/i,
-    /alt\s*(?:to|[:=])\s*["']?([^"']+)["']?/i,
-    /use\s+["']([^"']+)["']/i,
-    /change\s+to\s+["']([^"']+)["']/i,
-    /update\s+alt\s+text\s+to\s+["']([^"']+)["']/i,
-    /describe.*as\s+["']([^"']+)["']/i,
-    /["']([^"']+)["']/,
-  ]
+  const patterns = [/e\.g\.\s*,\s*["']([^"']+)["']/i, /alt\s*(?:to|[:=])\s*["']?([^"']+)["']?/i, /use\s+["']([^"']+)["']/i, /change\s+to\s+["']([^"']+)["']/i, /update\s+alt\s+text\s+to\s+["']([^"']+)["']/i, /describe.*as\s+["']([^"']+)["']/i, /["']([^"']+)["']/]
   for (const pattern of patterns) {
     const m = s.match(pattern)
     if (m && m[1] && m[1].length > 3) return m[1].trim()
@@ -724,9 +626,7 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
   const category = isValidCategory(raw) ? raw : inferCategory(f.issue_type)
   const rawAction = (f as { action?: string }).action
   const validActions = ['update', 'add', 'remove', 'create'] as const
-  const action = validActions.includes(rawAction as (typeof validActions)[number])
-    ? (rawAction as (typeof validActions)[number])
-    : (f.action ?? 'update')
+  const action = validActions.includes(rawAction as (typeof validActions)[number]) ? (rawAction as (typeof validActions)[number]) : (f.action ?? 'update')
   const wcag = f.wcag ?? f.wcag_criteria ?? ''
   const wcag_criteria = f.wcag_criteria ?? wcag
   let attrs = f.attributes ?? {}
@@ -734,7 +634,7 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
     const inferred = inferAttributes(f)
     attrs = Object.keys(inferred).length > 0 ? inferred : attrs
   }
-  
+
   // Normalize impact - if GPT returns "serious" for everything, infer based on issue type
   let impact = f.impact?.toLowerCase()?.trim()
   const validImpacts = ['minor', 'moderate', 'serious', 'critical']
@@ -751,7 +651,7 @@ function normalizeFix(f: AutoFixItem): AutoFixItem {
       impact = inferredImpact
     }
   }
-  
+
   const out: Record<string, unknown> = {
     ...f,
     category,
@@ -798,11 +698,7 @@ function getMessageContent(msg: { content?: unknown } | null): string {
 
 type ModelResult = { fixes: AutoFixItem[]; hadError: boolean }
 
-async function getSuggestedFixesFromModel(
-  model: string,
-  systemPrompt: string,
-  userPrompt: string
-): Promise<ModelResult> {
+async function getSuggestedFixesFromModel(model: string, systemPrompt: string, userPrompt: string): Promise<ModelResult> {
   try {
     const completion = await openai.chat.completions.create({
       model,

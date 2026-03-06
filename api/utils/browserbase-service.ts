@@ -67,15 +67,7 @@ function getPreferredCountryFromURL(url: string): string {
     }
 
     // Check for US domains
-    if (
-      hostname.endsWith('.com') ||
-      hostname.endsWith('.org') ||
-      hostname.endsWith('.net') ||
-      hostname.endsWith('.us') ||
-      hostname.endsWith('.edu') ||
-      hostname.endsWith('.gov') ||
-      hostname.endsWith('.io')
-    ) {
+    if (hostname.endsWith('.com') || hostname.endsWith('.org') || hostname.endsWith('.net') || hostname.endsWith('.us') || hostname.endsWith('.edu') || hostname.endsWith('.gov') || hostname.endsWith('.io')) {
       return 'US'
     }
 
@@ -141,7 +133,7 @@ export class BrowserbaseService {
 
     // Load ISP proxies
     this.ispProxies = loadISPProxiesFromEnv()
-    
+
     if (this.ispProxies.size > 0) {
       console.log(`[SCRAPELESS] Loaded ${this.ispProxies.size} ISP proxies: [${Array.from(this.ispProxies.keys()).join(', ')}]`)
     }
@@ -154,7 +146,7 @@ export class BrowserbaseService {
     const hasISPForPreferred = this.ispProxies.has(preferredCountry)
 
     // Try with ISP proxy first, then residential, then default
-    let browser: any = null
+    const browser: any = null
     let lastError: Error | null = null
 
     // Strategy 1: Try preferred country (ISP or residential)
@@ -202,12 +194,7 @@ export class BrowserbaseService {
     }
   }
 
-  private async scrapeWithProxy(
-    url: string,
-    useISPProxy: boolean,
-    proxyCountry: string | null,
-    ispProxy?: ISPProxy,
-  ): Promise<ScrapeResult> {
+  private async scrapeWithProxy(url: string, useISPProxy: boolean, proxyCountry: string | null, ispProxy?: ISPProxy): Promise<ScrapeResult> {
     let browser: any = null
 
     try {
