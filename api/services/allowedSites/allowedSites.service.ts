@@ -6,9 +6,9 @@ import {
   FindAllowedSitesProps,
   findSiteById,
   findSiteByURL,
+  findUserSitesCount,
   findUserSitesWithPlansForWorkspace,
   findUserSitesWithPlansWithWorkspaces,
-  findUserSitesCount,
   insertSite,
   IUserSites,
   toggleSiteMonitoring as toggleSiteMonitoringRepo,
@@ -18,10 +18,10 @@ import { findUserNotificationByUserId, getUserbyId } from '../../repository/user
 import { hasWorkspaceAccessToSite } from '../../repository/workspace_users.repository'
 import { canManageOrganization } from '../../utils/access.helper'
 import { normalizeDomain } from '../../utils/domain.utils'
-import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { generatePDF } from '../../utils/generatePDF'
 import { ApolloError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateChangeURL, validateDomain } from '../../validations/allowedSites.validation'
 import { fetchAccessibilityReport } from '../accessibilityReport/accessibilityReport.service'
@@ -235,10 +235,10 @@ export async function findUserSites(user: UserLogined, limit?: number, offset?: 
 
   try {
     const isAdmin = await isAdminOrManager(user)
-    
+
     // Get total count first (before pagination, with filter and search)
     const total = await findUserSitesCount(user.id, user.current_organization_id, isAdmin, filter, search)
-    
+
     // Get sites (paginated if limit provided, otherwise all, with filter and search)
     const allSites = await findUserSitesWithPlansWithWorkspaces(user.id, user.current_organization_id, isAdmin, limit, offset, filter, search)
     const sitesWithOwnership = addOwnershipFlag(allSites, user.id)

@@ -56,9 +56,7 @@ export async function findEngagementURLDate(user_id: number, site_url: string, s
     const localDate = new Date(`${result.date}Z`) // Assuming result.date is in 'YYYY-MM-DD' format
 
     const totalImpressions = Number(result.totalImpressions)
-    const engagementRate = totalImpressions > 0
-      ? (Number(result.engagedImpressions) / totalImpressions) * 100
-      : 0
+    const engagementRate = totalImpressions > 0 ? (Number(result.engagedImpressions) / totalImpressions) * 100 : 0
 
     return {
       date: localDate.toISOString().split('T')[0],
@@ -114,11 +112,7 @@ export async function insertImpressionURL(data: any, url: string) {
  * This is ~8x faster than the JOIN-based approach
  * Use this when you already have the site_id
  */
-export async function findImpressionsBySiteIdAndDate(
-  siteId: number,
-  startDate: Date,
-  endDate: Date
-): Promise<impressionsProps[]> {
+export async function findImpressionsBySiteIdAndDate(siteId: number, startDate: Date, endDate: Date): Promise<impressionsProps[]> {
   const results = await database(TABLE)
     .select(
       `${impressionsColumns.id} as id`,
@@ -126,12 +120,12 @@ export async function findImpressionsBySiteIdAndDate(
       `${impressionsColumns.widget_opened} as widget_opened`,
       `${impressionsColumns.widget_closed} as widget_closed`,
       `${impressionsColumns.createdAt} as createdAt`, // Alias to camelCase for GraphQL
-      `${impressionsColumns.profileCounts} as profileCounts`
+      `${impressionsColumns.profileCounts} as profileCounts`,
     )
     .where({ [impressionsColumns.site_id]: siteId })
     .andWhere(impressionsColumns.createdAt, '>=', startDate)
     .andWhere(impressionsColumns.createdAt, '<=', endDate)
-  
+
   return results
 }
 
@@ -140,11 +134,7 @@ export async function findImpressionsBySiteIdAndDate(
  * This is ~8x faster than the JOIN-based approach
  * Use this when you already have the site_id
  */
-export async function findEngagementBySiteIdAndDate(
-  siteId: number,
-  startDate: string,
-  endDate: string
-) {
+export async function findEngagementBySiteIdAndDate(siteId: number, startDate: string, endDate: string) {
   const results = await database(TABLE)
     .select([
       database.raw(`DATE(${TABLE}.created_at) as date`),
@@ -161,9 +151,7 @@ export async function findEngagementBySiteIdAndDate(
   return results.map((result: any) => {
     const localDate = new Date(`${result.date}Z`)
     const totalImpressions = Number(result.totalImpressions)
-    const engagementRate = totalImpressions > 0
-      ? (Number(result.engagedImpressions) / totalImpressions) * 100
-      : 0
+    const engagementRate = totalImpressions > 0 ? (Number(result.engagedImpressions) / totalImpressions) * 100 : 0
 
     return {
       date: localDate.toISOString().split('T')[0],

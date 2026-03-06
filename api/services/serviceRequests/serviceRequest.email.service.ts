@@ -51,10 +51,7 @@ export async function sendQuoteRequestNotification(data: QuoteRequestEmailData):
   try {
     const user = await getUserbyId(data.userId)
     const year = new Date().getFullYear()
-    const smtpConfig =
-      user.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
+    const smtpConfig = user.current_organization_id != null ? await getOrganizationSmtpConfig(user.current_organization_id) : null
     const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
 
     const template = await compileEmailTemplate({
@@ -92,10 +89,7 @@ export async function sendMeetingRequestNotification(data: MeetingRequestEmailDa
   try {
     const year = new Date().getFullYear()
     const user = await getUserbyId(data.userId)
-    const smtpConfig =
-      user?.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
+    const smtpConfig = user?.current_organization_id != null ? await getOrganizationSmtpConfig(user.current_organization_id) : null
     const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
 
     const template = await compileEmailTemplate({
@@ -125,4 +119,3 @@ export async function sendMeetingRequestNotification(data: MeetingRequestEmailDa
     // Don't throw - we don't want to fail the request if email fails
   }
 }
-

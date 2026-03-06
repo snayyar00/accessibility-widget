@@ -58,13 +58,13 @@ export async function findSitesByIds(ids: number[]): Promise<Array<{ id: number;
  * Get total count of sites for a user/organization with optional filter and search
  */
 export async function findUserSitesCount(userId: number, organizationId: number, isAdmin: boolean, filter?: 'all' | 'active' | 'disabled', search?: string): Promise<number> {
-  let filterCondition = '';
-  let searchCondition = '';
-  const params: any[] = [];
-  
+  let filterCondition = ''
+  let searchCondition = ''
+  const params: any[] = []
+
   if (filter === 'active' || filter === 'disabled') {
-    const latestPlanSubquery = `(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`;
-    
+    const latestPlanSubquery = `(SELECT MAX(sp2.id) FROM ${TABLES.sitesPlans} sp2 WHERE sp2.allowed_site_id = ${TABLE}.id)`
+
     if (filter === 'active') {
       // Active: trial === 0 AND expiredAt > now
       filterCondition = `
@@ -76,8 +76,9 @@ export async function findUserSitesCount(userId: number, organizationId: number,
           AND sp_count.expired_at > NOW()
           AND sp_count.id = ${latestPlanSubquery}
         )
-      `;
-    } else { // filter === 'disabled'
+      `
+    } else {
+      // filter === 'disabled'
       // Disabled: trial === 1 OR expiredAt is null OR expiredAt <= now
       filterCondition = `
         AND EXISTS (
@@ -86,16 +87,16 @@ export async function findUserSitesCount(userId: number, organizationId: number,
           AND (sp_count.is_trial = 1 OR sp_count.expired_at IS NULL OR sp_count.expired_at <= NOW())
           AND sp_count.id = ${latestPlanSubquery}
         )
-      `;
+      `
     }
   }
-  
+
   // Add search condition for URL
   if (search && search.trim().length > 0) {
-    searchCondition = ` AND ${TABLE}.url LIKE ?`;
-    params.push(`%${search.trim()}%`);
+    searchCondition = ` AND ${TABLE}.url LIKE ?`
+    params.push(`%${search.trim()}%`)
   }
-  
+
   if (isAdmin) {
     const result = await database.raw(
       `
@@ -104,8 +105,8 @@ export async function findUserSitesCount(userId: number, organizationId: number,
       WHERE ${TABLE}.organization_id = ?${filterCondition}${searchCondition}
       `,
       [organizationId, ...params],
-    );
-    return Number(result[0]?.[0]?.count || 0);
+    )
+    return Number(result[0]?.[0]?.count || 0)
   } else {
     const result = await database.raw(
       `
@@ -126,8 +127,8 @@ export async function findUserSitesCount(userId: number, organizationId: number,
         )${filterCondition}${searchCondition}
       `,
       [organizationId, userId, userId, ...params],
-    );
-    return Number(result[0]?.[0]?.count || 0);
+    )
+    return Number(result[0]?.[0]?.count || 0)
   }
 }
 
@@ -145,32 +146,27 @@ export async function findUserSitesCount(userId: number, organizationId: number,
  * @returns Promise<IUserSites[]> - Sites with plan information and workspace data pre-aggregated
  */
 export async function findUserSitesWithPlansWithWorkspaces(userId: number, organizationId: number, isAdmin: boolean, limit?: number, offset?: number, filter?: 'all' | 'active' | 'disabled', search?: string): Promise<IUserSites[]> {
-  const now = database.raw('NOW()');
+  const now = database.raw('NOW()')
   if (isAdmin) {
     // Admin path: Get ALL sites in organization with workspace info via subquery to avoid GROUP BY issues
     let query = buildSitesBaseQuery()
       .where(`${TABLE}.organization_id`, organizationId)
       .select(...selectSiteFieldsWithMonitoring())
-    
+
     // Apply filter
     if (filter === 'active') {
-      query = query
-        .where(`${TABLES.sitesPlans}.is_trial`, 0)
-        .whereNotNull(`${TABLES.sitesPlans}.expired_at`)
-        .where(`${TABLES.sitesPlans}.expired_at`, '>', now);
+      query = query.where(`${TABLES.sitesPlans}.is_trial`, 0).whereNotNull(`${TABLES.sitesPlans}.expired_at`).where(`${TABLES.sitesPlans}.expired_at`, '>', now)
     } else if (filter === 'disabled') {
-      query = query.where(function() {
-        this.where(`${TABLES.sitesPlans}.is_trial`, 1)
-          .orWhereNull(`${TABLES.sitesPlans}.expired_at`)
-          .orWhere(`${TABLES.sitesPlans}.expired_at`, '<=', now);
-      });
+      query = query.where(function () {
+        this.where(`${TABLES.sitesPlans}.is_trial`, 1).orWhereNull(`${TABLES.sitesPlans}.expired_at`).orWhere(`${TABLES.sitesPlans}.expired_at`, '<=', now)
+      })
     }
-    
+
     // Apply search filter
     if (search && search.trim().length > 0) {
-      query = query.where(`${TABLE}.url`, 'like', `%${search.trim()}%`);
+      query = query.where(`${TABLE}.url`, 'like', `%${search.trim()}%`)
     }
-    
+
     if (limit !== undefined) {
       query = query.limit(limit)
       // Only add OFFSET if LIMIT is also defined (MySQL requires LIMIT when using OFFSET)
@@ -178,32 +174,32 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
         query = query.offset(offset)
       }
     }
-    
+
     return query
   } else {
     // Regular user path: Single query with OR condition (own sites OR workspace membership)
     // Workspace array aggregated in subquery to avoid GROUP BY complexity
-    
+
     // Build filter condition first
-    let filterCondition = '';
+    let filterCondition = ''
     if (filter === 'active') {
       filterCondition = `
         AND sp.is_trial = 0
         AND sp.expired_at IS NOT NULL
         AND sp.expired_at > NOW()
-      `;
+      `
     } else if (filter === 'disabled') {
       filterCondition = `
         AND (sp.is_trial = 1 OR sp.expired_at IS NULL OR sp.expired_at <= NOW())
-      `;
+      `
     }
-    
+
     // Build search condition
-    let searchCondition = '';
+    let searchCondition = ''
     if (search && search.trim().length > 0) {
-      searchCondition = ` AND ${TABLE}.url LIKE ?`;
+      searchCondition = ` AND ${TABLE}.url LIKE ?`
     }
-    
+
     let sql = `
       SELECT DISTINCT
         ${TABLE}.id,
@@ -253,12 +249,12 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
         )
         ${filterCondition}${searchCondition}
     `
-    
-    const params: any[] = [organizationId, userId, userId];
+
+    const params: any[] = [organizationId, userId, userId]
     if (search && search.trim().length > 0) {
-      params.push(`%${search.trim()}%`);
+      params.push(`%${search.trim()}%`)
     }
-    
+
     if (limit !== undefined) {
       sql += ` LIMIT ?`
       params.push(limit)
@@ -268,7 +264,7 @@ export async function findUserSitesWithPlansWithWorkspaces(userId: number, organ
         params.push(offset)
       }
     }
-    
+
     const sites = await database.raw(sql, params)
     return sites[0] // raw() returns [rows, fields]
   }

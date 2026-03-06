@@ -4,9 +4,8 @@
  * - When no org SMTP is set (or send has no org context), Brevo is used.
  * - If org SMTP is set but sending fails, we fall back to Brevo.
  */
-import nodemailer from 'nodemailer'
-
 import { SendSmtpEmail, TransactionalEmailsApi, TransactionalEmailsApiApiKeys } from '@getbrevo/brevo'
+import nodemailer from 'nodemailer'
 
 import type { OrganizationEmailContext, OrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 
@@ -25,17 +24,12 @@ function hasSmtpCredentials(c: OrganizationEmailContext): c is OrganizationSmtpC
   return 'user' in c && typeof (c as { user?: string }).user === 'string' && 'password' in c
 }
 
-async function sendViaOrgSmtp(
-  to: string,
-  subject: string,
-  html: string,
-  opts: SendMailOptions,
-): Promise<boolean> {
+async function sendViaOrgSmtp(to: string, subject: string, html: string, opts: SendMailOptions): Promise<boolean> {
   const { smtpConfig, attachments, senderName = 'WebAbility' } = opts
   if (!smtpConfig || !hasSmtpCredentials(smtpConfig)) return false
 
   try {
-    const host = (smtpConfig.host || '').trim() 
+    const host = (smtpConfig.host || '').trim()
     const transporter = nodemailer.createTransport({
       host,
       port: smtpConfig.port,
@@ -74,13 +68,7 @@ async function sendViaOrgSmtp(
   }
 }
 
-async function sendViaBrevo(
-  to: string,
-  subject: string,
-  html: string,
-  attachments?: EmailAttachment[],
-  senderName: string = 'WebAbility',
-): Promise<boolean> {
+async function sendViaBrevo(to: string, subject: string, html: string, attachments?: EmailAttachment[], senderName: string = 'WebAbility'): Promise<boolean> {
   try {
     const brevoClient = new TransactionalEmailsApi()
     brevoClient.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY as string)
@@ -113,14 +101,7 @@ async function sendViaBrevo(
   }
 }
 
-async function sendMail(
-  to: string,
-  subject: string,
-  html: string,
-  attachments?: EmailAttachment[],
-  senderName: string = 'WebAbility',
-  smtpConfig?: OrganizationEmailContext | null,
-): Promise<boolean> {
+async function sendMail(to: string, subject: string, html: string, attachments?: EmailAttachment[], senderName: string = 'WebAbility', smtpConfig?: OrganizationEmailContext | null): Promise<boolean> {
   if (!to || to.trim() === '') {
     console.error('Recipient email address is missing or empty.')
     return false
@@ -140,14 +121,7 @@ async function sendMail(
   return sendViaBrevo(to, subject, html, attachments, effectiveSenderName)
 }
 
-async function sendMailMultiple(
-  recipients: string[],
-  subject: string,
-  html: string,
-  attachments?: EmailAttachment[],
-  senderName: string = 'WebAbility',
-  smtpConfig?: OrganizationEmailContext | null,
-): Promise<boolean> {
+async function sendMailMultiple(recipients: string[], subject: string, html: string, attachments?: EmailAttachment[], senderName: string = 'WebAbility', smtpConfig?: OrganizationEmailContext | null): Promise<boolean> {
   if (!recipients || recipients.length === 0) {
     console.error('No recipients provided.')
     return false
@@ -215,16 +189,7 @@ async function sendMailMultiple(
   return false
 }
 
-async function sendEmailWithRetries(
-  email: string,
-  template: string,
-  subject: string,
-  maxRetries = 3,
-  delay = 2000,
-  attachments?: EmailAttachment[],
-  senderName: string = 'WebAbility',
-  smtpConfig?: OrganizationEmailContext | null,
-): Promise<void> {
+async function sendEmailWithRetries(email: string, template: string, subject: string, maxRetries = 3, delay = 2000, attachments?: EmailAttachment[], senderName: string = 'WebAbility', smtpConfig?: OrganizationEmailContext | null): Promise<void> {
   let attempt = 0
 
   while (attempt < maxRetries) {

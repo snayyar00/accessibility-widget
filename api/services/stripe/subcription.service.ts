@@ -131,7 +131,6 @@ export async function createNewSubcription(token: string, email: string, name: s
         },
       }
 
-
       return {
         customer_id: customer.id,
         subcription_id: 'Trial',

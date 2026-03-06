@@ -70,7 +70,7 @@ export class EmailSequenceService {
       const smtpConfig = organizationId ? await getOrganizationSmtpConfig(organizationId) : null
       const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
       // Use org logo when available; otherwise display current/default platform logo
-      const logoUrl = (smtpConfig && 'logoUrl' in smtpConfig && smtpConfig.logoUrl) ? smtpConfig.logoUrl : DEFAULT_LOGO_URL
+      const logoUrl = smtpConfig && 'logoUrl' in smtpConfig && smtpConfig.logoUrl ? smtpConfig.logoUrl : DEFAULT_LOGO_URL
 
       const template = await compileEmailTemplate({
         fileName: welcomeStep.template,
@@ -398,7 +398,7 @@ export class EmailSequenceService {
       const smtpConfig = user.current_organization_id ? await getOrganizationSmtpConfig(user.current_organization_id) : null
       const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
       // Use org logo when available; otherwise display current/default platform logo
-      const logoUrl = (smtpConfig && 'logoUrl' in smtpConfig && smtpConfig.logoUrl) ? smtpConfig.logoUrl : DEFAULT_LOGO_URL
+      const logoUrl = smtpConfig && 'logoUrl' in smtpConfig && smtpConfig.logoUrl ? smtpConfig.logoUrl : DEFAULT_LOGO_URL
 
       const template = await compileEmailTemplate({
         fileName: step.template,

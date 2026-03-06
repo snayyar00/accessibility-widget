@@ -23,17 +23,17 @@ export async function createAgencyDashboardLink(req: Request & { user: UserLogin
 
     // Validate user has a current organization
     if (!user.current_organization_id) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'No organization selected',
-        message: 'Please select an organization to access the agency dashboard.' 
+        message: 'Please select an organization to access the agency dashboard.',
       })
     }
 
     // Check if user is a member of the organization
     if (!user.currentOrganizationUser) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'Access denied',
-        message: 'You are not a member of this organization.' 
+        message: 'You are not a member of this organization.',
       })
     }
 
@@ -45,10 +45,10 @@ export async function createAgencyDashboardLink(req: Request & { user: UserLogin
         organizationId: user.current_organization_id,
         userRole: user.currentOrganizationUser.role,
       })
-      
-      return res.status(403).json({ 
+
+      return res.status(403).json({
         error: 'Access denied',
-        message: 'Only organization owners can access the agency billing dashboard.' 
+        message: 'Only organization owners can access the agency billing dashboard.',
       })
     }
 
@@ -56,17 +56,17 @@ export async function createAgencyDashboardLink(req: Request & { user: UserLogin
     const organization = await getOrganizationById(user.current_organization_id)
 
     if (!organization) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'Organization not found',
-        message: 'The selected organization could not be found.' 
+        message: 'The selected organization could not be found.',
       })
     }
 
     // Check if organization has a Stripe account connected
     if (!organization.stripe_account_id) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Not connected to Agency Program',
-        message: 'This organization is not connected to the Agency Program. Please connect first.' 
+        message: 'This organization is not connected to the Agency Program. Please connect first.',
       })
     }
 
@@ -83,9 +83,9 @@ export async function createAgencyDashboardLink(req: Request & { user: UserLogin
 
       if (!account) {
         console.error('[AGENCY_DASHBOARD] Account not found in Stripe:', organization.stripe_account_id)
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Invalid Stripe account',
-          message: 'The connected Stripe account could not be found. Please reconnect to the Agency Program.' 
+          message: 'The connected Stripe account could not be found. Please reconnect to the Agency Program.',
         })
       }
 
@@ -96,10 +96,10 @@ export async function createAgencyDashboardLink(req: Request & { user: UserLogin
           charges_enabled: account.charges_enabled,
           payouts_enabled: account.payouts_enabled,
         })
-        
-        return res.status(400).json({ 
+
+        return res.status(400).json({
           error: 'Account setup incomplete',
-          message: 'Please complete your Stripe account setup before accessing the dashboard.' 
+          message: 'Please complete your Stripe account setup before accessing the dashboard.',
         })
       }
 
@@ -110,9 +110,9 @@ export async function createAgencyDashboardLink(req: Request & { user: UserLogin
       })
     } catch (accountError) {
       console.error('[AGENCY_DASHBOARD] Error verifying account:', accountError)
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to verify Stripe account',
-        message: 'Could not verify your Stripe account. Please try again or reconnect to the Agency Program.' 
+        message: 'Could not verify your Stripe account. Please try again or reconnect to the Agency Program.',
       })
     }
 
@@ -133,16 +133,15 @@ export async function createAgencyDashboardLink(req: Request & { user: UserLogin
 
     // Handle Stripe-specific errors
     if (error.type === 'StripeInvalidRequestError') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid Stripe account',
-        message: 'The connected Stripe account is invalid. Please reconnect to the Agency Program.' 
+        message: 'The connected Stripe account is invalid. Please reconnect to the Agency Program.',
       })
     }
 
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Internal server error',
-      message: 'Failed to create agency dashboard link. Please try again.' 
+      message: 'Failed to create agency dashboard link. Please try again.',
     })
   }
 }
-
