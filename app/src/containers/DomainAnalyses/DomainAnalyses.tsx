@@ -7,7 +7,7 @@ import Favicon from '@/components/Common/Favicon';
 import { useQuery } from '@apollo/client';
 import GET_USER_SITES from '@/queries/sites/getSites';
 import { Site } from '@/generated/graphql';
-import Select from 'react-select';
+import Select, { components, type ClearIndicatorProps } from 'react-select';
 import Modal from '@/components/Common/Modal';
 import { motion, AnimatePresence } from 'framer-motion';
 import './DomainAnalyses.css';
@@ -18,6 +18,37 @@ interface OptionType {
   value: string;
   label: string;
 }
+
+const AccessibleClearIndicator = (
+  props: ClearIndicatorProps<OptionType, false>,
+) => {
+  const { innerProps, clearValue } = props;
+  const { ref, ...restInnerProps } = innerProps;
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      clearValue();
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      {...restInnerProps}
+      ref={ref as React.Ref<HTMLButtonElement>}
+      onClick={(event) => {
+        event.stopPropagation();
+        clearValue();
+      }}
+      onKeyDown={handleKeyDown}
+      className="flex items-center justify-center text-gray-400 hover:text-gray-600 p-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
+      aria-label="Clear selected domain"
+    >
+      <components.ClearIndicator {...props} />
+    </button>
+  );
+};
 
 export interface Analysis {
   id: string;
@@ -58,6 +89,7 @@ const DomainAnalyses: React.FC = () => {
   const [sliderUrl, setSliderUrl] = useState<string | null>(null);
   // Slider tabs: 'fixes' | 'page-html'
   const [sliderTab, setSliderTab] = useState<'fixes' | 'page-html'>('fixes');
+  const [sliderFiltersExpanded, setSliderFiltersExpanded] = useState(true);
   // Page HTML from page_cache (view fixes)
   const [pageHtml, setPageHtml] = useState<{
     url: string | null;
@@ -85,6 +117,8 @@ const DomainAnalyses: React.FC = () => {
   const [modalSuggestedFixesError, setModalSuggestedFixesError] = useState<string | null>(null);
   const [currentFixIndex, setCurrentFixIndex] = useState<number>(0);
   const [swipingFix, setSwipingFix] = useState<{ index: number; direction: 'left' | 'right' } | null>(null);
+  const [suggestedFixesModalAnnouncement, setSuggestedFixesModalAnnouncement] = useState<string>('');
+  const prevModalLoadingRef = useRef(modalSuggestedFixesLoading);
   // Search state for URL list
   const [urlSearchQuery, setUrlSearchQuery] = useState<string>('');
   const [confirmModal, setConfirmModal] = useState<{
@@ -99,6 +133,8 @@ const DomainAnalyses: React.FC = () => {
     fixIndex: -1,
   });
   const isMounted = useRef(true);
+  const sliderPanelRef = useRef<HTMLDivElement | null>(null);
+  const sliderPreviousFocusRef = useRef<HTMLElement | null>(null);
 
   // Fetch user sites for domain selector
   const { data: sitesData, loading: sitesLoading } = useQuery(GET_USER_SITES);
@@ -377,6 +413,39 @@ const DomainAnalyses: React.FC = () => {
     }
   }, [analyses, handleCloseSuggestedFixesModal]);
 
+  // Announce Suggested Fixes modal loading and result to screen readers
+  useEffect(() => {
+    if (!suggestedFixesModal.isOpen) {
+      setSuggestedFixesModalAnnouncement('');
+      prevModalLoadingRef.current = modalSuggestedFixesLoading;
+      return undefined;
+    }
+    const justFinishedLoading = prevModalLoadingRef.current === true && modalSuggestedFixesLoading === false;
+    prevModalLoadingRef.current = modalSuggestedFixesLoading;
+
+    if (modalSuggestedFixesLoading) {
+      setSuggestedFixesModalAnnouncement(
+        'Scanning and analyzing page. Our AI is scraping the HTML, analyzing accessibility issues, and generating fix suggestions.',
+      );
+      return undefined;
+    }
+    if (justFinishedLoading) {
+      setSuggestedFixesModalAnnouncement('');
+      const msg =
+        modalSuggestedFixes.length === 0
+          ? 'No fixes found. All fixes are already implemented.'
+          : `${modalSuggestedFixes.length} suggested fix${modalSuggestedFixes.length === 1 ? '' : 'es'} found.`;
+      const t = setTimeout(() => setSuggestedFixesModalAnnouncement(msg), 400);
+      return () => clearTimeout(t);
+    }
+    setSuggestedFixesModalAnnouncement(
+      modalSuggestedFixes.length === 0
+        ? 'No fixes found. All fixes are already implemented.'
+        : `${modalSuggestedFixes.length} suggested fix${modalSuggestedFixes.length === 1 ? '' : 'es'} found.`,
+    );
+    return undefined;
+  }, [suggestedFixesModal.isOpen, modalSuggestedFixesLoading, modalSuggestedFixes.length]);
+
   // Note: We no longer auto-close when fixes list is empty
   // Instead, we show a "No fixes found" message and let the user close manually
 
@@ -607,6 +676,61 @@ const DomainAnalyses: React.FC = () => {
     });
   }, [urlList, urlSearchQuery]);
 
+  // Announce loading, error, and result state to screen readers (status live region)
+  const [searchResultAnnouncement, setSearchResultAnnouncement] = useState<string>('');
+  const prevLoaderRef = useRef(loader);
+
+  useEffect(() => {
+    if (currentView !== 'url-list') {
+      setSearchResultAnnouncement('');
+      prevLoaderRef.current = loader;
+      return undefined;
+    }
+
+    const getResultMessage = (): string => {
+      if (urlList.length === 0) {
+        return 'No Pages Found. No pages have been analyzed for this domain yet.';
+      }
+      if (filteredUrlList.length === 0) {
+        return `No Results Found. No pages match your search query "${urlSearchQuery}". Try a different search term.`;
+      }
+      const n = filteredUrlList.length;
+      return `${n} page${n === 1 ? '' : 's'} found.`;
+    };
+
+    const justStartedLoading = prevLoaderRef.current === false && loader === true;
+    const justFinishedLoading = prevLoaderRef.current === true && loader === false;
+    prevLoaderRef.current = loader;
+
+    // Loading: announce when loading starts so SR announces "Finding auto fixes, please wait"
+    if (loader) {
+      if (justStartedLoading) {
+        setSearchResultAnnouncement('');
+        const t = setTimeout(() => setSearchResultAnnouncement('Finding auto fixes, please wait.'), 200);
+        return () => clearTimeout(t);
+      }
+      setSearchResultAnnouncement('Finding auto fixes, please wait.');
+      return undefined;
+    }
+
+    // Error: announce when error is shown
+    if (error) {
+      setSearchResultAnnouncement(error);
+      return undefined;
+    }
+
+    if (justFinishedLoading) {
+      // Announce when Find completes: clear then set after delay so SR reliably announces the result
+      setSearchResultAnnouncement('');
+      const msg = getResultMessage();
+      const t = setTimeout(() => setSearchResultAnnouncement(msg), 350);
+      return () => clearTimeout(t);
+    }
+
+    setSearchResultAnnouncement(getResultMessage());
+    return undefined;
+  }, [currentView, urlList.length, filteredUrlList.length, urlSearchQuery, loader, error]);
+
   const handleUrlClick = (url: string) => {
     setSliderUrl(url);
     setSelectedPage(url);
@@ -625,6 +749,82 @@ const DomainAnalyses: React.FC = () => {
     setSuggestedFixesError(null);
     setAcceptingFixKey(null);
   };
+
+  // Focus trap and Escape for Auto Fixes slider panel
+  const sliderFocusableSelectors =
+    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  useEffect(() => {
+    if (!isSliderOpen) return;
+
+    sliderPreviousFocusRef.current = document.activeElement as HTMLElement | null;
+    const panel = sliderPanelRef.current;
+    if (!panel) return;
+
+    const getFocusable = (): HTMLElement[] =>
+      Array.from(panel.querySelectorAll<HTMLElement>(sliderFocusableSelectors)).filter(
+        (el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true',
+      );
+
+    const focusFirst = () => {
+      const focusables = getFocusable();
+      if (focusables.length > 0) focusables[0].focus();
+      else panel.focus();
+    };
+
+    const t = setTimeout(focusFirst, 50);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleCloseSlider();
+        const prev = sliderPreviousFocusRef.current;
+        if (prev && typeof prev.focus === 'function') {
+          setTimeout(() => prev.focus(), 0);
+        }
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const focusables = getFocusable();
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const current = document.activeElement as HTMLElement;
+      const idx = focusables.indexOf(current);
+      if (idx === -1) {
+        e.preventDefault();
+        focusFirst();
+        return;
+      }
+      if (e.shiftKey) {
+        if (idx <= 0) {
+          e.preventDefault();
+          focusables[focusables.length - 1].focus();
+        }
+      } else {
+        if (idx >= focusables.length - 1) {
+          e.preventDefault();
+          focusables[0].focus();
+        }
+      }
+    };
+
+    panel.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(t);
+      panel.removeEventListener('keydown', handleKeyDown);
+      const prev = sliderPreviousFocusRef.current;
+      if (prev && document.contains(prev)) {
+        try {
+          prev.focus();
+        } catch {
+          // ignore if element no longer focusable
+        }
+      }
+    };
+  }, [isSliderOpen]);
 
   const handleBackToUrlList = () => {
     setCurrentView('url-list');
@@ -896,6 +1096,15 @@ const DomainAnalyses: React.FC = () => {
   const renderUrlListView = () => (
     <div className="w-full h-full flex flex-col md:overflow-hidden">
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 w-full max-w-full border border-gray-100 flex flex-col flex-1 md:overflow-hidden md:min-h-0">
+        {/* Screen reader announcement for search results (announced when Find completes or result changes) */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+        >
+          {searchResultAnnouncement}
+        </div>
         {/* Enhanced Header */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -997,13 +1206,14 @@ const DomainAnalyses: React.FC = () => {
               placeholder="Search pages by URL..."
               value={urlSearchQuery}
               onChange={(e) => setUrlSearchQuery(e.target.value)}
-              className="block w-full pl-12 pr-12 py-3 md:py-3.5 border-2 border-gray-200 rounded-xl text-sm md:text-base focus:outline-none transition-all bg-gray-50 focus:bg-white"
+              className="block w-full pl-12 pr-12 py-3 md:py-3.5 border-2 rounded-xl text-sm md:text-base focus:outline-none transition-all bg-gray-50 focus:bg-white placeholder:text-gray-600"
+              style={{ borderColor: '#6b7280' }}
               onFocus={(e) => {
                 e.target.style.borderColor = '#0052CC';
                 e.target.style.boxShadow = '0 0 0 3px rgba(0, 82, 204, 0.1)';
               }}
               onBlur={(e) => {
-                e.target.style.borderColor = '#e5e7eb';
+                e.target.style.borderColor = '#6b7280';
                 e.target.style.boxShadow = 'none';
               }}
             />
@@ -1019,7 +1229,7 @@ const DomainAnalyses: React.FC = () => {
               </button>
             )}
             {urlSearchQuery && (
-              <div className="absolute top-full left-0 right-0 mt-2 text-xs text-gray-500 px-4">
+              <div className="absolute top-full left-0 right-0 mt-2 text-xs text-gray-600 px-4">
                 Showing {filteredUrlList.length} of {urlList.length} pages
               </div>
             )}
@@ -1077,6 +1287,7 @@ const DomainAnalyses: React.FC = () => {
                         style={{ color: '#0052CC' }}
                         onMouseEnter={(e) => e.currentTarget.style.color = '#003d99'}
                         onMouseLeave={(e) => e.currentTarget.style.color = '#0052CC'}
+                        aria-label={`${item.url} (opens in a new tab)`}
                       >
                         <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -1091,12 +1302,12 @@ const DomainAnalyses: React.FC = () => {
                     {/* Stats Section */}
                     <div className="grid grid-cols-3 gap-3 mb-4">
                       <div className="bg-gray-50 rounded-lg p-3 text-center border border-gray-100">
-                        <div className="text-xs text-gray-500 mb-1.5 font-medium">Auto-Fixes</div>
+                        <div className="text-xs text-gray-600 mb-1.5 font-medium">Auto-Fixes</div>
                         <div className="text-2xl font-bold text-gray-900">{item.fixCount}</div>
                       </div>
                       <div className="bg-green-50 rounded-lg p-3 text-center border border-green-100">
-                        <div className="text-xs text-green-600 mb-1.5 font-medium">Enabled</div>
-                        <div className="text-2xl font-bold text-green-700">{item.activeFixCount}</div>
+                        <div className="text-xs text-green-700 mb-1.5 font-medium">Enabled</div>
+                        <div className="text-2xl font-bold text-green-800">{item.activeFixCount}</div>
                       </div>
                       <div className="bg-red-50 rounded-lg p-3 text-center border border-red-100">
                         <div className="text-xs text-red-600 mb-1.5 font-medium">Disabled</div>
@@ -1124,9 +1335,9 @@ const DomainAnalyses: React.FC = () => {
                           handleOpenSuggestedFixesModal(item.url);
                         }}
                         className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-white text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-100 whitespace-nowrap"
-                        style={{ backgroundColor: '#10b981' }}
+                        style={{ backgroundColor: '#047857' }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#047857'}
                       >
                         View Suggested
                       </button>
@@ -1179,6 +1390,7 @@ const DomainAnalyses: React.FC = () => {
                               style={{ color: '#0052CC' }}
                               onMouseEnter={(e) => e.currentTarget.style.color = '#003d99'}
                               onMouseLeave={(e) => e.currentTarget.style.color = '#0052CC'}
+                              aria-label={`${item.url} (opens in a new tab)`}
                             >
                               <span className="text-sm break-words break-all font-medium">{item.url}</span>
                               <svg className="w-4 h-4 flex-shrink-0 opacity-0 group-hover/link:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1191,7 +1403,7 @@ const DomainAnalyses: React.FC = () => {
                           <span className="text-base font-semibold text-gray-900">{item.fixCount}</span>
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <span className="text-base font-semibold text-green-600">{item.activeFixCount}</span>
+                          <span className="text-base font-semibold text-green-800">{item.activeFixCount}</span>
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
                           <span className="text-base font-semibold text-red-600">{item.deletedFixCount}</span>
@@ -1216,9 +1428,9 @@ const DomainAnalyses: React.FC = () => {
                                 handleOpenSuggestedFixesModal(item.url);
                               }}
                               className="px-4 py-2 text-white text-sm font-semibold rounded-lg transition-all duration-200 whitespace-nowrap shadow-sm hover:shadow-md transform hover:scale-105"
-                              style={{ backgroundColor: '#10b981' }}
+                              style={{ backgroundColor: '#047857' }}
                               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#047857'}
                             >
                               View Suggested
                             </button>
@@ -1234,11 +1446,17 @@ const DomainAnalyses: React.FC = () => {
               </div>
             </>
           ) : urlList.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16">
+            <div
+              className="flex flex-col items-center justify-center py-16"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              aria-label="No Pages Found. No pages have been analyzed for this domain yet."
+            >
             <div className="relative mb-6">
               <div className="absolute inset-0 rounded-full blur-xl opacity-50" style={{ backgroundColor: 'rgba(0, 82, 204, 0.2)' }}></div>
               <div className="relative p-6 rounded-2xl shadow-lg" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
-                <svg className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
+                <svg className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }} aria-hidden="true" focusable="false">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -1249,11 +1467,17 @@ const DomainAnalyses: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16">
+            <div
+              className="flex flex-col items-center justify-center py-16"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              aria-label={`No Results Found. No pages match your search query "${urlSearchQuery}". Try a different search term.`}
+            >
               <div className="relative mb-6">
                 <div className="absolute inset-0 bg-gray-100 rounded-full blur-xl opacity-50"></div>
                 <div className="relative p-6 bg-gray-50 rounded-2xl shadow-lg">
-                  <svg className="h-16 w-16 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-16 w-16 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true" focusable="false">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
@@ -1307,12 +1531,14 @@ const DomainAnalyses: React.FC = () => {
           {/* Input Section */}
           <div className="flex flex-col md:flex-row gap-3 sm:gap-4 mb-6">
             <div className="flex-1">
-              <label htmlFor="domain-select-input-main" className="sr-only">
+              <label
+                htmlFor="domain-select-input-main"
+                className="block text-sm sm:text-base font-medium text-gray-700 mb-1"
+              >
                 Select a Domain
               </label>
               <Select
                 inputId="domain-select-input-main"
-                aria-label="Select a Domain"
                 options={siteOptions}
                 value={selectedOption}
                 onChange={handleDomainChange}
@@ -1321,6 +1547,9 @@ const DomainAnalyses: React.FC = () => {
                 isSearchable
                 isClearable
                 isLoading={sitesLoading}
+                components={{
+                  ClearIndicator: AccessibleClearIndicator,
+                }}
                 formatOptionLabel={(option: OptionType) => (
                   <div className="flex items-center gap-2 min-w-0">
                     <Favicon domain={option.value} size={16} className="flex-shrink-0" />
@@ -1335,7 +1564,7 @@ const DomainAnalyses: React.FC = () => {
                     borderRadius: '8px',
                     border: state.isFocused
                       ? '2px solid #0052CC'
-                      : '1px solid #e5e7eb',
+                      : '1px solid #6b7280',
                     minHeight: '44px',
                     boxShadow: state.isFocused
                       ? '0 0 0 3px rgba(0, 82, 204, 0.1)'
@@ -1348,7 +1577,7 @@ const DomainAnalyses: React.FC = () => {
                     '&:hover': {
                       border: state.isFocused
                         ? '2px solid #0052CC'
-                        : '1px solid #d1d5db',
+                        : '1px solid #4b5563',
                     },
                   }),
                   placeholder: (provided: any) => ({
@@ -1382,9 +1611,9 @@ const DomainAnalyses: React.FC = () => {
 
             <button
               type="button"
-              className="text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-offset-2"
+              className="text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors duration-200 min-w-[120px] sm:min-w-[140px] text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-100"
               style={{
-                backgroundColor: loader || !selectedDomain ? '#9ca3af' : '#0052CC',
+                backgroundColor: loader || !selectedDomain ? '#4b5563' : '#0052CC',
                 '--tw-ring-color': '#0052CC',
               } as React.CSSProperties & { '--tw-ring-color': string }}
               onClick={handleFindAutoFixes}
@@ -1403,13 +1632,14 @@ const DomainAnalyses: React.FC = () => {
             </button>
           </div>
           
-          {/* Screen reader announcement for loading state */}
-          <div 
-            className="sr-only" 
-            aria-live="polite" 
+          {/* Screen reader announcement for loading state (when Find is clicked, view switches to url-list so main announcement is there) */}
+          <div
+            role="status"
+            aria-live="polite"
             aria-atomic="true"
+            className="sr-only"
           >
-            {loader && 'Finding auto fixes, please wait'}
+            {loader ? 'Finding auto fixes, please wait.' : ''}
           </div>
         </div>
 
@@ -1420,7 +1650,15 @@ const DomainAnalyses: React.FC = () => {
             <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2.5 rounded-lg" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    style={{ color: '#0052CC' }}
+                    aria-hidden="true"
+                    focusable="false"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -1435,7 +1673,14 @@ const DomainAnalyses: React.FC = () => {
             <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2.5 bg-green-50 rounded-lg">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                   </svg>
                 </div>
@@ -1450,7 +1695,14 @@ const DomainAnalyses: React.FC = () => {
             <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2.5 bg-purple-50 rounded-lg">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
@@ -1466,7 +1718,15 @@ const DomainAnalyses: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
               <h4 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  style={{ color: '#0052CC' }}
+                  aria-hidden="true"
+                  focusable="false"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 How it works
@@ -1478,7 +1738,14 @@ const DomainAnalyses: React.FC = () => {
             </div>
             <div className="bg-white rounded-xl p-5 sm:p-6 border border-gray-200 shadow-sm">
               <h4 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="w-5 h-5 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                  focusable="false"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 Benefits
@@ -1506,7 +1773,15 @@ const DomainAnalyses: React.FC = () => {
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(0, 82, 204, 0.1)' }}>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#0052CC' }}>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      style={{ color: '#0052CC' }}
+                      aria-hidden="true"
+                      focusable="false"
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                     </svg>
                   </div>
@@ -1543,10 +1818,14 @@ const DomainAnalyses: React.FC = () => {
                     control: (base: any) => ({
                       ...base,
                       maxWidth: '100%',
-                      borderColor: '#d1d5db',
+                      borderColor: '#6b7280',
                       '&:hover': {
-                        borderColor: '#9ca3af',
+                        borderColor: '#4b5563',
                       },
+                    }),
+                    placeholder: (base: any) => ({
+                      ...base,
+                      color: '#4b5563',
                     }),
                     menu: (base: any) => ({
                       ...base,
@@ -1562,7 +1841,14 @@ const DomainAnalyses: React.FC = () => {
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-2 bg-purple-50 rounded-lg">
-                    <svg className="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg
+                      className="w-4 h-4 text-purple-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
@@ -1639,19 +1925,22 @@ const DomainAnalyses: React.FC = () => {
 
             {/* Impact Filter */}
             {impacts.length > 0 && (
-              <div className="mb-6">
+              <div className="mb-6" role="radiogroup" aria-labelledby="sidebar-impact-heading">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-2 bg-red-50 rounded-lg">
-                    <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </div>
-                  <h2 className="text-sm font-bold text-gray-900">
+                  <h2 id="sidebar-impact-heading" className="text-sm font-bold text-gray-900">
                     Impact
                   </h2>
                 </div>
                 <div className="space-y-1.5">
                   <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedImpact === 'all'}
                     onClick={() => setSelectedImpact('all')}
                     className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                       selectedImpact === 'all'
@@ -1675,6 +1964,9 @@ const DomainAnalyses: React.FC = () => {
                   {impacts.map(({ impact, count }) => (
                     <button
                       key={impact}
+                      type="button"
+                      role="radio"
+                      aria-checked={selectedImpact === impact}
                       onClick={() => setSelectedImpact(impact)}
                       className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         selectedImpact === impact
@@ -1702,19 +1994,22 @@ const DomainAnalyses: React.FC = () => {
 
             {/* Category Filter */}
             {categories.length > 0 && (
-              <div>
+              <div role="radiogroup" aria-labelledby="sidebar-category-heading">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="p-2 bg-green-50 rounded-lg">
-                    <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                   </div>
-                  <h2 className="text-sm font-bold text-gray-900">
+                  <h2 id="sidebar-category-heading" className="text-sm font-bold text-gray-900">
                     Category
                   </h2>
                 </div>
                 <div className="space-y-1.5">
                   <button
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedCategory === 'all'}
                     onClick={() => setSelectedCategory('all')}
                     className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                       selectedCategory === 'all'
@@ -1738,6 +2033,9 @@ const DomainAnalyses: React.FC = () => {
                   {categories.map(({ category, count }) => (
                     <button
                       key={category}
+                      type="button"
+                      role="radio"
+                      aria-checked={selectedCategory === category}
                       onClick={() => setSelectedCategory(category)}
                       className={`page-button w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         selectedCategory === category
@@ -1786,8 +2084,8 @@ const DomainAnalyses: React.FC = () => {
         </aside>
         )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 min-w-0 flex md:overflow-hidden">
+        {/* Main Content Area - use div to avoid duplicate main landmark (layout already has main) */}
+        <div className="domain-analyses-content flex-1 min-w-0 flex md:overflow-hidden">
           {currentView === 'domain-selection' && renderDomainSelectionView()}
           {currentView === 'url-list' && renderUrlListView()}
           {currentView === 'fixes-view' && (
@@ -1826,10 +2124,13 @@ const DomainAnalyses: React.FC = () => {
                   </p>
                 )}
 
-              {/* Filter Buttons */}
+              {/* Filter Buttons - radio group for status */}
               {allFixes.length > 0 && (
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label="All Fixes">
                   <button
+                    type="button"
+                    role="radio"
+                    aria-checked={filter === 'all'}
                     onClick={() => setFilter('all')}
                     className={`filter-button px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                       filter === 'all'
@@ -1841,17 +2142,23 @@ const DomainAnalyses: React.FC = () => {
                     All
                   </button>
                   <button
+                    type="button"
+                    role="radio"
+                    aria-checked={filter === 'active'}
                     onClick={() => setFilter('active')}
                     className={`filter-button px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                       filter === 'active'
                         ? 'text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                     }`}
-                    style={filter === 'active' ? { backgroundColor: '#16a34a' } : {}}
+                    style={filter === 'active' ? { backgroundColor: '#15803d' } : {}}
                   >
                     Enabled
                   </button>
                   <button
+                    type="button"
+                    role="radio"
+                    aria-checked={filter === 'deleted'}
                     onClick={() => setFilter('deleted')}
                     className={`filter-button px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                       filter === 'deleted'
@@ -1966,7 +2273,7 @@ const DomainAnalyses: React.FC = () => {
             )}
             </div>
           )}
-        </main>
+        </div>
       </div>
 
       {/* Fixes Slider - Opens from Right */}
@@ -1978,9 +2285,14 @@ const DomainAnalyses: React.FC = () => {
             onClick={handleCloseSlider}
           />
 
-          {/* Slider Panel */}
+          {/* Slider Panel - focus trapped, role dialog for SR */}
           <div
-            className="fixed right-0 top-0 h-full bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out"
+            ref={sliderPanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auto-fixes-slider-title"
+            tabIndex={-1}
+            className="fixed right-0 top-0 h-full bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out outline-none"
             style={{
               width: 'min(90vw, 1200px)',
               height: '100vh',
@@ -1991,18 +2303,19 @@ const DomainAnalyses: React.FC = () => {
             <div className="flex items-center justify-between p-6 border-b flex-shrink-0" style={{ borderColor: '#A2ADF3' }}>
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="p-2.5 rounded-lg shadow-md" style={{ backgroundColor: '#0052CC' }}>
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl md:text-2xl font-bold text-gray-900">Auto Fixes</h2>
+                  <h2 id="auto-fixes-slider-title" className="text-xl md:text-2xl font-bold text-gray-900">Auto Fixes</h2>
                   {sliderUrl && (
                     <p className="text-sm text-gray-600 mt-1 truncate">{sliderUrl}</p>
                   )}
                 </div>
               </div>
               <button
+                type="button"
                 onClick={handleCloseSlider}
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors ml-4 flex-shrink-0"
                 aria-label="Close slider"
@@ -2041,11 +2354,42 @@ const DomainAnalyses: React.FC = () => {
 
             {/* Filter Buttons - only when Fixes tab */}
             {sliderTab === 'fixes' && (
-            <div className="flex-shrink-0 border-b" style={{ backgroundColor: '#f9fafb', borderColor: '#e5e7eb' }}>
-              <div className="px-4 sm:px-5 py-3.5">
-                {/* Status Filters Row */}
-                <div className="flex flex-wrap items-center gap-2 mb-3">
+            <div className="flex-shrink-0 border-b overflow-hidden" style={{ backgroundColor: '#f9fafb', borderColor: '#e5e7eb' }}>
+              {/* Collapsible toggle - visible only in sm view (≤768px) */}
+              <div className="flex md:hidden items-center justify-between px-4 py-3 border-b border-gray-200" style={{ borderColor: '#e5e7eb' }}>
+                <span className="text-sm font-semibold text-gray-700">Filters</span>
+                <button
+                  type="button"
+                  onClick={() => setSliderFiltersExpanded((v) => !v)}
+                  className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
+                  aria-expanded={sliderFiltersExpanded}
+                  aria-controls="slider-filters-content"
+                  id="slider-filters-toggle"
+                  aria-label={sliderFiltersExpanded ? 'Collapse filters' : 'Expand filters'}
+                >
+                  <svg
+                    className={`w-5 h-5 text-gray-600 transition-transform ${sliderFiltersExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+              <div
+                id="slider-filters-content"
+                role="region"
+                aria-labelledby="slider-filters-toggle"
+                className={`px-4 sm:px-5 py-3.5 sm:max-h-[220px] sm:overflow-y-auto ${!sliderFiltersExpanded ? 'hidden' : ''} md:!block`}
+              >
+                {/* Status Filters Row - radio group for status */}
+                <div className="flex flex-wrap items-center gap-2 mb-3" role="radiogroup" aria-label="All Fixes">
                   <button
+                    type="button"
+                    role="radio"
+                    aria-checked={filter === 'all'}
                     onClick={() => setFilter('all')}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       filter === 'all'
@@ -2054,26 +2398,32 @@ const DomainAnalyses: React.FC = () => {
                     }`}
                     style={filter === 'all' ? { backgroundColor: '#0052CC' } : {}}
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     All
                   </button>
                   <button
+                    type="button"
+                    role="radio"
+                    aria-checked={filter === 'active'}
                     onClick={() => setFilter('active')}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       filter === 'active'
                         ? 'text-white shadow-md'
                         : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                     }`}
-                    style={filter === 'active' ? { backgroundColor: '#16a34a' } : {}}
+                    style={filter === 'active' ? { backgroundColor: '#15803d' } : {}}
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Enabled
                   </button>
                   <button
+                    type="button"
+                    role="radio"
+                    aria-checked={filter === 'deleted'}
                     onClick={() => setFilter('deleted')}
                     className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       filter === 'deleted'
@@ -2082,7 +2432,7 @@ const DomainAnalyses: React.FC = () => {
                     }`}
                     style={filter === 'deleted' ? { backgroundColor: '#dc2626' } : {}}
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Disabled
@@ -2091,11 +2441,14 @@ const DomainAnalyses: React.FC = () => {
 
                 {/* Impact & Category Filters Row */}
                 <div className="flex flex-wrap items-center gap-3 text-xs">
-                  {/* Impact Filters */}
+                  {/* Impact Filters - radiogroup so list/selection is announced */}
                   {impacts.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-gray-600 font-semibold mr-1">Impact:</span>
+                    <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-labelledby="slider-impact-label">
+                      <span id="slider-impact-label" className="text-gray-600 font-semibold mr-1">Impact:</span>
                       <button
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedImpact === 'all'}
                         onClick={() => setSelectedImpact('all')}
                         className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                           selectedImpact === 'all'
@@ -2109,6 +2462,9 @@ const DomainAnalyses: React.FC = () => {
                       {impacts.map(({ impact, count }) => (
                         <button
                           key={impact}
+                          type="button"
+                          role="radio"
+                          aria-checked={selectedImpact === impact}
                           onClick={() => setSelectedImpact(impact)}
                           className={`px-2.5 py-1 rounded-md font-medium transition-all capitalize ${
                             selectedImpact === impact
@@ -2125,14 +2481,17 @@ const DomainAnalyses: React.FC = () => {
 
                   {/* Divider */}
                   {impacts.length > 0 && categories.length > 0 && (
-                    <div className="h-4 w-px bg-gray-300"></div>
+                    <div className="h-4 w-px bg-gray-300" aria-hidden="true"></div>
                   )}
 
-                  {/* Category Filters */}
+                  {/* Category Filters - radiogroup so list/selection is announced */}
                   {categories.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-gray-600 font-semibold mr-1">Category:</span>
+                    <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-labelledby="slider-category-label">
+                      <span id="slider-category-label" className="text-gray-600 font-semibold mr-1">Category:</span>
                       <button
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedCategory === 'all'}
                         onClick={() => setSelectedCategory('all')}
                         className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                           selectedCategory === 'all'
@@ -2146,6 +2505,9 @@ const DomainAnalyses: React.FC = () => {
                       {categories.map(({ category, count }) => (
                         <button
                           key={category}
+                          type="button"
+                          role="radio"
+                          aria-checked={selectedCategory === category}
                           onClick={() => setSelectedCategory(category)}
                           className={`px-2.5 py-1 rounded-md font-medium transition-all ${
                             selectedCategory === category
@@ -2434,13 +2796,26 @@ const DomainAnalyses: React.FC = () => {
         ariaDescribedBy="suggested-fixes-modal-description"
       >
         <div className="p-4">
+          {/* Screen reader announcement for loading and result */}
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+          >
+            {suggestedFixesModalAnnouncement}
+          </div>
           <div className="flex justify-end mb-4">
             <button
+              type="button"
               onClick={handleCloseSuggestedFixesModal}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              className="transition-colors p-1 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600"
+              style={{ color: '#6b7280' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = '#4b5563'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = '#6b7280'; }}
               aria-label="Close modal"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -2709,15 +3084,15 @@ const DomainAnalyses: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Title with fade-in */}
-                <motion.h3
+                {/* Title with fade-in - h2 for correct heading level in modal */}
+                <motion.h2
                   className="text-3xl font-bold text-gray-900 mb-3"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.6 }}
                 >
                   No Fixes Found
-                </motion.h3>
+                </motion.h2>
 
                 {/* Subtitle with fade-in */}
                 <motion.p
@@ -2802,14 +3177,15 @@ const DomainAnalyses: React.FC = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Single Pair of Action Buttons */}
+              {/* Single Pair of Action Buttons - stacked in sm (≤768px), row from md up */}
               <motion.div
-                className="flex items-center justify-center gap-4"
+                className="flex flex-col md:flex-row items-center justify-center gap-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
                 <button
+                  type="button"
                   onClick={() => {
                     if (!modalSuggestedFixes[currentFixIndex]) return;
                     const index = currentFixIndex;
@@ -2819,14 +3195,18 @@ const DomainAnalyses: React.FC = () => {
                     acceptingFixKey ===
                     `modal-suggested-${currentFixIndex}-${modalSuggestedFixes[currentFixIndex]?.selector}-${modalSuggestedFixes[currentFixIndex]?.issue_type}`
                   }
-                  className="px-6 py-3 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                  className="px-6 py-3 text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                  style={{ backgroundColor: '#b91c1c' }}
+                  onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#991b1b'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#b91c1c'; }}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   Reject
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     if (!modalSuggestedFixes[currentFixIndex]) return;
                     const fix = modalSuggestedFixes[currentFixIndex];
@@ -2837,9 +3217,12 @@ const DomainAnalyses: React.FC = () => {
                     acceptingFixKey ===
                     `modal-suggested-${currentFixIndex}-${modalSuggestedFixes[currentFixIndex]?.selector}-${modalSuggestedFixes[currentFixIndex]?.issue_type}`
                   }
-                  className="px-6 py-3 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                  className="px-6 py-3 text-white text-sm font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                  style={{ backgroundColor: '#15803d' }}
+                  onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = '#166534'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#15803d'; }}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   Accept

@@ -406,6 +406,27 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
     }
   }, [selectedHeatmapCategory, viewMode]);
 
+  // Handle Esc key to dismiss tooltip
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && hoveredStatusIcon) {
+        setHoveredStatusIcon(null);
+        // Optionally blur the trigger element to remove focus
+        const trigger = document.activeElement as HTMLElement;
+        if (trigger && trigger.getAttribute('role') === 'button') {
+          trigger.blur();
+        }
+      }
+    };
+
+    if (hoveredStatusIcon) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+    
+    return undefined;
+  }, [hoveredStatusIcon]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -514,7 +535,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   id="grid-tab"
                   tabIndex={viewMode === 'grid' ? 0 : -1}
                   onClick={() => setViewMode('grid')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-4 focus:ring-blue-600 focus:ring-offset-2 ${
                     viewMode === 'grid'
                       ? 'text-white shadow-md'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -530,7 +551,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   id="chart-tab"
                   tabIndex={viewMode === 'chart' ? 0 : -1}
                   onClick={() => setViewMode('chart')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-4 focus:ring-blue-600 focus:ring-offset-2 ${
                     viewMode === 'chart'
                       ? 'text-white shadow-md'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -547,7 +568,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                     id="heatmap-tab"
                     tabIndex={viewMode === 'heatmap' ? 0 : -1}
                     onClick={() => setViewMode('heatmap')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-4 focus:ring-blue-600 focus:ring-offset-2 ${
                       viewMode === 'heatmap'
                         ? 'text-white shadow-md'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -629,7 +650,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                    ${isActive ? 'border-orange-300 shadow-lg' : ''}
                    ${
                      check.status !== 'pending' && check.status !== 'checking'
-                       ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                       ? 'cursor-pointer hover:shadow-md focus:outline-none focus:ring-4 focus:ring-blue-600 focus:ring-offset-2'
                        : ''
                    }
                  `}
@@ -807,7 +828,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         <div className="mt-3 pt-3 border-t border-gray-100">
                           <button
                             onClick={() => history.push('/scanner')}
-                            className="text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer transition-colors duration-200"
+                            className="text-xs text-blue-600 hover:text-blue-800 underline cursor-pointer transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 rounded px-1"
                           >
                             Click here to check latest score
                           </button>
@@ -923,7 +944,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   <button
                     onClick={() => setSelectedHeatmapCategory(category.id)}
                     aria-selected={selectedHeatmapCategory === category.id}
-                    className={`w-full px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium transition-all duration-200 text-xs sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    className={`w-full px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg font-medium transition-all duration-200 text-xs sm:text-base focus:outline-none focus:ring-4 focus:ring-blue-600 focus:ring-offset-2 ${
                       selectedHeatmapCategory === category.id
                         ? 'text-white shadow-lg transform scale-105'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800'
@@ -970,7 +991,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
               </div>
               <div className="p-5 sm:p-7">
-                <div className="relative overflow-hidden rounded-lg shadow-lg">
+                <div className="relative rounded-lg shadow-lg p-1">
                   <button
                     onClick={() =>
                       window.open(getSelectedHeatmapUrl(), '_blank')
@@ -981,7 +1002,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                         window.open(getSelectedHeatmapUrl(), '_blank');
                       }
                     }}
-                    className="w-full h-auto focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg"
+                    className="w-full h-auto focus:outline-none focus:ring-4 focus:ring-blue-600 focus:ring-offset-2 rounded-lg"
                     aria-label={`View full size ${getAvailableHeatmapCategories().find(
                       (cat) => cat.id === selectedHeatmapCategory,
                     )?.name} heatmap in new window`}

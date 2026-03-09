@@ -223,11 +223,13 @@ const FixCard: React.FC<FixCardProps> = ({ fix, url, onRemove, onRestore, isUpda
       <div className="flex justify-end pt-2">
         {isDeleted ? (
           <button
+            type="button"
             onClick={onRestore}
             disabled={isUpdating}
+            aria-label={`Enable Auto-Fix for ${fix.issue_type?.replace(/_/g, ' ') ?? 'this issue'}`}
             className="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-green-500/40 hover:shadow-xl hover:shadow-green-500/50 disabled:shadow-none transform hover:scale-105 active:scale-95"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -238,14 +240,16 @@ const FixCard: React.FC<FixCardProps> = ({ fix, url, onRemove, onRestore, isUpda
           </button>
         ) : (
           <button
+            type="button"
             onClick={onRemove}
             disabled={isUpdating}
+            aria-label={`Disable Auto-Fix for ${fix.issue_type?.replace(/_/g, ' ') ?? 'this issue'}`}
             className="px-5 py-2.5 bg-white border-2 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
             style={{
               borderColor: colors.border,
             }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
