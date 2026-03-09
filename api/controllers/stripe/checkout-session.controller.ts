@@ -16,7 +16,6 @@ import { appSumoPromoCount } from '../../utils/appSumoPromoCount'
 import { customTokenCount } from '../../utils/customTokenCount'
 import { expireUsedPromo } from '../../utils/expireUsedPromo'
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 export async function createCheckoutSession(req: Request & { user: UserLogined }, res: Response) {
