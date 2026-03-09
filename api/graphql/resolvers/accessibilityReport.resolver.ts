@@ -206,6 +206,7 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
               },
               'en',
               emailUrl,
+              smtpConfigForTemplate?.logoUrl,
             )
             
             // Convert Blob to Buffer - handle both browser Blob and Node.js compatible formats

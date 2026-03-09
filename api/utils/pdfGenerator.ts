@@ -289,18 +289,37 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
     } catch (error) {
       console.warn('Failed to fetch logo from URL:', logoImage, error)
     }
+    // If fetch failed (e.g. in prod), try bundled fallback (same as generatePDF.ts)
+    if (!logoBase64) {
+      const bundledLogoPath = path.resolve(__dirname, 'pdf_images', 'logo.png')
+      const emailTemplatesLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
+      const distEmailTemplatesPath = path.join(process.cwd(), 'dist', 'email-templates', 'logo.png')
+      for (const fallbackLogoPath of [bundledLogoPath, emailTemplatesLogoPath, distEmailTemplatesPath]) {
+        if (fs.existsSync(fallbackLogoPath)) {
+          logopath = fallbackLogoPath
+          logoBuffer = fs.readFileSync(fallbackLogoPath)
+          logoBase64 = logoBuffer.toString('base64')
+          break
+        }
+      }
+    }
   } else if (logoImage && fs.existsSync(logoImage)) {
     // Local file path - backward compatible
     logoBuffer = fs.readFileSync(logoImage)
     logoBase64 = logoBuffer.toString('base64')
     logopath = logoImage
   } else {
-    // fallback: try to load from default path
-    const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
-    logopath = fallbackLogoPath
-    if (fs.existsSync(fallbackLogoPath)) {
-      logoBuffer = fs.readFileSync(fallbackLogoPath)
-      logoBase64 = logoBuffer.toString('base64')
+    // Fallback: try bundled pdf_images/logo.png first, then email-templates (same as generatePDF.ts)
+    const bundledLogoPath = path.resolve(__dirname, 'pdf_images', 'logo.png')
+    const emailTemplatesLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
+    const distEmailTemplatesPath = path.join(process.cwd(), 'dist', 'email-templates', 'logo.png')
+    for (const fallbackLogoPath of [bundledLogoPath, emailTemplatesLogoPath, distEmailTemplatesPath]) {
+      if (fs.existsSync(fallbackLogoPath)) {
+        logopath = fallbackLogoPath
+        logoBuffer = fs.readFileSync(fallbackLogoPath)
+        logoBase64 = logoBuffer.toString('base64')
+        break
+      }
     }
   }
   try {

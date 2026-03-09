@@ -198,13 +198,19 @@ function isWcagCodeCompliantPDF(code: string): boolean {
 
 // ───────────────────────────────────────────────────────────────────────────
 
-export const generatePDF = async (reportData: any, currentLanguage: string, domain?: string): Promise<Blob> => {
+export const generatePDF = async (
+  reportData: any,
+  currentLanguage: string,
+  domain?: string,
+  organizationLogoUrl?: string,
+): Promise<Blob> => {
   try {
     console.log('generatePDF called with:', {
       hasReportData: !!reportData,
       reportKeys: reportData ? Object.keys(reportData) : [],
       currentLanguage,
       domain,
+      hasOrganizationLogoUrl: !!organizationLogoUrl,
       reportDataScore: reportData?.score,
       reportDataUrl: reportData?.url,
       reportDataWidgetInfo: reportData?.widgetInfo,
@@ -231,6 +237,13 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
     console.log('Getting widget settings...')
     const { logoImage, logoUrl, accessibilityStatementLinkUrl } = await getWidgetSettings(reportData.url)
     console.log('Widget settings retrieved:', { logoImage: !!logoImage, logoUrl, accessibilityStatementLinkUrl })
+
+    // Match frontend: prioritize widget logo, fall back to organization logo (same as app/src/utils/generatePDF.ts)
+    const WIDGET_FALLBACK_LOGO = '/images/logo.png'
+    const hasValidWidgetLogo = logoImage && logoImage !== WIDGET_FALLBACK_LOGO
+    const hasValidWidgetLogoUrl = logoUrl && logoUrl.trim() !== ''
+    const finalLogoImage = hasValidWidgetLogo ? logoImage : (organizationLogoUrl || logoImage)
+    const finalLogoUrl = hasValidWidgetLogoUrl ? logoUrl : (organizationLogoUrl || logoUrl || undefined)
 
     const WEBABILITY_SCORE_BONUS = 45
     const MAX_TOTAL_SCORE = 95
@@ -372,70 +385,90 @@ export const generatePDF = async (reportData: any, currentLanguage: string, doma
 
     let logoBottomY = 0
 
-    // Handle logo loading - backward compatible with base64, HTTP URLs, and local paths
-    let logoBase64 = null
+    // Handle logo loading - same logic as frontend (app/src/utils/generatePDF.ts): finalLogoImage with fallback chain
+    let logoBase64: string | null = null
     let logoBuffer: Buffer | undefined
 
-    if (logoImage && logoImage.startsWith('data:image')) {
-      // Already base64 - backward compatible
-      logoBase64 = logoImage.split(',')[1]
-      logoBuffer = Buffer.from(logoBase64, 'base64')
-    } else if (logoImage && (logoImage.startsWith('http://') || logoImage.startsWith('https://'))) {
-      // HTTP/HTTPS URL (e.g., R2 storage URL) - backward compatible
+    const LOGO_FETCH_TIMEOUT_MS = 10000 // 10s - avoid hanging PDF generation in prod
+    const tryFetchLogo = async (url: string): Promise<boolean> => {
       try {
-        const response = await fetch(logoImage)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), LOGO_FETCH_TIMEOUT_MS)
+        const response = await fetch(url, { signal: controller.signal })
+        clearTimeout(timeoutId)
         if (response.ok) {
           logoBuffer = Buffer.from(await response.arrayBuffer())
           logoBase64 = logoBuffer.toString('base64')
+          return true
         }
       } catch (error) {
-        console.warn('Failed to fetch logo from URL:', logoImage, error)
+        console.warn('Failed to fetch logo from URL:', url, error)
       }
-    } else if (logoImage && fs.existsSync(logoImage)) {
-      // Local file path - backward compatible
-      logoBuffer = fs.readFileSync(logoImage)
+      return false
+    }
+
+    const tryBundledFallback = (): void => {
+      const bundledLogoPath = path.resolve(__dirname, 'pdf_images', 'logo.png')
+      const emailTemplatesLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
+      const distEmailTemplatesPath = path.join(process.cwd(), 'dist', 'email-templates', 'logo.png')
+      for (const fallbackLogoPath of [bundledLogoPath, emailTemplatesLogoPath, distEmailTemplatesPath]) {
+        if (fs.existsSync(fallbackLogoPath)) {
+          logoBuffer = fs.readFileSync(fallbackLogoPath)
+          logoBase64 = logoBuffer.toString('base64')
+          return
+        }
+      }
+    }
+
+    if (finalLogoImage && finalLogoImage.startsWith('data:image')) {
+      logoBase64 = finalLogoImage.split(',')[1]
+      logoBuffer = Buffer.from(logoBase64, 'base64')
+    } else if (finalLogoImage && (finalLogoImage.startsWith('http://') || finalLogoImage.startsWith('https://'))) {
+      await tryFetchLogo(finalLogoImage)
+      if (!logoBase64) {
+        // Primary fetch failed - try fallback logo (same as frontend: widget ↔ organization)
+        const fallbackLogo =
+          hasValidWidgetLogo && finalLogoImage === logoImage
+            ? organizationLogoUrl
+            : organizationLogoUrl && finalLogoImage === organizationLogoUrl && hasValidWidgetLogo
+              ? logoImage
+              : null
+        if (fallbackLogo && (fallbackLogo.startsWith('http://') || fallbackLogo.startsWith('https://'))) {
+          await tryFetchLogo(fallbackLogo)
+        }
+      }
+      if (!logoBase64) {
+        tryBundledFallback()
+      }
+    } else if (finalLogoImage && fs.existsSync(finalLogoImage)) {
+      logoBuffer = fs.readFileSync(finalLogoImage)
       logoBase64 = logoBuffer.toString('base64')
     } else {
-      // fallback: try to load from default path
-      const fallbackLogoPath = path.join(process.cwd(), 'email-templates', 'logo.png')
-      if (fs.existsSync(fallbackLogoPath)) {
-        logoBuffer = fs.readFileSync(fallbackLogoPath)
-        logoBase64 = logoBuffer.toString('base64')
-      }
+      tryBundledFallback()
     }
 
     try {
       if (logoBase64 && logoBuffer) {
-        // Use sharp to get proper dimensions like pdfGenerator.ts
         const sharp = (await import('sharp')).default
         const image = sharp(logoBuffer)
-
         const maxWidth = 48
-        const maxHeight = 36 // increased size for a bigger logo
-        // Get metadata (dimensions)
+        const maxHeight = 36
         const metadata = await image.metadata()
         let drawWidth = metadata.width || maxWidth
         let drawHeight = metadata.height || maxHeight
-
         const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight)
         drawWidth *= scale
         drawHeight *= scale
-
-        // Logo position - top left corner with minimal padding
-        const logoPadding = 8 // Reduced padding from top and left edges
+        const logoPadding = 8
         const logoX = logoPadding
         const logoY = logoPadding
-
-        // Add logo image directly without white container
         doc.addImage(logoBase64, 'PNG', logoX, logoY, drawWidth, drawHeight)
-
-        if (logoUrl) {
+        if (finalLogoUrl) {
           doc.link(logoX, logoY, drawWidth, drawHeight, {
-            url: logoUrl,
+            url: finalLogoUrl,
             target: '_blank',
           })
         }
-
         logoBottomY = logoY + drawHeight
       } else {
         console.warn('Logo not found for PDF generation.')

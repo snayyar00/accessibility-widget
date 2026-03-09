@@ -189,6 +189,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
         console.log('Report data keys:', Object.keys(report))
         console.log('Widget status:', widgetStatus)
 
+        const orgLogoUrl = smtpConfigForTemplate?.logoUrl
         const pdfBlob = await generatePDF(
           {
             ...report, // Pass the full report data
@@ -199,6 +200,7 @@ export async function addSite(user: UserLogined, url: string): Promise<string> {
           },
           'en',
           domain,
+          orgLogoUrl,
         )
         console.log('PDF generation completed, blob size:', pdfBlob.size)
         const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())

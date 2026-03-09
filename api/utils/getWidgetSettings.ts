@@ -1,5 +1,7 @@
 import { findSiteByURL } from '../repository/sites_allowed.repository'
 import { getWidgetSettingsBySiteId } from '../repository/widget_settings.repository'
+import { normalizeDomain } from './domain.utils'
+
 type LogoSettings = {
   logoImage: string
   logoUrl: string
@@ -9,7 +11,9 @@ type LogoSettings = {
 const getWidgetSettings = async (siteUrl: string): Promise<LogoSettings> => {
   const fallbackLogoUrl = '/images/logo.png'
   try {
-    const site = await findSiteByURL(siteUrl)
+    // Normalize URL so lookup matches DB (sites are stored with normalized domain, e.g. "paklap.pk")
+    const normalizedUrl = normalizeDomain(siteUrl || '')
+    const site = await findSiteByURL(normalizedUrl)
     if (!site) {
       // Site not found, return fallback
       return {

@@ -159,6 +159,7 @@ const sendMonthlyEmails = async () => {
             // Generate PDF attachment
             let attachments: EmailAttachment[] = []
             try {
+              const orgLogoUrl = smtpConfigForTemplate?.logoUrl
               const pdfBlob = await generatePDF(
                 {
                   ...report, // Pass the full report data
@@ -169,6 +170,7 @@ const sendMonthlyEmails = async () => {
                 },
                 'en',
                 site?.url,
+                orgLogoUrl,
               )
               const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
               attachments = [
