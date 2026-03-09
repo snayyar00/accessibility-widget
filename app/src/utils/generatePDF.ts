@@ -91,7 +91,33 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
       reader.readAsDataURL(blob);
     });
   } catch (e) {
-    // Fallback to canvas approach when direct fetch fails (e.g. CORS)
+    // If fetch fails (likely CORS), try backend proxy
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL;
+      if (backendUrl) {
+        const { getAuthenticationCookie } = await import('@/utils/cookie');
+        const token = getAuthenticationCookie();
+        const proxyResponse = await fetch(`${backendUrl}/proxy-image`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ imageUrl: url }),
+        });
+        
+        if (proxyResponse.ok) {
+          const data = await proxyResponse.json();
+          if (data.base64) {
+            return data.base64.startsWith('data:') ? data.base64 : `data:image/png;base64,${data.base64}`;
+          }
+        }
+      }
+    } catch (proxyError) {
+      // Fall through to canvas approach
+    }
+
+    // Fallback to canvas approach
     try {
       return await new Promise<string | null>((resolve) => {
         const img = new Image();
