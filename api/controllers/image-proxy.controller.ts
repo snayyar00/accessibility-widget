@@ -1,17 +1,18 @@
 import * as dns from 'node:dns/promises'
+
 import { Request, Response } from 'express'
 
 /** Private/reserved IP ranges — reject to prevent SSRF (e.g. IMDS, localhost, VPC) */
 const BLOCKED_IP_RANGES = [
-  /^127\./,                                    // IPv4 loopback
-  /^10\./,                                     // IPv4 private
-  /^172\.(1[6-9]|2\d|3[01])\./,                // IPv4 private 172.16.0.0/12
-  /^192\.168\./,                               // IPv4 private
-  /^169\.254\./,                               // IPv4 link-local (e.g. AWS IMDS)
-  /^0\./,                                      // IPv4 "this" network
-  /^::1$/,                                     // IPv6 loopback
-  /^fd/i,                                      // IPv6 unique local
-  /^fe80/i,                                    // IPv6 link-local
+  /^127\./, // IPv4 loopback
+  /^10\./, // IPv4 private
+  /^172\.(1[6-9]|2\d|3[01])\./, // IPv4 private 172.16.0.0/12
+  /^192\.168\./, // IPv4 private
+  /^169\.254\./, // IPv4 link-local (e.g. AWS IMDS)
+  /^0\./, // IPv4 "this" network
+  /^::1$/, // IPv6 loopback
+  /^fd/i, // IPv6 unique local
+  /^fe80/i, // IPv6 link-local
   /^::ffff:(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|169\.254\.|0\.)/, // IPv4-mapped private
 ]
 
