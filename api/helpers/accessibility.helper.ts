@@ -67,6 +67,20 @@ interface HumanFunctionality {
   Errors: Error[]
 }
 
+// Prefer scanner-provided score when available and meaningful
+function getScannerScore(rawResults: any): number | undefined {
+  if (!rawResults || typeof rawResults !== 'object') return undefined
+
+  const rawScore = (rawResults as any).score
+  if (typeof rawScore !== 'number' || Number.isNaN(rawScore)) return undefined
+
+  // Ignore placeholder scores of 0 or 100 as requested
+  if (rawScore === 0 || rawScore === 100) return undefined
+
+  // Clamp to a sane percentage range without re-normalizing
+  return Math.max(0, Math.min(100, rawScore))
+}
+
 interface ScannerJobResponse {
   job_id: string
   status: string
@@ -508,6 +522,9 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
     console.log('🚀 Using enhanced preprocessing pipeline')
     try {
       const enhancedResult = await processAccessibilityIssuesWithFallback(output)
+      const scannerScore = getScannerScore(results)
+      const calculatedScore = calculateAccessibilityScore(output.axe)
+      const effectiveScore = typeof scannerScore === 'number' ? scannerScore : calculatedScore
 
       // Debug: Check what we got from enhanced processing
       console.log('🔍 Enhanced processing result debug:')
@@ -530,7 +547,7 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
         axe: enhancedResult.axe,
         htmlcs: enhancedResult.htmlcs,
         ByFunctions: enhancedResult.ByFunctions, // Preserve enhanced ByFunctions
-        score: calculateAccessibilityScore(output.axe), // enhancedResult.score ||
+        score: effectiveScore, // Prefer scanner score when available
         totalElements: output.totalElements,
         siteImg: output.siteImg, // Preserve screenshots
         processing_stats: enhancedResult.processing_stats,
@@ -552,7 +569,9 @@ export async function getAccessibilityInformationPally(domain: string, useCache?
 
   // Legacy processing path (fallback)
   console.log('⚙️ Using legacy processing pipeline')
-  output.score = calculateAccessibilityScore(output.axe)
+  const scannerScore = getScannerScore(results)
+  const calculatedScore = calculateAccessibilityScore(output.axe)
+  output.score = typeof scannerScore === 'number' ? scannerScore : calculatedScore
   const result = await readAccessibilityDescriptionFromDb(output.htmlcs)
   output.htmlcs = result
   return output
