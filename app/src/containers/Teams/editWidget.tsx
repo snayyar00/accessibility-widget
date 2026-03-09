@@ -33,6 +33,7 @@ export interface Colors {
   accessibilityStatementLinkUrl: string;
   logoUrl: string;
   footerText: string; // Custom footer branding text
+  termsAndConditionsLink: string;
 }
 
 export interface Toggles {
@@ -143,6 +144,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
     footerText: organizationName,
+    termsAndConditionsLink: 'https://www.webability.io/terms-of-use',
   };
 
   const DefaultDarkColors: Colors = {
@@ -161,6 +163,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     accessibilityStatementLinkUrl: 'https://www.webability.io/statement',
     logoUrl: 'https://webability.io',
     footerText: organizationName,
+    termsAndConditionsLink: 'https://www.webability.io/terms-of-use',
   };
   const DefaultToggles = {
     language: true,
@@ -254,6 +257,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
       DefaultLightColors.accessibilityStatementLinkUrl,
     logoUrl: DefaultLightColors.logoUrl,
     footerText: DefaultLightColors.footerText,
+    termsAndConditionsLink: DefaultLightColors.termsAndConditionsLink,
     toggleLanguage: DefaultToggles.language ? 1 : 0,
     toggledarkMode: DefaultToggles.darkMode ? 1 : 0,
     'togglescreen-reader': DefaultToggles.screenReader ? 1 : 0,
@@ -329,6 +333,7 @@ const AccessibilityWidgetPage: React.FC<any> = ({
         lightModeColors.accessibilityStatementLinkUrl,
       logoUrl: lightModeColors.logoUrl,
       footerText: lightModeColors.footerText,
+      termsAndConditionsLink: lightModeColors.termsAndConditionsLink,
       toggleLanguage: toggles.language ? 1 : 0,
       toggledarkMode: toggles.darkMode ? 1 : 0,
       'togglescreen-reader': toggles.screenReader ? 1 : 0,
@@ -537,6 +542,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           logoUrl: fetchedSettings['logoUrl'] || DefaultLightColors.logoUrl,
           footerText:
             fetchedSettings['footerText'] || DefaultLightColors.footerText,
+          termsAndConditionsLink:
+            fetchedSettings['termsAndConditionsLink'] ||
+            DefaultLightColors.termsAndConditionsLink,
         });
 
         // Load dark mode grouped colors
@@ -574,6 +582,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           logoUrl: fetchedSettings['logoUrl'] || DefaultDarkColors.logoUrl,
           footerText:
             fetchedSettings['footerText'] || DefaultDarkColors.footerText,
+          termsAndConditionsLink:
+            fetchedSettings['termsAndConditionsLink'] ||
+            DefaultDarkColors.termsAndConditionsLink,
         });
 
         // Update toggles.
@@ -728,6 +739,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           logoUrl: fetchedSettings['logoUrl'] || DefaultLightColors.logoUrl,
           footerText:
             fetchedSettings['footerText'] || DefaultLightColors.footerText,
+          termsAndConditionsLink:
+            fetchedSettings['termsAndConditionsLink'] ||
+            DefaultLightColors.termsAndConditionsLink,
         });
 
         // Load dark mode grouped colors
@@ -765,6 +779,9 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           logoUrl: fetchedSettings['logoUrl'] || DefaultDarkColors.logoUrl,
           footerText:
             fetchedSettings['footerText'] || DefaultDarkColors.footerText,
+          termsAndConditionsLink:
+            fetchedSettings['termsAndConditionsLink'] ||
+            DefaultDarkColors.termsAndConditionsLink,
         });
 
         // Update toggles.
