@@ -1,14 +1,7 @@
 import { Router } from 'express'
 
 import { sendWidgetInstallationInstructionsController } from '../controllers/widget-installation.controller'
-import {
-  deleteWidgetLogo,
-  deleteWidgetIcon,
-  uploadMiddleware,
-  uploadIconMiddleware,
-  uploadWidgetLogo,
-  uploadWidgetIcon,
-} from '../controllers/widget-logo.controller'
+import { deleteWidgetIcon, deleteWidgetLogo, uploadIconMiddleware, uploadMiddleware, uploadWidgetIcon, uploadWidgetLogo } from '../controllers/widget-logo.controller'
 import { getSiteWidgetSettings, updateSiteWidgetSettings } from '../controllers/widget-settings.controller'
 import { allowedOrganization, isAuthenticated } from '../middlewares/auth.middleware'
 import { moderateLimiter } from '../middlewares/limiters.middleware'

@@ -3,9 +3,8 @@
  * Provides synchronous access to async-imported graphql-upload types
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _GraphQLUpload: any = null
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 let _Upload: any = null
 
 export async function initializeGraphQLUpload() {

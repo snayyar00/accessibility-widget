@@ -174,18 +174,14 @@ export function deleteVisitorIp(ip_address: string): Promise<any> {
  * This is ~19x faster than the JOIN-based approach
  * Use this for dashboard visitor count
  */
-export async function findVisitorCountBySiteIdAndDate(
-  siteId: number,
-  startDate: Date,
-  endDate: Date
-): Promise<number> {
+export async function findVisitorCountBySiteIdAndDate(siteId: number, startDate: Date, endDate: Date): Promise<number> {
   const result = await database(TABLE)
     .where({ [visitorColumns.site_id]: siteId })
     .andWhere(visitorColumns.first_visit, '>=', startDate)
     .andWhere(visitorColumns.first_visit, '<=', endDate)
     .count('* as count')
     .first()
-  
+
   return Number(result?.count) || 0
 }
 
@@ -194,22 +190,13 @@ export async function findVisitorCountBySiteIdAndDate(
  * This is ~8x faster than the JOIN-based approach
  * Use this when you already have the site_id
  */
-export async function findVisitorsBySiteIdAndDate(
-  siteId: number,
-  startDate: Date,
-  endDate: Date
-) {
+export async function findVisitorsBySiteIdAndDate(siteId: number, startDate: Date, endDate: Date) {
   const visitors = await database(TABLE)
     .where({ [visitorColumns.site_id]: siteId })
     .andWhere(visitorColumns.first_visit, '>=', startDate)
     .andWhere(visitorColumns.first_visit, '<=', endDate)
-    .select(
-      visitorColumns.id,
-      visitorColumns.site_id,
-      visitorColumns.ip_address,
-      visitorColumns.first_visit
-    )
-  
+    .select(visitorColumns.id, visitorColumns.site_id, visitorColumns.ip_address, visitorColumns.first_visit)
+
   return visitors.map((visitor) => ({
     id: visitor.id,
     siteId: visitor.site_id,

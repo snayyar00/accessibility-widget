@@ -126,8 +126,7 @@ async function sendStatusChangeNotification(result: MonitoringResult, lastStatus
       unsubscribeLink: generateSecureUnsubscribeLink(userEmail, getUnsubscribeTypeForEmail('monitoring'), user.id),
     }
 
-    const smtpConfig =
-      site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
+    const smtpConfig = site.organization_id != null ? await getOrganizationSmtpConfig(site.organization_id) : null
     const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
     const emailHtml = await compileEmailTemplate({
       fileName: templateName,

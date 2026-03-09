@@ -1,9 +1,6 @@
 import database from '../config/database.config'
 import { TABLES } from '../constants/database.constant'
-import {
-  sendQuoteRequestNotification,
-  sendMeetingRequestNotification,
-} from '../services/serviceRequests/serviceRequest.email.service'
+import { sendMeetingRequestNotification, sendQuoteRequestNotification } from '../services/serviceRequests/serviceRequest.email.service'
 
 export interface QuoteRequestData {
   user_id: number
@@ -30,7 +27,7 @@ export async function createQuoteRequest(data: QuoteRequestData) {
     project_links: JSON.stringify(data.project_links),
     status: 'pending',
   })
-  
+
   // Send email notification using MJML template
   setImmediate(async () => {
     try {
@@ -58,7 +55,7 @@ export async function createMeetingRequest(data: MeetingRequestData) {
     ...data,
     status: 'pending',
   })
-  
+
   // Send email notification using MJML template
   setImmediate(async () => {
     try {
@@ -86,21 +83,17 @@ export async function getUserQuoteRequests(userId: number) {
   try {
     console.log('🔍 Querying quote requests for user:', userId)
     console.log('📋 Table name:', TABLES.serviceQuoteRequests)
-    
-    const requests = await database(TABLES.serviceQuoteRequests)
-      .where({ user_id: userId })
-      .orderBy('created_at', 'desc')
-    
+
+    const requests = await database(TABLES.serviceQuoteRequests).where({ user_id: userId }).orderBy('created_at', 'desc')
+
     console.log('📦 Raw requests from DB:', requests?.length || 0)
-    
+
     // Parse JSON project_links back to array
-    const parsedRequests = requests.map(request => ({
+    const parsedRequests = requests.map((request) => ({
       ...request,
-      project_links: typeof request.project_links === 'string' 
-        ? JSON.parse(request.project_links) 
-        : request.project_links,
+      project_links: typeof request.project_links === 'string' ? JSON.parse(request.project_links) : request.project_links,
     }))
-    
+
     return parsedRequests
   } catch (error: any) {
     console.error('❌ Database error in getUserQuoteRequests:', {
@@ -114,9 +107,7 @@ export async function getUserQuoteRequests(userId: number) {
 
 export async function getUserMeetingRequests(userId: number) {
   try {
-    return await database(TABLES.serviceMeetingRequests)
-      .where({ user_id: userId })
-      .orderBy('created_at', 'desc')
+    return await database(TABLES.serviceMeetingRequests).where({ user_id: userId }).orderBy('created_at', 'desc')
   } catch (error: any) {
     console.error('❌ Database error in getUserMeetingRequests:', {
       error: error.message,
@@ -126,4 +117,3 @@ export async function getUserMeetingRequests(userId: number) {
     throw error
   }
 }
-

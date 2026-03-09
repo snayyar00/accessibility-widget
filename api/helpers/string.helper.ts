@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const slugify = require('slugify')
 
 export function normalizeEmail(text: string): string {

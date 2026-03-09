@@ -7,6 +7,7 @@
  */
 
 import Stripe from 'stripe'
+
 import { ORGANIZATION_USER_ROLE_OWNER } from '../../constants/organization.constant'
 import { getOrganizationById, updateOrganization } from '../../repository/organization.repository'
 import { updateOrganizationUserAgencyAccount } from '../../repository/organization_user.repository'
@@ -86,18 +87,18 @@ export async function connectToAgencyProgram(user: UserLogined, successUrl: stri
 
     // Get organization details
     const organization = await getOrganizationById(organizationId)
-    
+
     if (!organization) {
       throw new ValidationError('Organization not found')
     }
 
     let stripeAccountId: string
-    
+
     // Check if Stripe account already exists in our database
     if (organization.stripe_account_id) {
       // Use existing account ID
       stripeAccountId = organization.stripe_account_id
-      
+
       logger.info('Using existing Stripe account for Agency Program', {
         userId,
         organizationId,
@@ -112,30 +113,10 @@ export async function connectToAgencyProgram(user: UserLogined, successUrl: stri
     let accountDetails
     try {
       accountDetails = await stripe.accounts.retrieve(stripeAccountId)
-      
-      // 🧪 TESTING: Log account details
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      console.log('🧪 STRIPE ACCOUNT DETAILS (Testing):')
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      console.log('Account ID:', accountDetails.id)
-      console.log('Type:', accountDetails.type)
-      console.log('Country:', accountDetails.country)
-      console.log('Email:', accountDetails.email)
-      console.log('Business Type:', accountDetails.business_type)
-      console.log('Charges Enabled:', accountDetails.charges_enabled)
-      console.log('Payouts Enabled:', accountDetails.payouts_enabled)
-      console.log('Details Submitted:', accountDetails.details_submitted)
-      console.log('Capabilities:', JSON.stringify(accountDetails.capabilities, null, 2))
-      console.log('Requirements:', JSON.stringify(accountDetails.requirements, null, 2))
-      console.log('Metadata:', JSON.stringify(accountDetails.metadata, null, 2))
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      
+
       // Check if account is fully onboarded
-      const isFullyOnboarded = 
-        accountDetails.charges_enabled === true &&
-        accountDetails.payouts_enabled === true &&
-        accountDetails.requirements?.currently_due?.length === 0
-      
+      const isFullyOnboarded = accountDetails.charges_enabled === true && accountDetails.payouts_enabled === true && accountDetails.requirements?.currently_due?.length === 0
+
       if (isFullyOnboarded) {
         logger.info('✅ Account is already fully onboarded - skipping onboarding link', {
           userId,
@@ -145,14 +126,14 @@ export async function connectToAgencyProgram(user: UserLogined, successUrl: stri
           payouts_enabled: accountDetails.payouts_enabled,
           currently_due: accountDetails.requirements?.currently_due,
         })
-        
+
         return {
           onboardingUrl: 'ALREADY_CONNECTED',
           success: true,
           message: 'Your account is already fully connected to the Agency Program. No further action needed.',
         }
       }
-      
+
       logger.info('⚠️ Account needs onboarding - creating link', {
         userId,
         organizationId,
@@ -171,7 +152,7 @@ export async function connectToAgencyProgram(user: UserLogined, successUrl: stri
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
       refresh_url: successUrl, // Where to send if they need to restart
-      return_url: successUrl,  // Where to send after completion
+      return_url: successUrl, // Where to send after completion
       type: 'account_onboarding',
     })
 
@@ -193,7 +174,7 @@ export async function connectToAgencyProgram(user: UserLogined, successUrl: stri
 
 /**
  * Create a new Stripe Express Account for the organization
- * 
+ *
  * @param user - Current user profile
  * @param organization - Organization details
  * @returns Stripe account ID

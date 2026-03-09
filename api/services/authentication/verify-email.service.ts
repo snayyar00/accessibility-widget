@@ -70,22 +70,19 @@ export async function verifyEmail(authToken: string): Promise<true | ApolloError
 
     const user = await getUserbyId(token.user_id)
 
-  const smtpConfig =
-      user?.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
-  const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
+    const smtpConfig = user?.current_organization_id != null ? await getOrganizationSmtpConfig(user.current_organization_id) : null
+    const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
 
-  const template = await compileEmailTemplate({
-    fileName: 'WelcomeEmail.mjml',
-    data: {
-      name: user?.name,
-      date: dayjs().format('dddd, MMMM D, YYYY h:mm A'),
-      organizationName,
-    },
-  })
+    const template = await compileEmailTemplate({
+      fileName: 'WelcomeEmail.mjml',
+      data: {
+        name: user?.name,
+        date: dayjs().format('dddd, MMMM D, YYYY h:mm A'),
+        organizationName,
+      },
+    })
 
-  await sendMail(user?.email, "Welcome to WebAbility ! Let's Make the Web Accessible Together", template, undefined, 'WebAbility Team', smtpConfig)
+    await sendMail(user?.email, "Welcome to WebAbility ! Let's Make the Web Accessible Together", template, undefined, 'WebAbility Team', smtpConfig)
 
     return true
   } catch (error) {
@@ -151,10 +148,7 @@ export async function resendEmailAction(user: UserLogined, type: 'verify_email' 
     }
 
     await changeTokenStatus(null, type, false)
-    await Promise.all([
-      createToken(user.id, token, type),
-      sendMail(normalizeEmail(user.email), subject, template, undefined, 'WebAbility Team', smtpConfig),
-    ])
+    await Promise.all([createToken(user.id, token, type), sendMail(normalizeEmail(user.email), subject, template, undefined, 'WebAbility Team', smtpConfig)])
 
     return true
   } catch (error) {
