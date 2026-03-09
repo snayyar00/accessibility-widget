@@ -3377,7 +3377,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                         </div>
                         <input
                           type="text"
-                          placeholder="https://www.webability.io/terms-of-use"
+                          placeholder="Enter URL (e.g., https://yourwebsite.com/terms or /terms)"
                           className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#808EEB]/20 focus:border-[#808EEB] transition-colors duration-200 bg-white placeholder:text-[#6E7788]"
                           value={termsAndConditionsLink}
                           onChange={(e) => {
