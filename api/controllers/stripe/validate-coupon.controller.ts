@@ -4,7 +4,6 @@ import { APP_SUMO_COUPON_IDS } from '../../constants/billing.constant'
 import { UserLogined } from '../../services/authentication/get-user-logined.service'
 import findPromo from '../../services/stripe/findPromo'
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 export async function validateCoupon(req: Request & { user: UserLogined }, res: Response) {
