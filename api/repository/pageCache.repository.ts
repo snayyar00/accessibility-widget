@@ -1,5 +1,6 @@
-import { gunzip } from 'zlib'
 import { promisify } from 'util'
+import { gunzip } from 'zlib'
+
 import { tursoClient } from '../config/turso.config'
 
 const gunzipAsync = promisify(gunzip)
@@ -16,7 +17,7 @@ function isHexString(s: string): boolean {
 }
 
 function isBase64Like(s: string): boolean {
-   return /^[A-Za-z0-9+/=]+$/.test(s) && s.length >= 4
+  return /^[A-Za-z0-9+/=]+$/.test(s) && s.length >= 4
 }
 
 /**
@@ -50,10 +51,7 @@ function toGzipBuffer(blob: unknown): Buffer | null {
   }
 }
 
-async function runQuery(
-  url: string,
-  urlHash: string | null
-): Promise<{ row: Record<string, unknown>; blob: Buffer | null } | null> {
+async function runQuery(url: string, urlHash: string | null): Promise<{ row: Record<string, unknown>; blob: Buffer | null } | null> {
   const baseSelect = `
     SELECT url_hash, url, domain, html_compressed, fetched_at, expires_at
     FROM page_cache
@@ -62,9 +60,7 @@ async function runQuery(
 
   // Single trip: url_hash (indexed, exact match) when available, else url exact.
   const useHash = urlHash && urlHash.trim()
-  const sql = useHash
-    ? `${baseSelect} WHERE url_hash = ?${orderLimit}`
-    : `${baseSelect} WHERE url = ?${orderLimit}`
+  const sql = useHash ? `${baseSelect} WHERE url_hash = ?${orderLimit}` : `${baseSelect} WHERE url = ?${orderLimit}`
   const args = useHash ? [urlHash!.trim()] : [url]
 
   const result = await tursoClient.execute({ sql, args })
@@ -81,18 +77,14 @@ async function runQuery(
 }
 
 /** Get page_summary for the latest page_cache row for url (or url_hash). Returns null if not found or column missing. */
-export async function getPageSummaryByUrl(
-  options: GetPageHtmlOptions | string
-): Promise<string | null> {
+export async function getPageSummaryByUrl(options: GetPageHtmlOptions | string): Promise<string | null> {
   const url = typeof options === 'string' ? options : options?.url
-  const urlHash = typeof options === 'string' ? null : options?.urlHash ?? null
+  const urlHash = typeof options === 'string' ? null : (options?.urlHash ?? null)
   if (!url || typeof url !== 'string' || !url.trim()) return null
 
   const trimmed = url.trim()
   const useHash = urlHash && urlHash.trim()
-  const sql = useHash
-    ? `SELECT page_summary FROM page_cache WHERE url_hash = ? ORDER BY fetched_at DESC LIMIT 1`
-    : `SELECT page_summary FROM page_cache WHERE url = ? ORDER BY fetched_at DESC LIMIT 1`
+  const sql = useHash ? `SELECT page_summary FROM page_cache WHERE url_hash = ? ORDER BY fetched_at DESC LIMIT 1` : `SELECT page_summary FROM page_cache WHERE url = ? ORDER BY fetched_at DESC LIMIT 1`
   const args = useHash ? [urlHash!.trim()] : [trimmed]
 
   const result = await tursoClient.execute({ sql, args })
@@ -102,9 +94,7 @@ export async function getPageSummaryByUrl(
 }
 
 /** Update page_summary for the latest page_cache row for this url (or url_hash). Returns true if a row was updated, false if no row found. */
-export async function updatePageSummary(
-  options: { url: string; urlHash?: string | null; summary: string }
-): Promise<boolean> {
+export async function updatePageSummary(options: { url: string; urlHash?: string | null; summary: string }): Promise<boolean> {
   const { url, urlHash, summary } = options
   if (!url || typeof url !== 'string' || !url.trim()) return false
 
@@ -129,10 +119,7 @@ export async function updatePageSummary(
     args: [summary, arg],
   })
 
-  const rowsAffected =
-    typeof result.rowsAffected === 'number'
-      ? result.rowsAffected
-      : Number((result as unknown as { rowsAffected?: number | string }).rowsAffected ?? 0)
+  const rowsAffected = typeof result.rowsAffected === 'number' ? result.rowsAffected : Number((result as unknown as { rowsAffected?: number | string }).rowsAffected ?? 0)
 
   if (!Number.isFinite(rowsAffected)) {
     return false
@@ -154,11 +141,9 @@ export type GetPageHtmlOptions = {
  * @param options - { url, urlHash? }
  * @returns Decompressed HTML string or null if not found / decompression fails
  */
-export async function getPageHtmlByUrl(
-  options: GetPageHtmlOptions | string
-): Promise<string | null> {
+export async function getPageHtmlByUrl(options: GetPageHtmlOptions | string): Promise<string | null> {
   const url = typeof options === 'string' ? options : options?.url
-  const urlHash = typeof options === 'string' ? null : options?.urlHash ?? null
+  const urlHash = typeof options === 'string' ? null : (options?.urlHash ?? null)
 
   if (!url || typeof url !== 'string' || !url.trim()) {
     return null

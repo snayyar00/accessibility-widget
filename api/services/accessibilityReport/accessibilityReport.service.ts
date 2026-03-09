@@ -2,13 +2,13 @@ import { Scrapeless } from '@scrapeless-ai/sdk'
 import fs from 'fs'
 import path from 'path'
 import puppeteer from 'puppeteer-core'
-import { getScrapelessScreenshotService } from '../scrapeless-screenshot.service'
 
+import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
 import { getAccessibilityInformationPally } from '../../helpers/accessibility.helper'
 import { formatUrlForScan, getRetryUrls } from '../../utils/domain.utils'
+import { getScrapelessScreenshotService } from '../scrapeless-screenshot.service'
 import { GPTChunks } from './accessibilityIssues.service'
 import { accessibilityReportQueue } from './accessibilityReportQueue.service'
-import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
 // interface Category {
 //     description: string;
 //     count: number;
@@ -291,7 +291,7 @@ export async function detectAccessibilityWidget(page: any): Promise<{
   const widgetScripts = await page.evaluate(() => {
     // @ts-ignore - This code runs in browser context where document is available
     const scripts = Array.from(document.querySelectorAll('script[src]'))
-    const widgetUrls = ['https://widget.access-widget.com/widget.min.js', 'https://widget.webability.io/widget.min.js','https://widget-v2.webability.io/widget.min.js']
+    const widgetUrls = ['https://widget.access-widget.com/widget.min.js', 'https://widget.webability.io/widget.min.js', 'https://widget-v2.webability.io/widget.min.js']
 
     const foundWidgets: Array<{ url: string; isExactMatch: boolean }> = []
 
@@ -566,9 +566,7 @@ async function takeScreenshotWithWidgetDetection(
     console.log('✅ Screenshot captured successfully')
 
     // Ensure screenshot has data URI prefix
-    const screenshotDataUri = screenshotBase64.startsWith('data:') 
-      ? screenshotBase64 
-      : `data:image/png;base64,${screenshotBase64}`
+    const screenshotDataUri = screenshotBase64.startsWith('data:') ? screenshotBase64 : `data:image/png;base64,${screenshotBase64}`
 
     return {
       screenshot: screenshotDataUri,
@@ -579,11 +577,14 @@ async function takeScreenshotWithWidgetDetection(
     const errorMessage = error instanceof Error ? error.message : String(error)
     const errorStack = error instanceof Error ? error.stack : 'No stack trace'
     const errorType = error?.constructor?.name || typeof error
-    const errorDetails = error instanceof Error ? {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-    } : error
+    const errorDetails =
+      error instanceof Error
+        ? {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+          }
+        : error
 
     console.error(`❌ Screenshot attempt ${retryCount + 1} failed:`)
     console.error(`   Error Type: ${errorType}`)
@@ -1086,7 +1087,7 @@ function calculateTotalStats(
   const severityCounts = countIssuesBySeverity(issues)
   const baseScore = report?.score || 0
   console.log(`Base score: ${baseScore}, Critical: ${severityCounts.criticalIssues}, Warnings: ${severityCounts.warnings}, Moderate: ${severityCounts.moderateIssues}`)
-  
+
   // If no issues are detected (displayed to user), set score to 95
   let enhancedScore
   if (issues.length === 0) {

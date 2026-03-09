@@ -49,10 +49,7 @@ export async function getOrganizationSmtpConfig(organizationId: number): Promise
   if (!organizationName) return null
 
   const orgWithLogo = org as { logo_url?: string | null }
-  const logoUrl =
-    typeof orgWithLogo.logo_url === 'string' && orgWithLogo.logo_url.trim()
-      ? generateOrganizationLogoUrl(orgWithLogo.logo_url.trim())
-      : undefined
+  const logoUrl = typeof orgWithLogo.logo_url === 'string' && orgWithLogo.logo_url.trim() ? generateOrganizationLogoUrl(orgWithLogo.logo_url.trim()) : undefined
 
   const o = org as {
     smtp_user?: string | null
@@ -63,21 +60,9 @@ export async function getOrganizationSmtpConfig(organizationId: number): Promise
   }
 
   // Prefer dedicated columns (host, port, SSL/TLS, username, password). Require explicit host and port.
-  if (
-    typeof o.smtp_user === 'string' &&
-    o.smtp_user.trim() &&
-    typeof o.smtp_password === 'string' &&
-    o.smtp_password &&
-    typeof o.smtp_host === 'string' &&
-    o.smtp_host.trim()
-  ) {
+  if (typeof o.smtp_user === 'string' && o.smtp_user.trim() && typeof o.smtp_password === 'string' && o.smtp_password && typeof o.smtp_host === 'string' && o.smtp_host.trim()) {
     const host = o.smtp_host.trim()
-    const port =
-      typeof o.smtp_port === 'number' && o.smtp_port > 0
-        ? o.smtp_port
-        : typeof o.smtp_port === 'string'
-          ? parseInt(o.smtp_port, 10)
-          : NaN
+    const port = typeof o.smtp_port === 'number' && o.smtp_port > 0 ? o.smtp_port : typeof o.smtp_port === 'string' ? parseInt(o.smtp_port, 10) : NaN
     const portNum = Number.isFinite(port) && port > 0 && port <= 65535 ? port : null
     if (portNum === null) {
       // Port missing or invalid; do not return SMTP config
@@ -101,19 +86,8 @@ export async function getOrganizationSmtpConfig(organizationId: number): Promise
     const user = smtp.user
     const password = smtp.password
     const hostStr = typeof smtp.host === 'string' && (smtp.host as string).trim() ? (smtp.host as string).trim() : null
-    if (
-      typeof user === 'string' &&
-      user.trim() &&
-      typeof password === 'string' &&
-      password &&
-      hostStr
-    ) {
-      const port =
-        typeof smtp.port === 'number' && smtp.port > 0
-          ? smtp.port
-          : typeof smtp.port === 'string'
-            ? parseInt(smtp.port as string, 10)
-            : NaN
+    if (typeof user === 'string' && user.trim() && typeof password === 'string' && password && hostStr) {
+      const port = typeof smtp.port === 'number' && smtp.port > 0 ? smtp.port : typeof smtp.port === 'string' ? parseInt(smtp.port as string, 10) : NaN
       const portNum = Number.isFinite(port) && port > 0 && port <= 65535 ? port : null
       if (portNum !== null) {
         return {

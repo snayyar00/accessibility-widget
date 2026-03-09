@@ -45,7 +45,7 @@ export async function proxyImage(req: Request, res: Response): Promise<Response>
     const arrayBuffer = await response.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     const base64 = buffer.toString('base64')
-    
+
     // Determine content type
     const contentType = response.headers.get('content-type') || 'image/png'
     const dataUrl = `data:${contentType};base64,${base64}`
@@ -62,4 +62,3 @@ export async function proxyImage(req: Request, res: Response): Promise<Response>
     })
   }
 }
-

@@ -93,12 +93,12 @@ export async function createSitesPlan(userId: number, paymentMethodToken: string
     // Fetch organization's stripe_account_id and revenue share % for Agency Program
     let agencyAccountId: string | null = null
     let revenueSharePercent = 50 // Default
-    
+
     if (user.current_organization_id) {
       try {
         const organization = await getOrganizationById(user.current_organization_id)
         revenueSharePercent = getAgencyRevenueSharePercent(organization)
-        
+
         if (organization?.stripe_account_id) {
           agencyAccountId = organization.stripe_account_id
           console.log(`[AGENCY_PROGRAM] Site plan will include revenue sharing: Platform ${revenueSharePercent}% | Agency ${100 - revenueSharePercent}%`, {

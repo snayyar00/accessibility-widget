@@ -152,14 +152,7 @@ async function registerUser(email: string, password: string, name: string, organ
     return { token, url: targetUrl }
   } catch (error: any) {
     // Handle duplicate entry errors (race condition where two requests try to register the same email)
-    if (
-      error?.code === 'ER_DUP_ENTRY' ||
-      error?.errno === 1062 ||
-      (error?.message && 
-       typeof error.message === 'string' && 
-       error.message.includes('Duplicate entry') &&
-       error.message.includes('for key'))
-    ) {
+    if (error?.code === 'ER_DUP_ENTRY' || error?.errno === 1062 || (error?.message && typeof error.message === 'string' && error.message.includes('Duplicate entry') && error.message.includes('for key'))) {
       logger.warn(`Duplicate registration attempt for email: ${email}`, error)
       // Throw a user-friendly error instead of the database error
       throw new ApolloError('Email address has been used', 'BAD_USER_INPUT')
