@@ -1585,7 +1585,11 @@ function styleSelectedItem(element: HTMLElement, selectedItemsColor: string) {
 
 export const sectionSelectors: Record<string, string | string[]> = {
   'header-background': '.asw-menu-header',
-  'footer-background': '.asw-footer',
+  'footer-background': [
+    '.asw-footer',
+    '.asw-ai-assistant-float-wrap',
+    '.asw-menu-ai-assistant-btn',
+  ],
   'header-buttons-border': [
     '.asw-report-issue-btn',
     '.asw-header-lang-selector',
@@ -1802,9 +1806,54 @@ export default function applyMenuColor(
   selectorArray.forEach((selector) => {
     // Handle header and footer background colors separately
     if (section === 'header-background' || section === 'footer-background') {
-      $menu.querySelectorAll(selector).forEach((el: any) => {
-        el.style.setProperty('background-color', color, 'important');
-      });
+      const rootElement = $widgetContainer || $menu;
+
+      rootElement
+        ?.querySelectorAll(selector)
+        .forEach((el: any) => {
+          const element = el as HTMLElement;
+
+          // Header background: keep existing behavior (full background)
+          if (section === 'header-background') {
+            element.style.setProperty('background-color', color, 'important');
+            return;
+          }
+
+          // Footer background: apply full background ONLY to the footer,
+          // and restrict AI assistant to ring + icon coloring
+          if (section === 'footer-background') {
+            if (element.classList.contains('asw-footer')) {
+              // Real footer keeps full background color
+              element.style.setProperty(
+                'background-color',
+                color,
+                'important',
+              );
+              return;
+            }
+
+            if (
+              element.classList.contains('asw-ai-assistant-float-wrap') ||
+              element.classList.contains('asw-menu-ai-assistant-btn')
+            ) {
+              // Only color the ring/border
+              element.style.setProperty('border-color', color, 'important');
+              element.style.setProperty('outline-color', color, 'important');
+
+              // And color the icons inside (SVGs)
+              element
+                .querySelectorAll(
+                  'svg, svg path, svg circle, svg rect, svg line, svg polyline, svg polygon',
+                )
+                .forEach((iconEl: any) => {
+                  iconEl.style.setProperty('fill', color, 'important');
+                  iconEl.style.setProperty('stroke', color, 'important');
+                });
+              return;
+            }
+          }
+        });
+
       return;
     }
 
