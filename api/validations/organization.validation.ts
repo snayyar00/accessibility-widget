@@ -58,22 +58,12 @@ export function validateEditOrganization(input: {
     smtp_host: {
       type: 'any',
       optional: true,
-      custom: (v: unknown) =>
-        v == null || v === ''
-          ? true
-          : typeof v === 'string' && v.length <= 255 && !/[\r\n]/.test(v)
-            ? true
-            : 'SMTP host must be a string up to 255 characters with no line breaks',
+      custom: (v: unknown) => (v == null || v === '' ? true : typeof v === 'string' && v.length <= 255 && !/[\r\n]/.test(v) ? true : 'SMTP host must be a string up to 255 characters with no line breaks'),
     },
     smtp_port: {
       type: 'any',
       optional: true,
-      custom: (v: unknown) =>
-        v == null || v === ''
-          ? true
-          : typeof v === 'number' && v >= 1 && v <= 65535
-            ? true
-            : 'Port must be between 1 and 65535',
+      custom: (v: unknown) => (v == null || v === '' ? true : typeof v === 'number' && v >= 1 && v <= 65535 ? true : 'Port must be between 1 and 65535'),
     },
     smtp_secure: { type: 'boolean', optional: true },
     smtp_user: { type: 'any', optional: true, custom: smtpUserValid },

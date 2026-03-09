@@ -120,4 +120,3 @@ export async function proxyImage(req: Request, res: Response): Promise<Response>
     })
   }
 }
-

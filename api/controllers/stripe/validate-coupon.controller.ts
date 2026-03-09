@@ -36,7 +36,7 @@ export async function validateCoupon(req: Request & { user: UserLogined }, res: 
     if (promoCodeData.coupon.percent_off) {
       return res.json({ valid: true, discount: Number(promoCodeData.coupon.percent_off) / 100, id: promoCodeData.coupon.id, percent: true, appSumo: false })
     }
-    
+
     return res.json({ valid: true, discount: Number(promoCodeData.coupon.amount_off) / 100, id: promoCodeData.coupon.id, percent: false, appSumo: false })
   } catch (error) {
     console.log('err', error)

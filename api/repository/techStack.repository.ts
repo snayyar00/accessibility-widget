@@ -191,7 +191,7 @@ async function getHTMLWithScrapeless(url: string): Promise<string | null> {
   try {
     const normalizedUrl = normalizeURL(url)
     console.log(`🔧 Fetching HTML for tech stack from: ${normalizedUrl}`)
-    
+
     const screenshotService = getScrapelessScreenshotService()
     return await screenshotService.getHTMLContent(normalizedUrl)
   } catch (error: any) {
@@ -230,7 +230,7 @@ export async function fetchTechStackFromAPI(url: string) {
     // PRIMARY: Use SCRAPELESS to fetch HTML and detect technologies
     console.log('🔧 Detecting tech stack using SCRAPELESS...')
     const html = await getHTMLWithScrapeless(normalizedUrl)
-    
+
     if (!html) {
       throw new Error('Failed to fetch HTML with SCRAPELESS')
     }
@@ -248,7 +248,7 @@ export async function fetchTechStackFromAPI(url: string) {
   } catch (error: any) {
     const errorMsg = error?.message || error?.toString() || JSON.stringify(error)
     console.warn(`⚠️ SCRAPELESS tech stack detection failed: ${errorMsg}`)
-    
+
     // FALLBACK: Try external API
     try {
       console.log('🔧 Falling back to external API...')
@@ -272,7 +272,7 @@ async function fetchTechStackFromExternalAPI(url: string) {
 
     const apiUrl = `${process.env.SECONDARY_SERVER_URL}/techstack/?url=${encodeURIComponent(url)}`
     console.log(`🔧 Fetching tech stack from external API: ${apiUrl}`)
-    
+
     const apiRes = await fetch(apiUrl, {
       headers: {
         'User-Agent': 'webAbilityFrontend',

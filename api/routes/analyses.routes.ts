@@ -1,13 +1,6 @@
 import { Router } from 'express'
 
-import {
-  getDomainAnalyses,
-  getOrCreatePageSummary,
-  getPageHtml,
-  postAddFix,
-  postSuggestedFixes,
-  updateAnalysisFixAction,
-} from '../controllers/analyses.controller'
+import { getDomainAnalyses, getOrCreatePageSummary, getPageHtml, postAddFix, postSuggestedFixes, updateAnalysisFixAction } from '../controllers/analyses.controller'
 import { allowedOrganization, isAuthenticated } from '../middlewares/auth.middleware'
 import { moderateLimiter } from '../middlewares/limiters.middleware'
 
