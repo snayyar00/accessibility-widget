@@ -11,4 +11,3 @@ const router = Router()
 router.post('/proxy-image', moderateLimiter, isAuthenticated, proxyImage)
 
 export default router
-

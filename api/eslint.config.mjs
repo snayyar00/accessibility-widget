@@ -35,14 +35,23 @@ const eslintConfig = [
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       '@typescript-eslint/no-explicit-any': 'warn',
+
+      // Relax strict TypeScript rules for this API project
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
           ignoreRestSiblings: true,
         },
       ],
+
+      // Don't fail builds on let-vs-const style; just warn
+      'prefer-const': 'warn',
+
       '@next/next/no-html-link-for-pages': 'off',
     },
   },

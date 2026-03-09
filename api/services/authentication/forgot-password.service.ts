@@ -7,8 +7,8 @@ import { createToken, updateUserTokenById } from '../../repository/user_tokens.r
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, ForbiddenError, ValidationError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { emailValidation } from '../../validations/email.validation'
 import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
+import { emailValidation } from '../../validations/email.validation'
 import { sendMail } from '../email/email.service'
 
 export async function forgotPasswordUser(email: string, organization: Organization): Promise<boolean> {

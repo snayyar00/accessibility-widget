@@ -63,25 +63,25 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
   // Fetch organization's stripe_account_id and revenue share % for Agency Program
   let agencyAccountId: string | null = null
   let organization: Awaited<ReturnType<typeof getOrganizationById>> = undefined
-  
+
   console.log('[AGENCY_PROGRAM] Checking for agency account...', {
     userId: user.id,
     currentOrgId: user.current_organization_id,
     hasOrgId: !!user.current_organization_id,
   })
-  
+
   if (user.current_organization_id) {
     try {
       organization = await getOrganizationById(user.current_organization_id)
       const revenueSharePercent = getAgencyRevenueSharePercent(organization)
-      
+
       console.log('[AGENCY_PROGRAM] Organization found:', {
         organizationId: organization?.id,
         hasStripeAccount: !!organization?.stripe_account_id,
         stripeAccountId: organization?.stripe_account_id || 'NOT_SET',
         revenueSharePercent: `${revenueSharePercent}%`,
       })
-      
+
       if (organization?.stripe_account_id) {
         agencyAccountId = organization.stripe_account_id
         console.log('[AGENCY_PROGRAM] ✅ Adding agency account to checkout:', {
@@ -250,9 +250,10 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
           client_reference_id: user.referral,
           discounts: [{ coupon: REWARDFUL_COUPON }],
         }),
-        ...(regularPromoCouponId && !user.referral && {
-          discounts: [{ coupon: regularPromoCouponId }],
-        }),
+        ...(regularPromoCouponId &&
+          !user.referral && {
+            discounts: [{ coupon: regularPromoCouponId }],
+          }),
         ...(brandingSettings && { branding_settings: brandingSettings }),
         metadata: {
           domainId,
@@ -334,9 +335,10 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
             client_reference_id: user.referral,
             discounts: [{ coupon: REWARDFUL_COUPON }],
           }),
-          ...(regularPromoCouponId && !user.referral && {
-            discounts: [{ coupon: regularPromoCouponId }],
-          }),
+          ...(regularPromoCouponId &&
+            !user.referral && {
+              discounts: [{ coupon: regularPromoCouponId }],
+            }),
           ...(brandingSettings && { branding_settings: brandingSettings }),
           metadata: {
             domainId,
@@ -362,7 +364,7 @@ export async function createCheckoutSession(req: Request & { user: UserLogined }
             }),
           },
         })
-        
+
         if (agencyAccountId) {
           console.log('[AGENCY_PROGRAM] Normal checkout with revenue sharing:', agencyAccountId)
         }

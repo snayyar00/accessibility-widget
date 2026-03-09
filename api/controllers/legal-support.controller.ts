@@ -4,9 +4,9 @@ import { join, resolve } from 'path'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 
 import compileEmailTemplate from '../helpers/compile-email-template'
+import { UserLogined } from '../services/authentication/get-user-logined.service'
 import { sendMail } from '../services/email/email.service'
 import { getOrganizationSmtpConfig } from '../utils/organizationSmtp.utils'
-import { UserLogined } from '../services/authentication/get-user-logined.service'
 import { emailValidation } from '../validations/email.validation'
 
 interface LegalSupportRequest {
@@ -60,24 +60,14 @@ export async function sendLegalSupportRequest(req: Request, res: Response) {
 
     // Send to admin email (configured via EMAIL_TO environment variable)
     const adminEmail = process.env.EMAIL_TO || 'admin@webability.io'
-    const smtpConfig =
-      user?.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
+    const smtpConfig = user?.current_organization_id != null ? await getOrganizationSmtpConfig(user.current_organization_id) : null
     const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
 
     const emailHtml = await compileEmailTemplate({
       fileName: 'legalSupportRequest.mjml',
       data: { ...templateVariables, organizationName },
     })
-    const emailSent = await sendMail(
-      adminEmail,
-      `Legal Support Request: ${complaintType} - ${name}`,
-      emailHtml,
-      undefined,
-      'WebAbility Team',
-      smtpConfig,
-    )
+    const emailSent = await sendMail(adminEmail, `Legal Support Request: ${complaintType} - ${name}`, emailHtml, undefined, 'WebAbility Team', smtpConfig)
 
     if (emailSent) {
       res.status(200).json({
@@ -127,10 +117,10 @@ export async function downloadLegalPDF(req: Request & { user?: UserLogined }, re
 
     // Get website URL from query parameter
     let websiteUrl = typeof domain === 'string' ? domain : null
-    
+
     // Log for debugging
     console.log('PDF Download - Domain from query:', domain, 'Website URL:', websiteUrl)
-    
+
     // If no domain provided, try to get first site from user's sites as fallback
     if (!websiteUrl && user.current_organization_id) {
       try {
@@ -144,7 +134,7 @@ export async function downloadLegalPDF(req: Request & { user?: UserLogined }, re
         console.error('Error fetching user sites for PDF:', error)
       }
     }
-    
+
     // Final fallback to email if no website URL available
     if (!websiteUrl) {
       websiteUrl = user.email
@@ -152,10 +142,7 @@ export async function downloadLegalPDF(req: Request & { user?: UserLogined }, re
     }
 
     // Determine PDF file name based on type
-    const pdfFileName =
-      type === 'legal-action-response-plan'
-        ? 'Legal Action Response Plan.pdf'
-        : 'Trusted Certification.pdf'
+    const pdfFileName = type === 'legal-action-response-plan' ? 'Legal Action Response Plan.pdf' : 'Trusted Certification.pdf'
 
     // Try multiple possible paths for the PDF file
     const possiblePaths = [
@@ -258,4 +245,3 @@ export async function downloadLegalPDF(req: Request & { user?: UserLogined }, re
     })
   }
 }
-

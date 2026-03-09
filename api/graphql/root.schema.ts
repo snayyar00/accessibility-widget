@@ -7,6 +7,7 @@ import { InvitationSchema } from './schemas/invitation.schema'
 import { OrganizationSchema } from './schemas/organization.schema'
 import proofOfEffortSchema from './schemas/proofOfEffort.schema'
 import { reportProblemSchema } from './schemas/reportProblem.schema'
+import serviceRequestSchema from './schemas/serviceRequest.schema'
 import { SitesPlanSchema } from './schemas/sitesPlan.schema'
 import { TranslationSchema } from './schemas/translation.schema'
 import { UniqueTokenSchema } from './schemas/uniqueToken.schema'
@@ -14,7 +15,6 @@ import { UniqueVisitorSchema } from './schemas/uniqueVisitor.schema'
 import { UserSchema } from './schemas/user.schema'
 import { widgetTypeDefs } from './schemas/widget.schema'
 import { WorkspaceSchema } from './schemas/workspace.schema'
-import serviceRequestSchema from './schemas/serviceRequest.schema'
 
 const rootSchema = `
   scalar Date
