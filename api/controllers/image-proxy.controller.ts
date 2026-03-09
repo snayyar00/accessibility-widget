@@ -102,15 +102,9 @@ function isPrivateAddress(address: string): boolean {
  * Returns the first public IP to use for connection pinning.
  */
 async function getPinnedPublicAddress(hostname: string): Promise<{ address: string; family: 4 | 6 }> {
-  const [v4, v6] = await Promise.all([
-    dns.resolve4(hostname, { ttl: false }).catch(() => [] as string[]),
-    dns.resolve6(hostname, { ttl: false }).catch(() => [] as string[]),
-  ])
-  const toAddr = (a: string | { address: string }): string => typeof a === 'string' ? a : a.address
-  const all = [
-    ...v4.map((a) => ({ address: toAddr(a), family: 4 as const })),
-    ...v6.map((a) => ({ address: toAddr(a), family: 6 as const })),
-  ]
+  const [v4, v6] = await Promise.all([dns.resolve4(hostname, { ttl: false }).catch(() => [] as string[]), dns.resolve6(hostname, { ttl: false }).catch(() => [] as string[])])
+  const toAddr = (a: string | { address: string }): string => (typeof a === 'string' ? a : a.address)
+  const all = [...v4.map((a) => ({ address: toAddr(a), family: 4 as const })), ...v6.map((a) => ({ address: toAddr(a), family: 6 as const }))]
   if (all.length === 0) throw new Error('No addresses resolved')
   const anyPrivate = all.some(({ address }) => isPrivateAddress(address))
   if (anyPrivate) throw new Error('Resolved to private address')
@@ -141,11 +135,7 @@ async function isBlockedUrl(urlString: string): Promise<boolean> {
 /**
  * Fetch URL using only the pre-validated public IP (pinned) to prevent DNS rebinding.
  */
-function fetchWithPinnedIp(
-  imageUrl: string,
-  pinned: { address: string; family: 4 | 6 },
-  hostname: string,
-): Promise<{ statusCode: number; statusMessage: string; headers: http.IncomingHttpHeaders; body: Buffer }> {
+function fetchWithPinnedIp(imageUrl: string, pinned: { address: string; family: 4 | 6 }, hostname: string): Promise<{ statusCode: number; statusMessage: string; headers: http.IncomingHttpHeaders; body: Buffer }> {
   return new Promise((resolve, reject) => {
     const url = new URL(imageUrl)
     const isHttps = url.protocol === 'https:'
@@ -178,12 +168,14 @@ function fetchWithPinnedIp(
         chunks.push(chunk)
       }
       res.on('data', onData)
-      res.on('end', () => resolve({
-        statusCode: res.statusCode ?? 0,
-        statusMessage: res.statusMessage ?? '',
-        headers: res.headers,
-        body: Buffer.concat(chunks),
-      }))
+      res.on('end', () =>
+        resolve({
+          statusCode: res.statusCode ?? 0,
+          statusMessage: res.statusMessage ?? '',
+          headers: res.headers,
+          body: Buffer.concat(chunks),
+        }),
+      )
       res.on('error', reject)
     })
     req.on('error', reject)
