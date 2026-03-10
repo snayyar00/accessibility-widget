@@ -97,7 +97,10 @@ type WidgetPosition = (typeof WIDGET_POSITIONS)[number]
 type PageColorSection = (typeof PAGE_COLOR_SECTIONS)[number]
 type PageColorValue = (typeof PAGE_COLOR_VALUES)[number]
 
-type WidgetCommandType = 'open_menu' | 'close_menu' | 'navigate' | 'profile' | 'tool' | 'language' | 'font_size' | 'widget_position' | 'oversize_widget' | 'menu_theme' | 'reset' | 'widget_visibility' | 'page_color' | 'none'
+/** Context types the model can request on the first call. */
+export type PageContextNeed = 'page_html' | 'links'
+
+type WidgetCommandType = 'open_menu' | 'close_menu' | 'navigate' | 'profile' | 'tool' | 'language' | 'font_size' | 'widget_position' | 'oversize_widget' | 'menu_theme' | 'reset' | 'widget_visibility' | 'page_color' | 'request_context' | 'none'
 
 type WidgetCommand =
   | { type: 'open_menu' }
@@ -118,33 +121,17 @@ type WidgetCommand =
   | { type: 'reset' }
   | { type: 'widget_visibility'; enabled: boolean }
   | { type: 'page_color'; section: PageColorSection; value: PageColorValue }
+  /**
+   * Internal-only command: model signals it needs page context before answering.
+   * Never forwarded to the widget — backend intercepts it and makes a second call
+   * with the requested content injected into the system prompt.
+   */
+  | { type: 'request_context'; needs: PageContextNeed[] }
   | { type: 'none' }
 
 export interface WidgetChatAction {
   command: WidgetCommand
   reply?: string
-}
-
-/** Format GPT uses to request page context. Parsed from assistant reply. */
-const REQUEST_PAGE_CONTEXT_REGEX = /\[REQUEST_PAGE_CONTEXT:\s*([^\]]+)\]/i
-
-export type PageContextRequest = 'page_html' | 'links'
-
-/** Parse [REQUEST_PAGE_CONTEXT: page_html] or [REQUEST_PAGE_CONTEXT: links] or [REQUEST_PAGE_CONTEXT: page_html,links] from reply. */
-function parsePageContextRequest(reply: string): PageContextRequest[] | null {
-  const m = reply.match(REQUEST_PAGE_CONTEXT_REGEX)
-  if (!m) return null
-  const value = m[1].trim().toLowerCase().replace(/\s+/g, '')
-  const parts = value
-    .split(',')
-    .map((p) => p.trim())
-    .filter(Boolean)
-  const allowed = new Set<PageContextRequest>(['page_html', 'links'])
-  const result: PageContextRequest[] = []
-  for (const p of parts) {
-    if (allowed.has(p as PageContextRequest)) result.push(p as PageContextRequest)
-  }
-  return result.length > 0 ? result : null
 }
 
 export interface WidgetChatRequestBody {
@@ -161,14 +148,14 @@ export interface WidgetChatRequestBody {
   /**
    * Optional list of links on the current page that the widget sends for navigation help.
    * Frontend contract: prefers "links"; "pageLinks" is kept for backward compatibility.
-   * Only included in the system prompt when GPT requests context via [REQUEST_PAGE_CONTEXT: links].
+   * Injected into the system prompt only when the model returns a request_context command with "links".
    */
   pageLinks?: PageLink[]
   links?: PageLink[]
   /**
    * Optional page text content (from text-bearing elements: h1–h6, p, a, li, etc.).
-   * Only included in the system prompt when GPT requests context via [REQUEST_PAGE_CONTEXT: page_html].
-   * Widget should collect and send this when available so GPT can answer questions about page content.
+   * Injected into the system prompt only when the model returns a request_context command with "page_html".
+   * Widget should collect and send this with every request so the backend can satisfy the model's context request immediately.
    */
   pageTextContent?: string
 }
@@ -390,6 +377,20 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
         break
       }
 
+      case 'request_context': {
+        const needs = command.needs
+        if (!Array.isArray(needs) || needs.length === 0) {
+          throw new Error(`request_context command at index ${index} must include a non-empty "needs" array`)
+        }
+        const allowed = new Set<PageContextNeed>(['page_html', 'links'])
+        for (const n of needs) {
+          if (!allowed.has(n as PageContextNeed)) {
+            throw new Error(`request_context command at index ${index} has invalid "needs" value "${n}"`)
+          }
+        }
+        break
+      }
+
       default:
         throw new Error(`Unknown command type "${String(type)}" at index ${index}`)
     }
@@ -534,11 +535,29 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       throw firstError
     }
 
-    // If GPT requested page context, resend with that context in the system prompt
-    const contextRequest = parsePageContextRequest(rawReply)
-    if (contextRequest && contextRequest.length > 0) {
+    // Parse the first call response immediately so we can inspect the command.
+    let actions: WidgetChatAction[]
+    try {
+      actions = parseAndValidateActions(rawReply)
+    } catch (parseError) {
+      console.error('Widget chat: failed to parse first AI response, falling back to safe reply.', {
+        error: (parseError as Error)?.message,
+        rawReply,
+      })
+      const cleaned = cleanReply(rawReply)
+      actions = [{ command: { type: 'none' }, reply: cleaned ?? DEFAULT_TIMEOUT_REPLY }]
+    }
+
+    // If the model returned a request_context command it needs page content before it can answer.
+    // Resolve the requested data from the widget payload (or DB as fallback), then make a second
+    // call with the context injected into the system prompt — transparent to the frontend.
+    const contextAction = actions.find((a) => a.command.type === 'request_context')
+    if (contextAction) {
+      const needs = (contextAction.command as { type: 'request_context'; needs: PageContextNeed[] }).needs
+
+      // Resolve page text: prefer what the widget already sent, fall back to DB-stored HTML.
       let pageText: string | undefined
-      if (contextRequest.includes('page_html')) {
+      if (needs.includes('page_html')) {
         if (typeof pageTextContent === 'string' && pageTextContent.trim().length > 0) {
           pageText = pageTextContent.trim()
         } else if (pageUrl) {
@@ -546,16 +565,16 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
           pageText = html != null ? extractTextFromHtml(html) : undefined
         }
       }
-      const includeLinks = contextRequest.includes('links') ? rawLinks : undefined
+      const includeLinks = needs.includes('links') ? rawLinks : undefined
 
-      // If none of the requested context is actually available, return a clear fallback immediately.
-      // hasAnyContent = at least one of the requested pieces has real data to give the model.
-      const pageTextRequested = contextRequest.includes('page_html')
-      const linksRequested = contextRequest.includes('links')
+      // Guard: if none of the requested context is actually available, return a clear fallback.
+      const pageTextRequested = needs.includes('page_html')
+      const linksRequested = needs.includes('links')
       const hasAnyContent = (pageTextRequested && pageText != null && pageText.trim().length > 0) || (linksRequested && includeLinks != null && includeLinks.length > 0)
+
       if (!hasAnyContent) {
-        // Before giving up, check if a cached summary is already ready (e.g. user asked to summarize
-        // but pageTextContent was empty yet a DB summary existed for this URL).
+        // Before giving up, check if a cached summary is already ready (e.g. user asked to
+        // summarize but pageTextContent was empty yet a DB summary existed for this URL).
         if (isSummary && summaryPromise) {
           try {
             const cachedSummary = await summaryPromise
@@ -581,19 +600,18 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         return
       }
 
-      let promptWithContext = buildBaseSystemPrompt({
-        includePageText: pageText ?? undefined,
-        includeLinks,
-      })
+      // Build the second system prompt with the requested context injected.
+      let promptWithContext = buildBaseSystemPrompt({ includePageText: pageText, includeLinks })
       if (isSummary) {
         promptWithContext += `\n\nIMPORTANT: The user asked for a page summary. The summary will be added to the response automatically — do NOT say you cannot summarize, cannot help with the summary, or mention the summary at all. Reply only with the appropriate widget command(s) the user requested (if any) and short confirmations of those actions (e.g. "Opening the menu." or "Done."). If the user only asked for a summary and no widget action, respond with { "command": { "type": "none" }, "reply": "Okay." } or a similar short acknowledgement.`
       } else {
-        promptWithContext += `\n\nIMPORTANT: You requested the PAGE TEXT and/or PAGE LINKS above because the user asked a question about the page. You MUST answer their question using this content. Provide the actual information (e.g. numbers, names, table data, section text). Do NOT reply with only "Done", "Okay", or a generic acknowledgment — give a helpful answer based on the page content.`
+        promptWithContext += `\n\nIMPORTANT: The PAGE TEXT and/or PAGE LINKS above were provided because the user asked a question about this page. You MUST answer their question using this content. Provide the actual information (e.g. numbers, names, table data, section text). Do NOT reply with only "Done", "Okay", or a generic acknowledgment — give a helpful answer based on the page content.`
       }
+
       const messagesWithContext = [{ role: 'system' as const, content: promptWithContext }, ...chatMessages.map((m) => ({ role: m.role, content: m.content }))]
+      let secondRawReply = ''
       try {
-        const secondReply = await callModel(messagesWithContext)
-        if (secondReply && secondReply.trim().length > 0) rawReply = secondReply
+        secondRawReply = await callModel(messagesWithContext)
       } catch (secondError) {
         if ((secondError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
           console.warn('Widget chat: all models timed out on second call with context (primary + fallback)')
@@ -606,9 +624,21 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         }
         throw secondError
       }
+
+      // Parse the second call — these become the final actions sent to the widget.
+      try {
+        actions = parseAndValidateActions(secondRawReply)
+      } catch (parseError) {
+        console.error('Widget chat: failed to parse second AI response, falling back to safe reply.', {
+          error: (parseError as Error)?.message,
+          secondRawReply,
+        })
+        const cleaned = cleanReply(secondRawReply)
+        actions = [{ command: { type: 'none' }, reply: cleaned ?? DEFAULT_TIMEOUT_REPLY }]
+      }
     }
 
-    // If a summary was requested: we have either an existing summary, a newly generated one (stored in DB), or no HTML in DB → default message.
+    // If a summary was requested, await it now (it ran in parallel with the first model call).
     if (summaryPromise) {
       try {
         const pageSummary = await summaryPromise
@@ -621,19 +651,11 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       }
     }
 
-    let actions: WidgetChatAction[]
-    try {
-      actions = parseAndValidateActions(rawReply)
-    } catch (parseError) {
-      console.error('Widget chat: failed to parse AI response, falling back to safe reply.', {
-        error: (parseError as Error)?.message,
-        rawReply,
-      })
-
-      const cleaned = cleanReply(rawReply)
-      const safeText = cleaned ?? DEFAULT_TIMEOUT_REPLY
-
-      actions = [{ command: { type: 'none' }, reply: safeText }]
+    // Strip any request_context commands from the final actions — they are internal signals
+    // and must never be forwarded to the widget (e.g. if the second call still returned one).
+    actions = actions.filter((a) => a.command.type !== 'request_context')
+    if (actions.length === 0) {
+      actions = [{ command: { type: 'none' }, reply: DEFAULT_TIMEOUT_REPLY }]
     }
 
     // If the widget sent a known set of page links, reject any navigate href that is not in that
