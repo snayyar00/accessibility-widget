@@ -625,16 +625,20 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         throw secondError
       }
 
-      // Parse the second call — these become the final actions sent to the widget.
+      // Parse the second call and merge with any widget commands from the first call.
+      // Non-request_context actions from the first call (e.g. font_size, tool) are preserved
+      // and the second call's answer is appended, so both execute on the widget.
+      const firstCallWidgetActions = actions.filter((a) => a.command.type !== 'request_context')
       try {
-        actions = parseAndValidateActions(secondRawReply)
+        const secondCallActions = parseAndValidateActions(secondRawReply)
+        actions = [...firstCallWidgetActions, ...secondCallActions]
       } catch (parseError) {
         console.error('Widget chat: failed to parse second AI response, falling back to safe reply.', {
           error: (parseError as Error)?.message,
           secondRawReply,
         })
         const cleaned = cleanReply(secondRawReply)
-        actions = [{ command: { type: 'none' }, reply: cleaned ?? DEFAULT_TIMEOUT_REPLY }]
+        actions = [...firstCallWidgetActions, { command: { type: 'none' }, reply: cleaned ?? DEFAULT_TIMEOUT_REPLY }]
       }
     }
 
@@ -663,7 +667,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     if (rawLinks.length > 0) {
       const validHrefs = new Set(rawLinks.map((l) => l.href.trim()))
       actions = actions.map((a) => {
-        if (a.command.type === 'navigate' && !validHrefs.has(a.command.href)) {
+        if (a.command.type === 'navigate' && !validHrefs.has(a.command.href.trim())) {
           console.warn('Widget chat: navigate href not in page links, blocked', { href: a.command.href })
           return { command: { type: 'none' as const }, reply: "I couldn't find that exact link on this page." }
         }
