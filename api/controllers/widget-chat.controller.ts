@@ -129,7 +129,10 @@ function parsePageContextRequest(reply: string): PageContextRequest[] | null {
   const m = reply.match(REQUEST_PAGE_CONTEXT_REGEX)
   if (!m) return null
   const value = m[1].trim().toLowerCase().replace(/\s+/g, '')
-  const parts = value.split(',').map((p) => p.trim()).filter(Boolean)
+  const parts = value
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean)
   const allowed = new Set<PageContextRequest>(['page_html', 'links'])
   const result: PageContextRequest[] = []
   for (const p of parts) {
@@ -423,10 +426,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${pageUrl}. You can refer to "this site" when giving directions.`
       }
       if (opts.includePageText != null && opts.includePageText.length > 0) {
-        const truncated =
-          opts.includePageText.length > MAX_PAGE_TEXT_IN_PROMPT
-            ? opts.includePageText.slice(0, MAX_PAGE_TEXT_IN_PROMPT) + '\n...[truncated]'
-            : opts.includePageText
+        const truncated = opts.includePageText.length > MAX_PAGE_TEXT_IN_PROMPT ? opts.includePageText.slice(0, MAX_PAGE_TEXT_IN_PROMPT) + '\n...[truncated]' : opts.includePageText
         systemPrompt += `\n\nPAGE TEXT (text content from the current page for answering questions about the page):\n${truncated}`
       }
       if (opts.includeLinks != null && opts.includeLinks.length > 0) {
@@ -539,9 +539,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       // hasAnyContent = at least one of the requested pieces has real data to give the model.
       const pageTextRequested = contextRequest.includes('page_html')
       const linksRequested = contextRequest.includes('links')
-      const hasAnyContent =
-        (pageTextRequested && pageText != null && pageText.trim().length > 0) ||
-        (linksRequested && includeLinks != null && includeLinks.length > 0)
+      const hasAnyContent = (pageTextRequested && pageText != null && pageText.trim().length > 0) || (linksRequested && includeLinks != null && includeLinks.length > 0)
       if (!hasAnyContent) {
         const noContentReply = "I'm sorry, the content of this page isn't available to me right now. Please try again later or ask me about the accessibility features instead."
         res.setHeader('Content-Type', 'application/json; charset=utf-8')
