@@ -73,6 +73,9 @@ type PageLink = {
   ariaLabel?: string
 }
 
+/** Max characters of page text injected into the system prompt on a context request. */
+const MAX_PAGE_TEXT_IN_PROMPT = 15_000
+
 /** Allowed "mode" values for tools that have cycling options (CYCLING BUTTONS in prompt). */
 const TOOL_MODES: Record<string, readonly string[]> = {
   contrast: ['light-contrast', 'high-contrast', 'dark-contrast'],
@@ -116,6 +119,25 @@ export interface WidgetChatAction {
   reply?: string
 }
 
+/** Format GPT uses to request page context. Parsed from assistant reply. */
+const REQUEST_PAGE_CONTEXT_REGEX = /\[REQUEST_PAGE_CONTEXT:\s*([^\]]+)\]/i
+
+export type PageContextRequest = 'page_html' | 'links'
+
+/** Parse [REQUEST_PAGE_CONTEXT: page_html] or [REQUEST_PAGE_CONTEXT: links] or [REQUEST_PAGE_CONTEXT: page_html,links] from reply. */
+function parsePageContextRequest(reply: string): PageContextRequest[] | null {
+  const m = reply.match(REQUEST_PAGE_CONTEXT_REGEX)
+  if (!m) return null
+  const value = m[1].trim().toLowerCase().replace(/\s+/g, '')
+  const parts = value.split(',').map((p) => p.trim()).filter(Boolean)
+  const allowed = new Set<PageContextRequest>(['page_html', 'links'])
+  const result: PageContextRequest[] = []
+  for (const p of parts) {
+    if (allowed.has(p as PageContextRequest)) result.push(p as PageContextRequest)
+  }
+  return result.length > 0 ? result : null
+}
+
 export interface WidgetChatRequestBody {
   /** Current user message (required). */
   message: string
@@ -130,9 +152,16 @@ export interface WidgetChatRequestBody {
   /**
    * Optional list of links on the current page that the widget sends for navigation help.
    * Frontend contract: prefers "links"; "pageLinks" is kept for backward compatibility.
+   * Only included in the system prompt when GPT requests context via [REQUEST_PAGE_CONTEXT: links].
    */
   pageLinks?: PageLink[]
   links?: PageLink[]
+  /**
+   * Optional page text content (from text-bearing elements: h1–h6, p, a, li, etc.).
+   * Only included in the system prompt when GPT requests context via [REQUEST_PAGE_CONTEXT: page_html].
+   * Widget should collect and send this when available so GPT can answer questions about page content.
+   */
+  pageTextContent?: string
 }
 
 /** Ensure replies are plain human-readable text (not JSON-looking). */
@@ -144,16 +173,6 @@ function cleanReply(raw: unknown): string | undefined {
     return undefined
   }
   return trimmed
-}
-
-/** Heuristic: detect when the user is asking for navigation or page links. */
-function isNavigationIntent(message: string): boolean {
-  const lower = message.trim().toLowerCase()
-  if (!lower) return false
-
-  const keywords = ['navigate', 'navigation', 'link', 'links', 'page', 'pages', 'open', 'go to', 'go back to', 'take me to', 'show me page links', 'what pages are available', 'what links are available', 'external links', 'help me navigate']
-
-  return keywords.some((kw) => lower.includes(kw))
 }
 
 /** Detect if the user is asking for a page summary (so we can fetch from DB and append it). */
@@ -382,7 +401,7 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
 export async function handleWidgetChatRequest(req: Request, res: Response) {
   try {
     const body = req.body as WidgetChatRequestBody
-    const { message, messages: history = [], currentUrl, siteUrl, language, pageLinks, links } = body
+    const { message, messages: history = [], currentUrl, siteUrl, language, pageLinks, links, pageTextContent } = body
     const pageUrl = typeof currentUrl === 'string' && currentUrl.trim() ? currentUrl.trim() : typeof siteUrl === 'string' && siteUrl.trim() ? siteUrl.trim() : undefined
 
     if (!message || typeof message !== 'string') {
@@ -396,33 +415,42 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       return
     }
 
-    let systemPrompt = WIDGET_CHAT_SYSTEM_PROMPT
-    if (pageUrl) {
-      systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${pageUrl}. You can refer to "this site" when giving directions.`
-    }
-
     const rawLinks: PageLink[] = (Array.isArray(pageLinks) && pageLinks.length ? pageLinks : Array.isArray(links) && links.length ? links : []).filter((link): link is PageLink => !!link && typeof link.href === 'string' && !!link.href.trim())
 
-    const shouldIncludeLinksInPrompt = isNavigationIntent(trimmedMessage)
-    const linksForPrompt = shouldIncludeLinksInPrompt ? rawLinks.slice(0, 50) : []
-
-    if (linksForPrompt.length > 0) {
-      systemPrompt += `\n\nPAGE LINKS:\n`
-      systemPrompt += linksForPrompt
-        .map((link, index) => {
-          const label = typeof link.text === 'string' && link.text.trim().length ? link.text.trim() : typeof link.ariaLabel === 'string' && link.ariaLabel.trim().length ? link.ariaLabel.trim() : link.href.trim()
-          return `${index + 1}. ${label} -> ${link.href.trim()}`
-        })
-        .join('\n')
-      systemPrompt +=
-        `\n\nThe numbered PAGE LINKS above are real links on the current page. ` +
-        `You can help the user choose between them in your "reply", and when they clearly ask to open one of these links, ` +
-        `return a navigate command with the matching href, for example: { "command": { "type": "navigate", "href": "<one of the URLs above>" }, "reply": "Opening that page for you." }.`
+    const buildBaseSystemPrompt = (opts: { includePageText?: string; includeLinks?: PageLink[] }) => {
+      let systemPrompt = WIDGET_CHAT_SYSTEM_PROMPT
+      if (pageUrl) {
+        systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${pageUrl}. You can refer to "this site" when giving directions.`
+      }
+      if (opts.includePageText != null && opts.includePageText.length > 0) {
+        const truncated =
+          opts.includePageText.length > MAX_PAGE_TEXT_IN_PROMPT
+            ? opts.includePageText.slice(0, MAX_PAGE_TEXT_IN_PROMPT) + '\n...[truncated]'
+            : opts.includePageText
+        systemPrompt += `\n\nPAGE TEXT (text content from the current page for answering questions about the page):\n${truncated}`
+      }
+      if (opts.includeLinks != null && opts.includeLinks.length > 0) {
+        const linksForPrompt = opts.includeLinks.slice(0, 50)
+        systemPrompt += `\n\nPAGE LINKS:\n`
+        systemPrompt += linksForPrompt
+          .map((link, index) => {
+            const label = typeof link.text === 'string' && link.text.trim().length ? link.text.trim() : typeof link.ariaLabel === 'string' && link.ariaLabel.trim().length ? link.ariaLabel.trim() : link.href.trim()
+            return `${index + 1}. ${label} -> ${link.href.trim()}`
+          })
+          .join('\n')
+        systemPrompt +=
+          `\n\nThe numbered PAGE LINKS above are real links on the current page. ` +
+          `You can help the user choose between them in your "reply", and when they clearly ask to open one of these links, ` +
+          `return a navigate command with the matching href, for example: { "command": { "type": "navigate", "href": "<one of the URLs above>" }, "reply": "Opening that page for you." }.`
+      }
+      if (language) {
+        systemPrompt += `\n\nPREFERRED LANGUAGE: Prefer responding in language code "${language}" if the user writes in that language.`
+      }
+      return systemPrompt
     }
 
-    if (language) {
-      systemPrompt += `\n\nPREFERRED LANGUAGE: Prefer responding in language code "${language}" if the user writes in that language.`
-    }
+    // First call: no page text, no links — GPT will request context if the query needs it
+    let systemPrompt = buildBaseSystemPrompt({})
 
     // Summary request from widget: fetch existing summary, or if HTML exists in DB generate and store one; if no HTML in DB return default.
     const isSummary = Boolean(pageUrl && isSummaryRequest(trimmedMessage))
@@ -455,19 +483,33 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
 
     let rawReply = ''
 
-    try {
-      // Primary model via OpenRouter (10s timeout)
-      const completion = await withTimeout(
-        openrouter.chat.completions.create({
-          model: 'google/gemini-2.5-flash-lite',
-          messages: messagesForModel,
-        }),
-        WIDGET_CHAT_TIMEOUT_MS,
-      )
+    const callModel = async (messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>) => {
+      try {
+        const completion = await withTimeout(
+          openrouter.chat.completions.create({
+            model: 'google/gemini-2.5-flash-lite',
+            messages,
+          }),
+          WIDGET_CHAT_TIMEOUT_MS,
+        )
+        return completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string' ? completion.choices[0].message.content : ''
+      } catch (primaryError) {
+        if ((primaryError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') throw primaryError
+        const fallbackCompletion = await withTimeout(
+          openrouter.chat.completions.create({
+            model: 'openai/gpt-4o-mini',
+            messages,
+          }),
+          WIDGET_CHAT_TIMEOUT_MS,
+        )
+        return fallbackCompletion.choices?.[0]?.message?.content && typeof fallbackCompletion.choices[0].message.content === 'string' ? fallbackCompletion.choices[0].message.content : ''
+      }
+    }
 
-      rawReply = completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string' ? completion.choices[0].message.content : ''
-    } catch (primaryError) {
-      if ((primaryError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
+    try {
+      rawReply = await callModel(messagesForModel)
+    } catch (firstError) {
+      if ((firstError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
         console.warn('Widget chat: primary model request timed out')
         res.setHeader('Content-Type', 'application/json; charset=utf-8')
         res.status(200).json({
@@ -476,22 +518,56 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         })
         return
       }
+      throw firstError
+    }
 
-      console.warn('Primary model failed, falling back to openai/gpt-4o-mini for widget chat')
+    // If GPT requested page context, resend with that context in the system prompt
+    const contextRequest = parsePageContextRequest(rawReply)
+    if (contextRequest && contextRequest.length > 0) {
+      let pageText: string | undefined
+      if (contextRequest.includes('page_html')) {
+        if (typeof pageTextContent === 'string' && pageTextContent.trim().length > 0) {
+          pageText = pageTextContent.trim()
+        } else if (pageUrl) {
+          const html = await getPageHtmlByUrl({ url: pageUrl, urlHash: null })
+          pageText = html != null ? extractTextFromHtml(html) : undefined
+        }
+      }
+      const includeLinks = contextRequest.includes('links') ? rawLinks : undefined
 
+      // If none of the requested context is actually available, return a clear fallback immediately.
+      // hasAnyContent = at least one of the requested pieces has real data to give the model.
+      const pageTextRequested = contextRequest.includes('page_html')
+      const linksRequested = contextRequest.includes('links')
+      const hasAnyContent =
+        (pageTextRequested && pageText != null && pageText.trim().length > 0) ||
+        (linksRequested && includeLinks != null && includeLinks.length > 0)
+      if (!hasAnyContent) {
+        const noContentReply = "I'm sorry, the content of this page isn't available to me right now. Please try again later or ask me about the accessibility features instead."
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.status(200).json({
+          reply: noContentReply,
+          actions: [{ command: { type: 'none' }, reply: noContentReply }],
+        })
+        return
+      }
+
+      let promptWithContext = buildBaseSystemPrompt({
+        includePageText: pageText ?? undefined,
+        includeLinks,
+      })
+      if (isSummary) {
+        promptWithContext += `\n\nIMPORTANT: The user asked for a page summary. The summary will be added to the response automatically — do NOT say you cannot summarize, cannot help with the summary, or mention the summary at all. Reply only with the appropriate widget command(s) the user requested (if any) and short confirmations of those actions (e.g. "Opening the menu." or "Done."). If the user only asked for a summary and no widget action, respond with { "command": { "type": "none" }, "reply": "Okay." } or a similar short acknowledgement.`
+      } else {
+        promptWithContext += `\n\nIMPORTANT: You requested the PAGE TEXT and/or PAGE LINKS above because the user asked a question about the page. You MUST answer their question using this content. Provide the actual information (e.g. numbers, names, table data, section text). Do NOT reply with only "Done", "Okay", or a generic acknowledgment — give a helpful answer based on the page content.`
+      }
+      const messagesWithContext = [{ role: 'system' as const, content: promptWithContext }, ...chatMessages.map((m) => ({ role: m.role, content: m.content }))]
       try {
-        const fallbackCompletion = await withTimeout(
-          openrouter.chat.completions.create({
-            model: 'openai/gpt-4o-mini',
-            messages: messagesForModel,
-          }),
-          WIDGET_CHAT_TIMEOUT_MS,
-        )
-
-        rawReply = fallbackCompletion.choices?.[0]?.message?.content && typeof fallbackCompletion.choices[0].message.content === 'string' ? fallbackCompletion.choices[0].message.content : ''
-      } catch (fallbackError) {
-        if ((fallbackError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
-          console.warn('Widget chat: fallback model request timed out')
+        const secondReply = await callModel(messagesWithContext)
+        if (secondReply && secondReply.trim().length > 0) rawReply = secondReply
+      } catch (secondError) {
+        if ((secondError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
+          console.warn('Widget chat: second call (with context) timed out')
           res.setHeader('Content-Type', 'application/json; charset=utf-8')
           res.status(200).json({
             reply: DEFAULT_TIMEOUT_REPLY,
@@ -499,7 +575,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
           })
           return
         }
-        throw fallbackError
+        throw secondError
       }
     }
 
