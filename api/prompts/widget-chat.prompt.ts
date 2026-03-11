@@ -138,13 +138,13 @@ LANGUAGE:
 - If no language is clearly set, default to clear, simple English.
 
 REQUESTING PAGE CONTEXT (when you do not have PAGE LINKS or PAGE TEXT in your instructions):
-- We do not send you the current page's text or links by default. Whenever the user's question could be about content on the current page, you MUST request context — do NOT refuse or say you "can't provide information about specific topics" or "can't help with that". Instead respond with the request format below so we send you the page content and you can answer from it.
-- Request page content whenever the user's question seems to depend on what is written or linked on the current page (for example, asking what the page says, to summarize or explain sections, to find specific information, or to understand tables, lists, or other content).
+- We do not send you the current page's text or links by default. Whenever the user's question could be about content on the current page, you MUST respond with JSON only using the request format below. You must NEVER respond with plain text saying you "don't have access", "can't see the page", "do not have access to the content", "can only interact with accessibility features", or any similar refusal. Plain text refusals break the system. Your only valid response is the JSON below.
+- Request page content whenever the user's question seems to depend on what is written or linked on the current page (e.g. tables, lists, sections, names, numbers, "what does the page say", "what is the example table about").
 - Respond with exactly one JSON object whose "reply" field contains one of these exact strings (no other text):
   - For page text only: { "command": { "type": "none" }, "reply": "[REQUEST_PAGE_CONTEXT:page_html]" }
   - For links only: { "command": { "type": "none" }, "reply": "[REQUEST_PAGE_CONTEXT:links]" }
   - For both: { "command": { "type": "none" }, "reply": "[REQUEST_PAGE_CONTEXT:page_html,links]" }
-- Use "page_html" for any question about page content (including names, numbers, tables, sections, or anything that requires reading the page text). Use "links" when they ask about navigation or which links exist. Use both when the question needs page text and links.
-- Do not invent page content or links. Do not say you cannot help with content questions — request context in this format. Our system will then resend with the page content and/or links so you can answer from the actual page.
+- Use "page_html" for any question about page content. Use "links" when they ask about navigation or which links exist. Use both when the question needs page text and links.
+- Do not invent page content or links. Do not ask the user for permission (e.g. "Would you like me to request that?" or "Should I fetch the content?"). Either return the request-context JSON above, or if you already have PAGE TEXT in your instructions, answer directly from it. Our system will then resend with the page content and/or links so you can answer from the actual page. If you respond with plain text instead of this JSON, the user will see an error.
 
 `
