@@ -25,8 +25,7 @@ const WIDGET_CHAT_TIMEOUT_MS = 20_000
 const DEFAULT_TIMEOUT_REPLY = "I'm taking a bit longer than usual. Please try again in a moment."
 
 /** User-facing message when page context was requested but the model could not answer from it. */
-const PAGE_CONTEXT_FAILURE_REPLY =
-  "I had trouble reading the page content for that question. Please try rephrasing or ask about something else on the page."
+const PAGE_CONTEXT_FAILURE_REPLY = 'I had trouble reading the page content for that question. Please try rephrasing or ask about something else on the page.'
 
 /** OpenRouter model IDs. Primary is tried first; fallback is used on error or when primary returns refusal/invalid JSON. */
 const PRIMARY_MODEL = 'google/gemini-2.5-flash-lite'
@@ -177,7 +176,7 @@ function looksLikeContextRefusal(text: string): boolean {
     'content of the page',
     'content of the web page',
     "i'm sorry, but i do not have access",
-    "i am sorry, but i cannot access",
+    'i am sorry, but i cannot access',
     "i can't see the content",
   ]
   return refusalPhrases.some((p) => lower.includes(p))
@@ -474,10 +473,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       return
     }
     const { message, messages: rawHistory = [], currentUrl, siteUrl, language: rawLanguage, pageLinks, links, pageTextContent } = body
-    const language =
-      typeof rawLanguage === 'string' && rawLanguage.trim()
-        ? rawLanguage.trim().replace(/\s+/g, ' ').slice(0, 20)
-        : undefined
+    const language = typeof rawLanguage === 'string' && rawLanguage.trim() ? rawLanguage.trim().replace(/\s+/g, ' ').slice(0, 20) : undefined
     // Limit conversation history to the most recent MAX_HISTORY_TURNS turns to cap prompt size.
     const history = rawHistory.slice(-(MAX_HISTORY_TURNS * 2))
     const pageUrl = typeof currentUrl === 'string' && currentUrl.trim() ? currentUrl.trim() : typeof siteUrl === 'string' && siteUrl.trim() ? siteUrl.trim() : undefined
@@ -503,8 +499,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       let systemPrompt = WIDGET_CHAT_SYSTEM_PROMPT
       if (pageUrl) {
         const sanitizedUrl = pageUrl.replace(/\s+/g, ' ').trim()
-        const safeUrl =
-          sanitizedUrl.length > MAX_PAGE_URL_LENGTH ? sanitizedUrl.slice(0, MAX_PAGE_URL_LENGTH) + '…' : sanitizedUrl
+        const safeUrl = sanitizedUrl.length > MAX_PAGE_URL_LENGTH ? sanitizedUrl.slice(0, MAX_PAGE_URL_LENGTH) + '…' : sanitizedUrl
         systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${safeUrl}. You can refer to "this site" when giving directions.`
       }
       if (opts.includePageText != null && opts.includePageText.length > 0) {
@@ -617,9 +612,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     let contextRequest = parsePageContextRequest(rawReply)
     const hasPageText = typeof pageTextContent === 'string' && pageTextContent.trim().length > 0
     const hasLinks = rawLinks.length > 0
-    const shouldForceContext =
-      (!contextRequest || contextRequest.length === 0) &&
-      (looksLikeContextRefusal(rawReply) || (looksLikeAskingForContentPermission(rawReply) && (hasPageText || hasLinks)))
+    const shouldForceContext = (!contextRequest || contextRequest.length === 0) && (looksLikeContextRefusal(rawReply) || (looksLikeAskingForContentPermission(rawReply) && (hasPageText || hasLinks)))
     if (shouldForceContext && (hasPageText || hasLinks)) {
       contextRequest = []
       if (hasPageText) contextRequest.push('page_html')
@@ -687,7 +680,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       }
       const messagesWithContext = [{ role: 'system' as const, content: promptWithContext }, ...chatMessages.map((m) => ({ role: m.role, content: m.content }))]
       try {
-        let secondReply = await callModel(messagesWithContext)
+        const secondReply = await callModel(messagesWithContext)
         if (secondReply && secondReply.trim().length > 0) {
           rawReply = secondReply
           // If second call returned a refusal or non-JSON, retry with fallback model only (primary may be ignoring page context)
@@ -757,8 +750,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     } catch (parseError) {
       const cleaned = cleanReply(rawReply)
       const hasContextRequest = Boolean(contextRequest && contextRequest.length > 0)
-      let safeText =
-        cleaned ?? (hasContextRequest ? PAGE_CONTEXT_FAILURE_REPLY : DEFAULT_TIMEOUT_REPLY)
+      let safeText = cleaned ?? (hasContextRequest ? PAGE_CONTEXT_FAILURE_REPLY : DEFAULT_TIMEOUT_REPLY)
       const isRefusal = hasContextRequest && looksLikeContextRefusal(rawReply)
       if (isRefusal) {
         safeText = PAGE_CONTEXT_FAILURE_REPLY
