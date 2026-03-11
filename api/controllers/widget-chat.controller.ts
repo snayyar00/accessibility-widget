@@ -24,6 +24,17 @@ const WIDGET_CHAT_TIMEOUT_MS = 20_000
 
 const DEFAULT_TIMEOUT_REPLY = "I'm taking a bit longer than usual. Please try again in a moment."
 
+/** User-facing message when page context was requested but the model could not answer from it. */
+const PAGE_CONTEXT_FAILURE_REPLY =
+  "I had trouble reading the page content for that question. Please try rephrasing or ask about something else on the page."
+
+/** OpenRouter model IDs. Primary is tried first; fallback is used on error or when primary returns refusal/invalid JSON. */
+const PRIMARY_MODEL = 'google/gemini-2.5-flash-lite'
+const FALLBACK_MODEL = 'openai/gpt-4o-mini'
+
+/** Max length for page URL injected into the system prompt (avoid prompt abuse). */
+const MAX_PAGE_URL_LENGTH = 2_048
+
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('WIDGET_CHAT_TIMEOUT')), ms)
@@ -147,6 +158,51 @@ function parsePageContextRequest(reply: string): PageContextRequest[] | null {
   return result.length > 0 ? result : null
 }
 
+/** Detect first-call reply that refused in plain text instead of returning [REQUEST_PAGE_CONTEXT:...] JSON. */
+function looksLikeContextRefusal(text: string): boolean {
+  const t = text.trim()
+  if (!t) return false
+  if (t.startsWith('{') && t.includes('"command"')) return false
+  const lower = t.toLowerCase()
+  const refusalPhrases = [
+    'do not have access',
+    "don't have access",
+    "can't see the content",
+    'cannot see the content',
+    'cannot access the content',
+    'cannot access the web page',
+    'unable to provide information',
+    'can only interact with',
+    'only interact with the accessibility',
+    'content of the page',
+    'content of the web page',
+    "i'm sorry, but i do not have access",
+    "i am sorry, but i cannot access",
+    "i can't see the content",
+  ]
+  return refusalPhrases.some((p) => lower.includes(p))
+}
+
+/** Detect first-call reply that asks the user for permission to fetch content instead of returning [REQUEST_PAGE_CONTEXT:...]. */
+function looksLikeAskingForContentPermission(text: string): boolean {
+  const lower = text.toLowerCase()
+  const permissionPhrases = [
+    'would you like me to request',
+    'would you like me to fetch',
+    'should i request',
+    'should i fetch',
+    'want me to request',
+    'want me to fetch',
+    'i need to see its content',
+    'i need to see the content',
+    'need to see its content',
+    'need to see the content',
+    'i need to see the page',
+    'need to see the page',
+  ]
+  return permissionPhrases.some((p) => lower.includes(p))
+}
+
 export interface WidgetChatRequestBody {
   /** Current user message (required). */
   message: string
@@ -166,9 +222,10 @@ export interface WidgetChatRequestBody {
   pageLinks?: PageLink[]
   links?: PageLink[]
   /**
-   * Optional page text content (from text-bearing elements: h1–h6, p, a, li, etc.).
-   * Only included in the system prompt when GPT requests context via [REQUEST_PAGE_CONTEXT: page_html].
-   * Widget should collect and send this when available so GPT can answer questions about page content.
+   * Optional page text content. Only included in the system prompt when GPT requests context via [REQUEST_PAGE_CONTEXT: page_html].
+   * Widget should collect and send this when available so the model can answer questions about page content.
+   * Expected format: plain text with semantic tags per line, e.g. "[H1] Title", "[P] Paragraph text", "[A] Link text (href)",
+   * "[TH] Header", "[TD] Cell", "[LI] List item", "[BLOCKQUOTE] ...", "[PRE] ...", etc. Newline-separated.
    */
   pageTextContent?: string
 }
@@ -404,13 +461,23 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
 /**
  * POST /widget/chat
  * AI chat endpoint for the embeddable widget (voice and text).
- * Receives a message (and optional history), sends to the model with the widget system prompt,
- * returns a single JSON response { reply } for the widget to display or speak (TTS).
+ * Receives a message (and optional history, pageTextContent, links), sends to the model with the
+ * widget system prompt. If the model requests page context via [REQUEST_PAGE_CONTEXT:...], a
+ * second call is made with that context injected. Returns { reply, actions } for the widget to
+ * display or speak (TTS). Uses primary model with fallback on error or refusal.
  */
 export async function handleWidgetChatRequest(req: Request, res: Response) {
   try {
     const body = req.body as WidgetChatRequestBody
-    const { message, messages: rawHistory = [], currentUrl, siteUrl, language, pageLinks, links, pageTextContent } = body
+    if (!body || typeof body !== 'object') {
+      res.status(400).json({ error: 'Invalid request body.' })
+      return
+    }
+    const { message, messages: rawHistory = [], currentUrl, siteUrl, language: rawLanguage, pageLinks, links, pageTextContent } = body
+    const language =
+      typeof rawLanguage === 'string' && rawLanguage.trim()
+        ? rawLanguage.trim().replace(/\s+/g, ' ').slice(0, 20)
+        : undefined
     // Limit conversation history to the most recent MAX_HISTORY_TURNS turns to cap prompt size.
     const history = rawHistory.slice(-(MAX_HISTORY_TURNS * 2))
     const pageUrl = typeof currentUrl === 'string' && currentUrl.trim() ? currentUrl.trim() : typeof siteUrl === 'string' && siteUrl.trim() ? siteUrl.trim() : undefined
@@ -435,7 +502,10 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     const buildBaseSystemPrompt = (opts: { includePageText?: string; includeLinks?: PageLink[] }) => {
       let systemPrompt = WIDGET_CHAT_SYSTEM_PROMPT
       if (pageUrl) {
-        systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${pageUrl}. You can refer to "this site" when giving directions.`
+        const sanitizedUrl = pageUrl.replace(/\s+/g, ' ').trim()
+        const safeUrl =
+          sanitizedUrl.length > MAX_PAGE_URL_LENGTH ? sanitizedUrl.slice(0, MAX_PAGE_URL_LENGTH) + '…' : sanitizedUrl
+        systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${safeUrl}. You can refer to "this site" when giving directions.`
       }
       if (opts.includePageText != null && opts.includePageText.length > 0) {
         const truncated = opts.includePageText.length > MAX_PAGE_TEXT_IN_PROMPT ? opts.includePageText.slice(0, MAX_PAGE_TEXT_IN_PROMPT) + '\n...[truncated]' : opts.includePageText
@@ -483,11 +553,15 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       systemPrompt += `\n\nIMPORTANT: The user asked for a page summary. The summary will be added to the response automatically — do NOT say you cannot summarize, cannot help with the summary, or mention the summary at all. Reply only with the appropriate widget command(s) the user requested (if any) and short confirmations of those actions (e.g. "Opening the menu." or "Done."). If the user only asked for a summary and no widget action, respond with { "command": { "type": "none" }, "reply": "Okay." } or a similar short acknowledgement.`
     }
 
+    // Cap each history message length to avoid prompt inflation and abuse.
     const chatMessages = [
-      ...history.map((m) => ({
-        role: m.role as 'user' | 'assistant' | 'system',
-        content: m.content,
-      })),
+      ...history.map((m) => {
+        const content = String(m.content ?? '')
+        return {
+          role: m.role as 'user' | 'assistant' | 'system',
+          content: content.length > MAX_MESSAGE_LENGTH ? content.slice(0, MAX_MESSAGE_LENGTH) + '…' : content,
+        }
+      }),
       { role: 'user' as const, content: trimmedMessage },
     ].filter((m) => m.role !== 'system') as Array<{ role: 'user' | 'assistant'; content: string }>
 
@@ -499,7 +573,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       try {
         const completion = await withTimeout(
           openrouter.chat.completions.create({
-            model: 'google/gemini-2.5-flash-lite',
+            model: PRIMARY_MODEL,
             messages,
           }),
           WIDGET_CHAT_TIMEOUT_MS,
@@ -508,15 +582,20 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       } catch (primaryError) {
         // Primary failed (timeout or any error) — always try the fallback model
         console.warn('Widget chat: primary model failed, trying fallback', { reason: (primaryError as Error)?.message })
-        const fallbackCompletion = await withTimeout(
-          openrouter.chat.completions.create({
-            model: 'openai/gpt-4o-mini',
-            messages,
-          }),
-          WIDGET_CHAT_TIMEOUT_MS,
-        )
-        return fallbackCompletion.choices?.[0]?.message?.content && typeof fallbackCompletion.choices[0].message.content === 'string' ? fallbackCompletion.choices[0].message.content : ''
+        return callFallbackModel(messages)
       }
+    }
+
+    /** Call only the fallback model (used when primary returns invalid/refusal and we want to retry with a different model). */
+    const callFallbackModel = async (messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>) => {
+      const completion = await withTimeout(
+        openrouter.chat.completions.create({
+          model: FALLBACK_MODEL,
+          messages,
+        }),
+        WIDGET_CHAT_TIMEOUT_MS,
+      )
+      return completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string' ? completion.choices[0].message.content : ''
     }
 
     try {
@@ -534,9 +613,21 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       throw firstError
     }
 
-    // If GPT requested page context, resend with that context in the system prompt
-    const contextRequest = parsePageContextRequest(rawReply)
+    // If GPT requested page context (or replied with refusal/permission-asking despite having content), resend with context
+    let contextRequest = parsePageContextRequest(rawReply)
+    const hasPageText = typeof pageTextContent === 'string' && pageTextContent.trim().length > 0
+    const hasLinks = rawLinks.length > 0
+    const shouldForceContext =
+      (!contextRequest || contextRequest.length === 0) &&
+      (looksLikeContextRefusal(rawReply) || (looksLikeAskingForContentPermission(rawReply) && (hasPageText || hasLinks)))
+    if (shouldForceContext && (hasPageText || hasLinks)) {
+      contextRequest = []
+      if (hasPageText) contextRequest.push('page_html')
+      if (hasLinks) contextRequest.push('links')
+      console.log('Widget chat: first reply was refusal or permission-asking, forcing second trip with context', { requested: contextRequest })
+    }
     if (contextRequest && contextRequest.length > 0) {
+      console.log('Widget chat: second trip — model requested context', { requested: contextRequest })
       let pageText: string | undefined
       if (contextRequest.includes('page_html')) {
         if (typeof pageTextContent === 'string' && pageTextContent.trim().length > 0) {
@@ -547,6 +638,10 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         }
       }
       const includeLinks = contextRequest.includes('links') ? rawLinks : undefined
+      console.log('Widget chat: second trip — injecting context', {
+        pageTextChars: pageText != null ? pageText.length : 0,
+        linksCount: includeLinks != null ? includeLinks.length : 0,
+      })
 
       // If none of the requested context is actually available, return a clear fallback immediately.
       // hasAnyContent = at least one of the requested pieces has real data to give the model.
@@ -588,12 +683,47 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       if (isSummary) {
         promptWithContext += `\n\nIMPORTANT: The user asked for a page summary. The summary will be added to the response automatically — do NOT say you cannot summarize, cannot help with the summary, or mention the summary at all. Reply only with the appropriate widget command(s) the user requested (if any) and short confirmations of those actions (e.g. "Opening the menu." or "Done."). If the user only asked for a summary and no widget action, respond with { "command": { "type": "none" }, "reply": "Okay." } or a similar short acknowledgement.`
       } else {
-        promptWithContext += `\n\nIMPORTANT: You requested the PAGE TEXT and/or PAGE LINKS above because the user asked a question about the page. You MUST answer their question using this content. Provide the actual information (e.g. numbers, names, table data, section text). Do NOT reply with only "Done", "Okay", or a generic acknowledgment — give a helpful answer based on the page content.`
+        promptWithContext += `\n\nIMPORTANT — YOU HAVE PAGE CONTEXT: The PAGE TEXT/LINKS above were injected because the user asked a question about this page. You MUST answer that question and put your full answer in the "reply" field. Use { "command": { "type": "none" }, "reply": "<your answer here>" }. The "reply" field must contain your substantive answer (e.g. what the table shows, what the section says, names and numbers from the page). Do NOT leave "reply" empty. Do NOT reply with only "Done" or "Okay" — write the actual answer from the page content.`
       }
       const messagesWithContext = [{ role: 'system' as const, content: promptWithContext }, ...chatMessages.map((m) => ({ role: m.role, content: m.content }))]
       try {
-        const secondReply = await callModel(messagesWithContext)
-        if (secondReply && secondReply.trim().length > 0) rawReply = secondReply
+        let secondReply = await callModel(messagesWithContext)
+        if (secondReply && secondReply.trim().length > 0) {
+          rawReply = secondReply
+          // If second call returned a refusal or non-JSON, retry with fallback model only (primary may be ignoring page context)
+          const secondIsRefusal = looksLikeContextRefusal(secondReply)
+          let secondParses = false
+          try {
+            parseAndValidateActions(secondReply)
+            secondParses = true
+          } catch {
+            // ignore
+          }
+          if (secondIsRefusal || !secondParses) {
+            console.warn('Widget chat: second call returned refusal or invalid JSON, retrying with fallback model only', {
+              refusal: secondIsRefusal,
+              parseOk: secondParses,
+            })
+            try {
+              const fallbackReply = await callFallbackModel(messagesWithContext)
+              if (fallbackReply && fallbackReply.trim().length > 0 && !looksLikeContextRefusal(fallbackReply)) {
+                try {
+                  parseAndValidateActions(fallbackReply)
+                  rawReply = fallbackReply
+                } catch {
+                  // fallback also didn't parse; keep original secondReply
+                }
+              }
+            } catch (fallbackRetryError) {
+              if ((fallbackRetryError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
+                console.warn('Widget chat: fallback retry timed out on second call')
+              }
+              // keep rawReply from first second call
+            }
+          }
+        } else if (contextRequest && contextRequest.length > 0) {
+          rawReply = '{"command":{"type":"none"},"reply":""}'
+        }
       } catch (secondError) {
         if ((secondError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
           console.warn('Widget chat: all models timed out on second call with context (primary + fallback)')
@@ -625,13 +755,25 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     try {
       actions = parseAndValidateActions(rawReply)
     } catch (parseError) {
-      console.error('Widget chat: failed to parse AI response, falling back to safe reply.', {
-        error: (parseError as Error)?.message,
-        rawReply,
-      })
-
       const cleaned = cleanReply(rawReply)
-      const safeText = cleaned ?? DEFAULT_TIMEOUT_REPLY
+      const hasContextRequest = Boolean(contextRequest && contextRequest.length > 0)
+      let safeText =
+        cleaned ?? (hasContextRequest ? PAGE_CONTEXT_FAILURE_REPLY : DEFAULT_TIMEOUT_REPLY)
+      const isRefusal = hasContextRequest && looksLikeContextRefusal(rawReply)
+      if (isRefusal) {
+        safeText = PAGE_CONTEXT_FAILURE_REPLY
+      }
+
+      // Log as error only when we have no usable reply; otherwise the model answered in plain text (e.g. page-context answer).
+      const usedPlainText = !isRefusal && cleaned != null && cleaned.length > 0
+      if (usedPlainText) {
+        console.warn('Widget chat: AI returned plain text instead of JSON, using as reply.', { length: rawReply.length })
+      } else {
+        console.error('Widget chat: failed to parse AI response, falling back to safe reply.', {
+          error: (parseError as Error)?.message,
+          rawReply: rawReply.length > 200 ? rawReply.slice(0, 200) + '…' : rawReply,
+        })
+      }
 
       actions = [{ command: { type: 'none' }, reply: safeText }]
     }
@@ -641,7 +783,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     if (rawLinks.length > 0) {
       const validHrefs = new Set(rawLinks.map((l) => l.href.trim()))
       actions = actions.map((a) => {
-        if (a.command.type === 'navigate' && !validHrefs.has(a.command.href)) {
+        if (a.command.type === 'navigate' && !validHrefs.has(a.command.href.trim())) {
           console.warn('Widget chat: navigate href not in page links, blocked', { href: a.command.href })
           return { command: { type: 'none' as const }, reply: "I couldn't find that exact link on this page." }
         }
@@ -652,6 +794,26 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     // Derive a user-facing reply from the first non-empty action reply, not from the raw JSON string
     const firstActionWithReply = actions.find((a) => typeof a.reply === 'string' && a.reply.trim().length > 0)
     let replyToSend = cleanReply(firstActionWithReply?.reply) ?? ''
+
+    // If we did a second trip with page context but the model returned no meaningful reply, try raw text then fallback
+    if (replyToSend === '' && contextRequest && contextRequest.length > 0) {
+      const rawTrimmed = rawReply.trim()
+      const looksLikeJson = rawTrimmed.startsWith('{') || rawTrimmed.startsWith('[')
+      if (!looksLikeJson && rawTrimmed.length > 0) {
+        const cleaned = cleanReply(rawReply)
+        if (cleaned) {
+          replyToSend = cleaned
+          actions = [{ command: { type: 'none' as const }, reply: replyToSend }]
+        }
+      }
+      if (replyToSend === '') {
+        console.warn('Widget chat: second trip returned empty reply despite page context being injected', {
+          rawSnippet: rawReply.length > 300 ? rawReply.slice(0, 300) + '…' : rawReply,
+        })
+        replyToSend = PAGE_CONTEXT_FAILURE_REPLY
+        actions = [{ command: { type: 'none' as const }, reply: replyToSend }]
+      }
+    }
 
     if (summaryToAppend) {
       // When we have a summary, the main reply is the summary only (no generic model line)
