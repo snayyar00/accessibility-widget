@@ -836,6 +836,27 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     toggleButtonByName('Page Structure', toggles.pageStructure);
     toggleButtonByName('Dark Mode', toggles.darkMode);
 
+    // AI Assistant (floating assistant) and Text Simplifier (tool)
+    const aiFloatWrap = queryInWidget(iframeDoc, '.asw-ai-assistant-float-wrap');
+    if (aiFloatWrap) {
+      (aiFloatWrap as HTMLElement).style.display = toggles.aiButton ? '' : 'none';
+    }
+
+    const aiMenuButton = queryInWidget(iframeDoc, '.asw-menu-ai-assistant-btn');
+    if (aiMenuButton) {
+      (aiMenuButton as HTMLElement).style.display = toggles.aiButton ? '' : 'none';
+    }
+
+    const textSimplifierBtn = queryInWidget(
+      iframeDoc,
+      '.asw-btn[data-key="text-simplifier"]',
+    );
+    if (textSimplifierBtn) {
+      (textSimplifierBtn as HTMLElement).style.display = toggles.textSimplifier
+        ? ''
+        : 'none';
+    }
+
     // Widget Position - specific dropdown element
     const widgetPositionDropdown = queryInWidget(
       iframeDoc,
@@ -942,7 +963,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
       toggles.voiceNavigation ||
       toggles.keyboardNavigation ||
       toggles.pageStructure ||
-      toggles.darkMode;
+      toggles.darkMode ||
+      toggles.textSimplifier;
 
     const sectionVisibility: Array<{ match: string; visible: boolean }> = [
       { match: 'Accessibility Profiles', visible: hasAccessibilityProfiles },
@@ -1836,6 +1858,55 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                       </div>
                     </div>
 
+                    {/* AI assistant */}
+                    <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-[#333333] text-sm md:text-base">
+                          AI Assistant
+                        </span>
+                        <Switch
+                          checked={Boolean(toggles.aiButton)}
+                          onChange={(e) =>
+                            setToggles((prev) => ({
+                              ...prev,
+                              aiButton: e.target.checked,
+                            }))
+                          }
+                          inputProps={{
+                            'aria-label': 'AI Assistant',
+                            role: 'switch',
+                            'aria-checked': toggles.aiButton,
+                          }}
+                          color="primary"
+                          sx={{
+                            '& .MuiSwitch-switchBase': {
+                              color: '#222D73',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked': {
+                              color: '#145DA6',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                              backgroundColor: '#82B2E7',
+                            },
+                            '& .MuiSwitch-switchBase:not(.Mui-checked) + .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-track': {
+                              backgroundColor: '#878993 !important',
+                              opacity: '1 !important',
+                            },
+                            '& .MuiSwitch-switchBase:focus-visible': {
+                              outline: 'none',
+                            },
+                            '& .MuiSwitch-switchBase.Mui-focusVisible': {
+                              outline: 'none',
+                            },
+                          }}
+                        />
+                      </div>
+                    </div>
+
                     {/* Accessibility Profiles */}
                     <div className="bg-white rounded-lg border border-[#A2ADF3] p-3 sm:p-4 md:p-4">
                       <div className="flex items-center justify-between mb-3">
@@ -2319,7 +2390,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 toggles.readingGuide ||
                                 toggles.stopAnimations ||
                                 toggles.bigCursor ||
-                                toggles.voiceNavigation,
+                                toggles.voiceNavigation ||
+                                toggles.textSimplifier,
                             )}
                             onChange={(e) => {
                               const checked = e.target.checked;
@@ -2333,6 +2405,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                 stopAnimations: checked,
                                 bigCursor: checked,
                                 voiceNavigation: checked,
+                                textSimplifier: checked,
                               }));
                             }}
                             inputProps={{
@@ -2346,7 +2419,8 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                                   toggles.readingGuide ||
                                   toggles.stopAnimations ||
                                   toggles.bigCursor ||
-                                  toggles.voiceNavigation,
+                                  toggles.voiceNavigation ||
+                                  toggles.textSimplifier,
                               ),
                             }}
                             color="primary"
@@ -2392,6 +2466,7 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                       {expandedSections.tools && (
                         <div className="space-y-2 pl-4">
                           {[
+                            { key: 'textSimplifier', label: 'Text Simplifier' },
                             { key: 'pageStructure', label: 'Page Structure' },
                             {
                               key: 'keyboardNavigation',
