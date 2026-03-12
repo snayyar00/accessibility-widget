@@ -1118,7 +1118,7 @@ const DomainAnalyses: React.FC = () => {
                       >
                         View Fixes
                       </button>
-                      <button
+                      {/* <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleOpenSuggestedFixesModal(item.url);
@@ -1129,7 +1129,7 @@ const DomainAnalyses: React.FC = () => {
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
                       >
                         View Suggested
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 );
@@ -1210,7 +1210,7 @@ const DomainAnalyses: React.FC = () => {
                             >
                               View Fixes
                             </button>
-                            <button
+                            {/* <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenSuggestedFixesModal(item.url);
@@ -1221,7 +1221,7 @@ const DomainAnalyses: React.FC = () => {
                               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
                             >
                               View Suggested
-                            </button>
+                            </button> */}
                           </div>
                         </td>
                       </tr>
