@@ -595,9 +595,7 @@ export async function handleWidgetSimplifyRequest(req: Request, res: Response) {
     }
 
     let systemPrompt =
-      'You are an accessibility assistant that simplifies website text for easier reading. ' +
-      'Given some text from a web page, rewrite it in clearer, shorter, plain language while keeping the original meaning. ' +
-      'Do not explain your changes, just return the simplified text only.'
+      'You are an accessibility assistant that simplifies website text for easier reading. ' + 'Given some text from a web page, rewrite it in clearer, shorter, plain language while keeping the original meaning. ' + 'Do not explain your changes, just return the simplified text only.'
 
     if (typeof currentUrl === 'string' && currentUrl.trim()) {
       systemPrompt += ` The text comes from this page URL: ${currentUrl.trim()}.`
@@ -622,10 +620,7 @@ export async function handleWidgetSimplifyRequest(req: Request, res: Response) {
         WIDGET_CHAT_TIMEOUT_MS,
       )
 
-      simplified =
-        completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string'
-          ? completion.choices[0].message.content
-          : ''
+      simplified = completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string' ? completion.choices[0].message.content : ''
     } catch (primaryError) {
       if ((primaryError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
         console.warn('Widget simplify: primary model request timed out')
@@ -647,11 +642,7 @@ export async function handleWidgetSimplifyRequest(req: Request, res: Response) {
           WIDGET_CHAT_TIMEOUT_MS,
         )
 
-        simplified =
-          fallbackCompletion.choices?.[0]?.message?.content &&
-          typeof fallbackCompletion.choices[0].message.content === 'string'
-            ? fallbackCompletion.choices[0].message.content
-            : ''
+        simplified = fallbackCompletion.choices?.[0]?.message?.content && typeof fallbackCompletion.choices[0].message.content === 'string' ? fallbackCompletion.choices[0].message.content : ''
       } catch (fallbackError) {
         if ((fallbackError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
           console.warn('Widget simplify: fallback model request timed out')
