@@ -145,10 +145,7 @@ async function getImageDimensions(base64Data: string): Promise<{ width: number; 
 
 // ── WCAG helpers (mirrors frontend logic in app/src/utils/generatePDF.ts) ──
 
-function getWcagKeyAndLabel(
-  rawWcagCode?: string,
-  rawFallbackCode?: string,
-): { key: string; label: string } {
+function getWcagKeyAndLabel(rawWcagCode?: string, rawFallbackCode?: string): { key: string; label: string } {
   const cleanedWcag = (rawWcagCode || '').replace(/undefined/gi, '').trim()
   const cleanedFallback = (rawFallbackCode || '').replace(/undefined/gi, '').trim()
 
@@ -168,42 +165,94 @@ function getWcagKeyAndLabel(
   return { key: `WCAG2AA.${numeric}`, label: `WCAG 2.1 – ${numeric}` }
 }
 
-const WCAG_COMPLIANT_PREFIXES = [
-  'WCAG2AA.Principle 1.Guideline 1.1',
-  'WCAG2AA.Principle 2.Guideline 2.4',
-  'WCAG2AA.Principle 1.Guideline 1.3',
-  'WCAG2AA.Principle 2.Guideline 2.1',
-  'WCAG2AA.Principle 1.Guideline 1.4',
-]
+const WCAG_COMPLIANT_PREFIXES = ['WCAG2AA.Principle 1.Guideline 1.1', 'WCAG2AA.Principle 2.Guideline 2.4', 'WCAG2AA.Principle 1.Guideline 1.3', 'WCAG2AA.Principle 2.Guideline 2.1', 'WCAG2AA.Principle 1.Guideline 1.4']
 
 const WCAG_COMPLIANT_CODES = new Set([
-  'WCAG2AA.1.1.1', 'WCAG2AA.1.2.1', 'WCAG2AA.1.2.2', 'WCAG2AA.1.2.3',
-  'WCAG2AA.1.2.4', 'WCAG2AA.1.2.5', 'WCAG2AA.1.3.1', 'WCAG2AA.1.3.2',
-  'WCAG2AA.1.3.3', 'WCAG2AA.1.3.4', 'WCAG2AA.1.3.5', 'WCAG2AA.1.3.6',
-  'WCAG2AA.1.4.1', 'WCAG2AA.1.4.2', 'WCAG2AA.1.4.3', 'WCAG2AA.1.4.4',
-  'WCAG2AA.1.4.5', 'WCAG2AA.1.4.6', 'WCAG2AA.1.4.8', 'WCAG2AA.1.4.9',
-  'WCAG2AA.1.4.10', 'WCAG2AA.1.4.11', 'WCAG2AA.1.4.12', 'WCAG2AA.1.4.13',
-  'WCAG2AA.2.1.1', 'WCAG2AA.2.1.2', 'WCAG2AA.2.1.4',
-  'WCAG2AA.2.2.1', 'WCAG2AA.2.2.2', 'WCAG2AA.2.2.3', 'WCAG2AA.2.2.4', 'WCAG2AA.2.2.5', 'WCAG2AA.2.2.6',
-  'WCAG2AA.2.3.1', 'WCAG2AA.2.3.2', 'WCAG2AA.2.3.3',
-  'WCAG2AA.2.4.1', 'WCAG2AA.2.4.2', 'WCAG2AA.2.4.3', 'WCAG2AA.2.4.4', 'WCAG2AA.2.4.5',
-  'WCAG2AA.2.4.6', 'WCAG2AA.2.4.7', 'WCAG2AA.2.4.8', 'WCAG2AA.2.4.9', 'WCAG2AA.2.4.10',
-  'WCAG2AA.2.4.11', 'WCAG2AA.2.4.12', 'WCAG2AA.2.4.13',
-  'WCAG2AA.2.5.1', 'WCAG2AA.2.5.2', 'WCAG2AA.2.5.3', 'WCAG2AA.2.5.4', 'WCAG2AA.2.5.5',
-  'WCAG2AA.2.5.6', 'WCAG2AA.2.5.7', 'WCAG2AA.2.5.8',
-  'WCAG2AA.3.1.1', 'WCAG2AA.3.1.2', 'WCAG2AA.3.1.3', 'WCAG2AA.3.1.4', 'WCAG2AA.3.1.5', 'WCAG2AA.3.1.6',
-  'WCAG2AA.3.2.1', 'WCAG2AA.3.2.2', 'WCAG2AA.3.2.3', 'WCAG2AA.3.2.4', 'WCAG2AA.3.2.5', 'WCAG2AA.3.2.6',
-  'WCAG2AA.3.3.1', 'WCAG2AA.3.3.2', 'WCAG2AA.3.3.3', 'WCAG2AA.3.3.4', 'WCAG2AA.3.3.5', 'WCAG2AA.3.3.6',
-  'WCAG2AA.3.3.7', 'WCAG2AA.3.3.8',
-  'WCAG2AA.4.1.1', 'WCAG2AA.4.1.2', 'WCAG2AA.4.1.3',
+  'WCAG2AA.1.1.1',
+  'WCAG2AA.1.2.1',
+  'WCAG2AA.1.2.2',
+  'WCAG2AA.1.2.3',
+  'WCAG2AA.1.2.4',
+  'WCAG2AA.1.2.5',
+  'WCAG2AA.1.3.1',
+  'WCAG2AA.1.3.2',
+  'WCAG2AA.1.3.3',
+  'WCAG2AA.1.3.4',
+  'WCAG2AA.1.3.5',
+  'WCAG2AA.1.3.6',
+  'WCAG2AA.1.4.1',
+  'WCAG2AA.1.4.2',
+  'WCAG2AA.1.4.3',
+  'WCAG2AA.1.4.4',
+  'WCAG2AA.1.4.5',
+  'WCAG2AA.1.4.6',
+  'WCAG2AA.1.4.8',
+  'WCAG2AA.1.4.9',
+  'WCAG2AA.1.4.10',
+  'WCAG2AA.1.4.11',
+  'WCAG2AA.1.4.12',
+  'WCAG2AA.1.4.13',
+  'WCAG2AA.2.1.1',
+  'WCAG2AA.2.1.2',
+  'WCAG2AA.2.1.4',
+  'WCAG2AA.2.2.1',
+  'WCAG2AA.2.2.2',
+  'WCAG2AA.2.2.3',
+  'WCAG2AA.2.2.4',
+  'WCAG2AA.2.2.5',
+  'WCAG2AA.2.2.6',
+  'WCAG2AA.2.3.1',
+  'WCAG2AA.2.3.2',
+  'WCAG2AA.2.3.3',
+  'WCAG2AA.2.4.1',
+  'WCAG2AA.2.4.2',
+  'WCAG2AA.2.4.3',
+  'WCAG2AA.2.4.4',
+  'WCAG2AA.2.4.5',
+  'WCAG2AA.2.4.6',
+  'WCAG2AA.2.4.7',
+  'WCAG2AA.2.4.8',
+  'WCAG2AA.2.4.9',
+  'WCAG2AA.2.4.10',
+  'WCAG2AA.2.4.11',
+  'WCAG2AA.2.4.12',
+  'WCAG2AA.2.4.13',
+  'WCAG2AA.2.5.1',
+  'WCAG2AA.2.5.2',
+  'WCAG2AA.2.5.3',
+  'WCAG2AA.2.5.4',
+  'WCAG2AA.2.5.5',
+  'WCAG2AA.2.5.6',
+  'WCAG2AA.2.5.7',
+  'WCAG2AA.2.5.8',
+  'WCAG2AA.3.1.1',
+  'WCAG2AA.3.1.2',
+  'WCAG2AA.3.1.3',
+  'WCAG2AA.3.1.4',
+  'WCAG2AA.3.1.5',
+  'WCAG2AA.3.1.6',
+  'WCAG2AA.3.2.1',
+  'WCAG2AA.3.2.2',
+  'WCAG2AA.3.2.3',
+  'WCAG2AA.3.2.4',
+  'WCAG2AA.3.2.5',
+  'WCAG2AA.3.2.6',
+  'WCAG2AA.3.3.1',
+  'WCAG2AA.3.3.2',
+  'WCAG2AA.3.3.3',
+  'WCAG2AA.3.3.4',
+  'WCAG2AA.3.3.5',
+  'WCAG2AA.3.3.6',
+  'WCAG2AA.3.3.7',
+  'WCAG2AA.3.3.8',
+  'WCAG2AA.4.1.1',
+  'WCAG2AA.4.1.2',
+  'WCAG2AA.4.1.3',
 ])
 
 function isWcagCodeCompliant(code: string): boolean {
   if (!code) return false
-  return (
-    WCAG_COMPLIANT_PREFIXES.some((prefix) => code.startsWith(prefix)) ||
-    [...WCAG_COMPLIANT_CODES].some((c) => code.startsWith(c))
-  )
+  return WCAG_COMPLIANT_PREFIXES.some((prefix) => code.startsWith(prefix)) || [...WCAG_COMPLIANT_CODES].some((c) => code.startsWith(c))
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -962,11 +1011,7 @@ export async function generateAccessibilityReportPDF(reportData: any, url: strin
         const chipX = x + 4
         const chipY = y + (height - chipH) / 2 - 2
 
-        doc.setFillColor(
-          status === 'autoFixed' ? 22 : 245,
-          status === 'autoFixed' ? 163 : 158,
-          status === 'autoFixed' ? 74 : 11,
-        )
+        doc.setFillColor(status === 'autoFixed' ? 22 : 245, status === 'autoFixed' ? 163 : 158, status === 'autoFixed' ? 74 : 11)
         doc.roundedRect(chipX, chipY, chipW, chipH, 2, 2, 'F')
         doc.setTextColor(255, 255, 255)
         doc.text(label, chipX + paddingX, chipY + chipH / 2, { baseline: 'middle' } as any)

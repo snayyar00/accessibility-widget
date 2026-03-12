@@ -2,7 +2,6 @@ import { Request, Response } from 'express'
 
 import { REWARDFUL_COUPON } from '../../constants/billing.constant'
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 export async function getRewardfulDiscount(req: Request, res: Response) {

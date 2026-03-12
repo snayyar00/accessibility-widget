@@ -1,7 +1,7 @@
-import { combineResolvers } from 'graphql-resolvers'
-import { v4 as uuidv4 } from 'uuid'
 // @ts-ignore - adm-zip doesn't have TypeScript definitions
 import AdmZip from 'adm-zip'
+import { combineResolvers } from 'graphql-resolvers'
+import { v4 as uuidv4 } from 'uuid'
 
 import { JOB_EXPIRY_MS } from '../../config/env'
 import { QUEUE_PRIORITY } from '../../constants/queue-priority.constant'
@@ -10,13 +10,13 @@ import { deleteAccessibilityReportByR2Key, getAccessibilityReportByR2Key, getR2K
 import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { fetchTechStackFromAPI } from '../../repository/techStack.repository'
 import { getUserbyId } from '../../repository/user.repository'
-import { checkScript } from '../../services/allowedSites/allowedSites.service'
 import { fetchAccessibilityReport } from '../../services/accessibilityReport/accessibilityReport.service'
+import { checkScript } from '../../services/allowedSites/allowedSites.service'
 import { EmailAttachment, sendEmailWithRetries } from '../../services/email/email.service'
 import { normalizeDomain } from '../../utils/domain.utils'
-import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { generatePDF } from '../../utils/generatePDF'
 import { UserInputError, ValidationError } from '../../utils/graphql-errors.helper'
+import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
 import { deleteReportFromR2, fetchReportFromR2, saveReportToR2 } from '../../utils/r2Storage'
 import { generateSecureUnsubscribeLink, getUnsubscribeTypeForEmail } from '../../utils/secure-unsubscribe.utils'
 import { validateAccessibilityReport, validateAccessibilityReportR2Filter, validateR2Key, validateSaveAccessibilityReportInput } from '../../validations/accesability.validation'
@@ -127,7 +127,7 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
       const emailResult = result
       const emailUrl = url
       const emailNormalizedUrl = normalizedUrl
-      
+
       setImmediate(async () => {
         try {
           const user = await getUserbyId(site.user_id)
@@ -208,7 +208,7 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
               emailUrl,
               smtpConfigForTemplate?.logoUrl,
             )
-            
+
             // Convert Blob to Buffer - handle both browser Blob and Node.js compatible formats
             let pdfBuffer: Buffer
             if (pdfBlob instanceof Buffer) {
@@ -221,42 +221,42 @@ async function processAccessibilityReportJob(jobId: string, url: string, useCach
               // The object from generatePDF is not a recognizable buffer or blob-like structure.
               throw new Error('PDF blob is not in a recognized format (Buffer, Uint8Array, or Blob-like with arrayBuffer method)')
             }
-            
+
             // Validate PDF buffer has content
             if (!pdfBuffer || pdfBuffer.length === 0) {
               throw new Error('Generated PDF buffer is empty')
             }
-            
+
             // Check PDF size and compress into zip file to reduce email size
             const pdfSizeMB = pdfBuffer.length / (1024 * 1024)
             console.log(`PDF size for full site scan ${emailUrl}: ${pdfSizeMB.toFixed(2)}MB`)
-            
+
             // Use adm-zip to compress PDF into a zip file
             try {
               const zip = new AdmZip()
               const pdfFileName = `accessibility-report-${emailUrl.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`
-              
+
               // Add the PDF file to the zip - ensure buffer is valid
               if (pdfBuffer && pdfBuffer.length > 0) {
                 zip.addFile(pdfFileName, pdfBuffer)
-                
+
                 // Verify the file was added to the zip
                 const zipEntries = zip.getEntries()
                 if (zipEntries.length === 0) {
                   throw new Error('No files were added to the zip')
                 }
                 console.log(`Added ${zipEntries.length} file(s) to zip: ${zipEntries.map((e: any) => e.entryName).join(', ')}`)
-                
+
                 const zipBuffer = zip.toBuffer()
-                
+
                 // Validate zip buffer has content
                 if (!zipBuffer || zipBuffer.length === 0) {
                   throw new Error('Generated zip buffer is empty')
                 }
-                
+
                 const zipSizeMB = zipBuffer.length / (1024 * 1024)
                 console.log(`Zipped PDF size for full site scan ${emailUrl}: ${zipSizeMB.toFixed(2)}MB (compression: ${((1 - zipSizeMB / pdfSizeMB) * 100).toFixed(1)}%)`)
-                
+
                 // Only use zip if it's smaller than 18MB (leave some margin under 20MB email limit)
                 if (zipSizeMB < 18) {
                   attachments = [

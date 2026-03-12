@@ -1,18 +1,13 @@
+import dayjs from 'dayjs'
 import { Request, Response } from 'express'
 import Stripe from 'stripe'
-import dayjs from 'dayjs'
 
 import { REWARDFUL_COUPON } from '../../constants/billing.constant'
 import { getAgencyRevenueSharePercent } from '../../helpers/agency-revenue.helper'
 import { getOrganizationById } from '../../repository/organization.repository'
 import { findProductById, findProductByStripeId, insertProduct, updateProduct } from '../../repository/products.repository'
+import { getSitePlanBySiteId, getSitesPlanByCustomerIdAndSubscriptionId, getSitesPlansByCustomerIdAndSubscriptionIdIncludeExpired, updateSitePlanById } from '../../repository/sites_plans.repository'
 import formatDateDB from '../../utils/format-date-db'
-import {
-  getSitePlanBySiteId,
-  getSitesPlanByCustomerIdAndSubscriptionId,
-  getSitesPlansByCustomerIdAndSubscriptionIdIncludeExpired,
-  updateSitePlanById,
-} from '../../repository/sites_plans.repository'
 import { createSitesPlan, deleteSitesPlan, deleteTrialPlan, updateSitesPlan } from '../allowedSites/plans-sites.service'
 
 const stripe = new Stripe(process.env.STRIPE_PRIVATE_KEY!, {
@@ -221,20 +216,20 @@ export const stripeWebhook = async (req: Request, res: Response) => {
           let referralCode = null
           let agencyAccountId: string | null = null
           let revenueSharePercent = 50 // Default
-          
+
           try {
             const user = await findUserById(Number(session.metadata.userId))
             if (user && user.referral) {
               referralCode = user.referral
               console.log('[REWARDFUL] Found referral code for webhook subscription:', referralCode)
             }
-            
+
             // Fetch organization's stripe_account_id and revenue share % for Agency Program
             if (user && user.current_organization_id) {
               try {
                 const organization = await getOrganizationById(user.current_organization_id)
                 revenueSharePercent = getAgencyRevenueSharePercent(organization)
-                
+
                 if (organization?.stripe_account_id) {
                   agencyAccountId = organization.stripe_account_id
                   console.log(`[AGENCY_PROGRAM] Webhook subscription with revenue sharing: Platform ${revenueSharePercent}% | Agency ${100 - revenueSharePercent}%`, {
@@ -417,8 +412,8 @@ export const stripeWebhook = async (req: Request, res: Response) => {
         const invoice = event.data.object as Stripe.Invoice
 
         // One-time invoices have no subscription — skip
-        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id ?? null
-        const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id ?? null
+        const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : (invoice.subscription?.id ?? null)
+        const customerId = typeof invoice.customer === 'string' ? invoice.customer : (invoice.customer?.id ?? null)
 
         if (!subscriptionId || !customerId) {
           console.log('[invoice.paid] Skipping: invoice has no subscription or customer (e.g. one-time payment)', {

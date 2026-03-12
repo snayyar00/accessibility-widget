@@ -10,4 +10,3 @@ router.post('/request-support', moderateLimiter, allowedOrganization, isAuthenti
 router.get('/download-pdf/:type', moderateLimiter, isAuthenticated, downloadLegalPDF)
 
 export default router
-

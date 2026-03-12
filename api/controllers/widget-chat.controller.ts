@@ -1,16 +1,9 @@
-import OpenAI from 'openai'
 import { Request, Response } from 'express'
+import OpenAI from 'openai'
 
 import { WIDGET_CHAT_SYSTEM_PROMPT } from '../prompts/widget-chat.prompt'
-import {
-  getPageHtmlByUrl,
-  getPageSummaryByUrl,
-  updatePageSummary,
-} from '../repository/pageCache.repository'
-import {
-  extractTextFromHtml,
-  generatePageSummary,
-} from '../services/pageSummary/pageSummary.service'
+import { getPageHtmlByUrl, getPageSummaryByUrl, updatePageSummary } from '../repository/pageCache.repository'
+import { extractTextFromHtml, generatePageSummary } from '../services/pageSummary/pageSummary.service'
 
 if (!process.env.OPENROUTER_API_KEY) {
   throw new Error('OPENROUTER_API_KEY environment variable is required for widget chat')
@@ -47,16 +40,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   })
 }
 
-const PROFILE_KEYS = [
-  'adhd',
-  'seizure-epileptic',
-  'cognitive-learning',
-  'visually-impaired',
-  'dyslexia-font',
-  'color-blind',
-  'blind',
-  'motor-impaired',
-] as const
+const PROFILE_KEYS = ['adhd', 'seizure-epileptic', 'cognitive-learning', 'visually-impaired', 'dyslexia-font', 'color-blind', 'blind', 'motor-impaired'] as const
 
 const TOOL_KEYS = [
   'highlight-title',
@@ -78,16 +62,7 @@ const TOOL_KEYS = [
   'contrast',
 ] as const
 
-const WIDGET_POSITIONS = [
-  'bottom-left',
-  'bottom-right',
-  'top-left',
-  'top-right',
-  'center-left',
-  'center-right',
-  'bottom-center',
-  'top-center',
-] as const
+const WIDGET_POSITIONS = ['bottom-left', 'bottom-right', 'top-left', 'top-right', 'center-left', 'center-right', 'bottom-center', 'top-center'] as const
 
 const PAGE_COLOR_SECTIONS = ['text', 'title', 'background'] as const
 const PAGE_COLOR_VALUES = ['white', 'black', 'orange', 'blue', 'red', 'green', 'default'] as const
@@ -113,21 +88,7 @@ type WidgetPosition = (typeof WIDGET_POSITIONS)[number]
 type PageColorSection = (typeof PAGE_COLOR_SECTIONS)[number]
 type PageColorValue = (typeof PAGE_COLOR_VALUES)[number]
 
-type WidgetCommandType =
-  | 'open_menu'
-  | 'close_menu'
-  | 'navigate'
-  | 'profile'
-  | 'tool'
-  | 'language'
-  | 'font_size'
-  | 'widget_position'
-  | 'oversize_widget'
-  | 'menu_theme'
-  | 'reset'
-  | 'widget_visibility'
-  | 'page_color'
-  | 'none'
+type WidgetCommandType = 'open_menu' | 'close_menu' | 'navigate' | 'profile' | 'tool' | 'language' | 'font_size' | 'widget_position' | 'oversize_widget' | 'menu_theme' | 'reset' | 'widget_visibility' | 'page_color' | 'none'
 
 type WidgetCommand =
   | { type: 'open_menu' }
@@ -190,23 +151,7 @@ function isNavigationIntent(message: string): boolean {
   const lower = message.trim().toLowerCase()
   if (!lower) return false
 
-  const keywords = [
-    'navigate',
-    'navigation',
-    'link',
-    'links',
-    'page',
-    'pages',
-    'open',
-    'go to',
-    'go back to',
-    'take me to',
-    'show me page links',
-    'what pages are available',
-    'what links are available',
-    'external links',
-    'help me navigate',
-  ]
+  const keywords = ['navigate', 'navigation', 'link', 'links', 'page', 'pages', 'open', 'go to', 'go back to', 'take me to', 'show me page links', 'what pages are available', 'what links are available', 'external links', 'help me navigate']
 
   return keywords.some((kw) => lower.includes(kw))
 }
@@ -258,9 +203,7 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
       // If the model returned multiple objects back-to-back, join them into a JSON array.
       try {
         const multi = candidate.replace(/}\s*{/g, '},{')
-        const arrayCandidate = candidate.trim().startsWith('[')
-          ? multi
-          : `[${multi}]`
+        const arrayCandidate = candidate.trim().startsWith('[') ? multi : `[${multi}]`
         parsed = JSON.parse(arrayCandidate)
       } catch {
         // Fallback: extract all JSON object-like segments and parse them individually,
@@ -323,28 +266,15 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
       case 'navigate': {
         const href = typeof command.href === 'string' ? command.href.trim() : ''
         if (!href) {
-          throw new Error(
-            `navigate command at index ${index} must include non-empty "href"`,
-          )
+          throw new Error(`navigate command at index ${index} must include non-empty "href"`)
         }
         const lowerHref = href.toLowerCase()
-        const isUnsafeScheme =
-          lowerHref.startsWith('javascript:') ||
-          lowerHref.startsWith('data:') ||
-          lowerHref.startsWith('vbscript:')
+        const isUnsafeScheme = lowerHref.startsWith('javascript:') || lowerHref.startsWith('data:') || lowerHref.startsWith('vbscript:')
         if (isUnsafeScheme) {
-          throw new Error(
-            `navigate command at index ${index} has disallowed URI scheme in "href"`,
-          )
+          throw new Error(`navigate command at index ${index} has disallowed URI scheme in "href"`)
         }
-        if (
-          command.behavior !== undefined &&
-          command.behavior !== 'smooth' &&
-          command.behavior !== 'instant'
-        ) {
-          throw new Error(
-            `navigate command behavior at index ${index} must be "smooth" or "instant" when provided`,
-          )
+        if (command.behavior !== undefined && command.behavior !== 'smooth' && command.behavior !== 'instant') {
+          throw new Error(`navigate command behavior at index ${index} must be "smooth" or "instant" when provided`)
         }
         break
       }
@@ -371,9 +301,7 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
           if (command.enabled && command.mode !== undefined && command.mode !== null) {
             const mode = typeof command.mode === 'string' ? command.mode.trim() : String(command.mode)
             if (!allowedModes.includes(mode)) {
-              throw new Error(
-                `Invalid mode "${command.mode}" for tool "${command.value}" at index ${index}. Allowed: ${allowedModes.join(', ')}`,
-              )
+              throw new Error(`Invalid mode "${command.mode}" for tool "${command.value}" at index ${index}. Allowed: ${allowedModes.join(', ')}`)
             }
           }
         }
@@ -454,16 +382,8 @@ function parseAndValidateActions(raw: string): WidgetChatAction[] {
 export async function handleWidgetChatRequest(req: Request, res: Response) {
   try {
     const body = req.body as WidgetChatRequestBody
-    const {
-      message,
-      messages: history = [],
-      currentUrl,
-      siteUrl,
-      language,
-      pageLinks,
-      links,
-    } = body
-    const pageUrl = typeof currentUrl === 'string' && currentUrl.trim() ? currentUrl.trim() : (typeof siteUrl === 'string' && siteUrl.trim() ? siteUrl.trim() : undefined)
+    const { message, messages: history = [], currentUrl, siteUrl, language, pageLinks, links } = body
+    const pageUrl = typeof currentUrl === 'string' && currentUrl.trim() ? currentUrl.trim() : typeof siteUrl === 'string' && siteUrl.trim() ? siteUrl.trim() : undefined
 
     if (!message || typeof message !== 'string') {
       res.status(400).json({ error: 'Missing or invalid "message" in request body.' })
@@ -481,16 +401,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       systemPrompt += `\n\nCURRENT SITE: The visitor is on this website: ${pageUrl}. You can refer to "this site" when giving directions.`
     }
 
-    const rawLinks: PageLink[] =
-      (Array.isArray(pageLinks) && pageLinks.length
-        ? pageLinks
-        : Array.isArray(links) && links.length
-          ? links
-          : []
-      ).filter(
-        (link): link is PageLink =>
-          !!link && typeof link.href === 'string' && !!link.href.trim(),
-      )
+    const rawLinks: PageLink[] = (Array.isArray(pageLinks) && pageLinks.length ? pageLinks : Array.isArray(links) && links.length ? links : []).filter((link): link is PageLink => !!link && typeof link.href === 'string' && !!link.href.trim())
 
     const shouldIncludeLinksInPrompt = isNavigationIntent(trimmedMessage)
     const linksForPrompt = shouldIncludeLinksInPrompt ? rawLinks.slice(0, 50) : []
@@ -499,12 +410,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       systemPrompt += `\n\nPAGE LINKS:\n`
       systemPrompt += linksForPrompt
         .map((link, index) => {
-          const label =
-            typeof link.text === 'string' && link.text.trim().length
-              ? link.text.trim()
-              : typeof link.ariaLabel === 'string' && link.ariaLabel.trim().length
-                ? link.ariaLabel.trim()
-                : link.href.trim()
+          const label = typeof link.text === 'string' && link.text.trim().length ? link.text.trim() : typeof link.ariaLabel === 'string' && link.ariaLabel.trim().length ? link.ariaLabel.trim() : link.href.trim()
           return `${index + 1}. ${label} -> ${link.href.trim()}`
         })
         .join('\n')
@@ -545,10 +451,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
       { role: 'user' as const, content: trimmedMessage },
     ].filter((m) => m.role !== 'system') as Array<{ role: 'user' | 'assistant'; content: string }>
 
-    const messagesForModel = [
-      { role: 'system' as const, content: systemPrompt },
-      ...chatMessages.map((m) => ({ role: m.role, content: m.content })),
-    ]
+    const messagesForModel = [{ role: 'system' as const, content: systemPrompt }, ...chatMessages.map((m) => ({ role: m.role, content: m.content }))]
 
     let rawReply = ''
 
@@ -562,10 +465,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
         WIDGET_CHAT_TIMEOUT_MS,
       )
 
-      rawReply =
-        completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string'
-          ? completion.choices[0].message.content
-          : ''
+      rawReply = completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string' ? completion.choices[0].message.content : ''
     } catch (primaryError) {
       if ((primaryError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
         console.warn('Widget chat: primary model request timed out')
@@ -588,11 +488,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
           WIDGET_CHAT_TIMEOUT_MS,
         )
 
-        rawReply =
-          fallbackCompletion.choices?.[0]?.message?.content &&
-          typeof fallbackCompletion.choices[0].message.content === 'string'
-            ? fallbackCompletion.choices[0].message.content
-            : ''
+        rawReply = fallbackCompletion.choices?.[0]?.message?.content && typeof fallbackCompletion.choices[0].message.content === 'string' ? fallbackCompletion.choices[0].message.content : ''
       } catch (fallbackError) {
         if ((fallbackError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
           console.warn('Widget chat: fallback model request timed out')
@@ -611,10 +507,7 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     if (summaryPromise) {
       try {
         const pageSummary = await summaryPromise
-        const summaryReplyText =
-          pageSummary != null && pageSummary.trim()
-            ? `Here's a quick summary of this page:\n\n${pageSummary.trim()}`
-            : "The page summary isn't available for this page right now."
+        const summaryReplyText = pageSummary != null && pageSummary.trim() ? `Here's a quick summary of this page:\n\n${pageSummary.trim()}` : "The page summary isn't available for this page right now."
         summaryToAppend = summaryReplyText
       } catch (summaryError) {
         console.error('Widget chat: page summary generation failed (continuing without summary).', {

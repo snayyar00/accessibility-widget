@@ -1,6 +1,6 @@
+import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { findVisitorByURL as findVisitorByURLClickHouse, findVisitorByURLDate as findVisitorByURLDateClickHouse, insertVisitor as insertVisitorClickHouse } from '../../repository/visitors.clickhouse.repository'
 import { findVisitorByURL as findVisitorByURLSQL, findVisitorByURLDate as findVisitorByURLDateSQL, findVisitorCountBySiteIdAndDate, insertVisitor as insertVisitorSQL } from '../../repository/visitors.repository'
-import { findSiteByURL } from '../../repository/sites_allowed.repository'
 import { getCurrentDatabaseType, isClickHouseDisabled } from '../../utils/database.utils'
 import { normalizeDomain } from '../../utils/domain.utils'
 import { ValidationError } from '../../utils/graphql-errors.helper'
@@ -41,19 +41,19 @@ export async function getSiteVisitorsByURL(url: string, user: UserLogined, start
   try {
     // OPTIMIZATION: Single site lookup + access check (replaces expensive findUserSites)
     const site = await findSiteByURL(domain)
-    
+
     if (!site) {
       throw new Error('Site not found')
     }
-    
+
     // Quick access check without fetching all sites
     const hasAccess = await canAccessSite(user, site)
     if (!hasAccess) {
       throw new Error('Access denied: You do not have permission to view this site')
     }
-    
+
     let count: number
-    
+
     if (startDate && endDate) {
       // OPTIMIZATION: Use COUNT query directly with site_id (no JOIN needed)
       if (isClickHouseDisabled()) {

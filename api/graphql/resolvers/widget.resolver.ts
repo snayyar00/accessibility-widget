@@ -36,13 +36,11 @@ const widgetResolvers = {
                 return err.message
               }
               // Fallback: construct message from type and field
-              return err.type === 'email' 
-                ? `The email address "${email}" is not valid`
-                : `Validation failed for ${err.field || 'email'}: ${err.type || 'invalid format'}`
+              return err.type === 'email' ? `The email address "${email}" is not valid` : `Validation failed for ${err.field || 'email'}: ${err.type || 'invalid format'}`
             })
             .filter(Boolean) // Remove any empty messages
             .join('; ')
-          
+
           const finalMessage = errorMessages || `The email address "${email}" is not valid`
           throw new Error(finalMessage)
         }

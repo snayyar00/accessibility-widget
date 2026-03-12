@@ -20,7 +20,7 @@ export interface Analysis {
 
 export async function getAnalysesByDomain(domain: string): Promise<Analysis[]> {
   const normalizedDomain = normalizeDomain(domain)
-  
+
   try {
     const result = await tursoClient.execute({
       sql: `
@@ -72,11 +72,7 @@ export async function getAnalysesByDomain(domain: string): Promise<Analysis[]> {
   }
 }
 
-export async function updateFixAction(
-  analysisId: string,
-  fixIndex: number,
-  action: 'update' | 'deleted',
-): Promise<Analysis> {
+export async function updateFixAction(analysisId: string, fixIndex: number, action: 'update' | 'deleted'): Promise<Analysis> {
   const startTime = Date.now()
   try {
     // Get the current analysis and update in one transaction-like operation
@@ -93,12 +89,7 @@ export async function updateFixAction(
     const parsedData = JSON.parse(currentJson)
 
     // Validate and update the specific fix's action
-    if (
-      parsedData.analysis &&
-      parsedData.analysis.fixes &&
-      Array.isArray(parsedData.analysis.fixes) &&
-      parsedData.analysis.fixes[fixIndex]
-    ) {
+    if (parsedData.analysis && parsedData.analysis.fixes && Array.isArray(parsedData.analysis.fixes) && parsedData.analysis.fixes[fixIndex]) {
       parsedData.analysis.fixes[fixIndex].action = action
 
       // Update the JSON in the database
@@ -201,10 +192,7 @@ export type AddFixInput = {
   category?: string
 }
 
-const BY_CATEGORY_KEYS = [
-  'animations', 'buttons', 'aria', 'duplicate_ids', 'focus', 'headings',
-  'tables', 'forms', 'links', 'icons', 'images', 'keyboard', 'media',
-] as const
+const BY_CATEGORY_KEYS = ['animations', 'buttons', 'aria', 'duplicate_ids', 'focus', 'headings', 'tables', 'forms', 'links', 'icons', 'images', 'keyboard', 'media'] as const
 
 /**
  * Appends a new fix to result_json.analysis.fixes and updates the DB.

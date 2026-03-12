@@ -6,6 +6,7 @@ type LogoSettings = {
   logoImage: string
   logoUrl: string
   accessibilityStatementLinkUrl: string
+  termsAndConditionsLink: string
 }
 
 const getWidgetSettings = async (siteUrl: string): Promise<LogoSettings> => {
@@ -20,6 +21,7 @@ const getWidgetSettings = async (siteUrl: string): Promise<LogoSettings> => {
         logoImage: fallbackLogoUrl,
         logoUrl: '',
         accessibilityStatementLinkUrl: '',
+        termsAndConditionsLink: 'https://www.webability.io/terms-of-use',
       }
     }
     // Get widget settings by site ID
@@ -28,11 +30,13 @@ const getWidgetSettings = async (siteUrl: string): Promise<LogoSettings> => {
     const logoImage = settings?.logoImage || fallbackLogoUrl
     const logoUrl = settings?.logoUrl || ''
     const accessibilityStatementLinkUrl = settings?.accessibilityStatementLinkUrl || ''
+    const termsAndConditionsLink = settings?.termsAndConditionsLink || 'https://www.webability.io/terms-of-use'
 
     return {
       logoImage,
       logoUrl,
       accessibilityStatementLinkUrl,
+      termsAndConditionsLink,
     }
   } catch (err) {
     console.error('Failed to fetch widget settings:', err)
@@ -40,6 +44,7 @@ const getWidgetSettings = async (siteUrl: string): Promise<LogoSettings> => {
       logoImage: fallbackLogoUrl,
       logoUrl: '',
       accessibilityStatementLinkUrl: '',
+      termsAndConditionsLink: 'https://www.webability.io/terms-of-use',
     }
   }
 }

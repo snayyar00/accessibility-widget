@@ -63,4 +63,3 @@ const serviceRequestSchema = `
 `
 
 export default serviceRequestSchema
-

@@ -1,20 +1,9 @@
 import { Request, Response } from 'express'
 
-import {
-  addFixToAnalysis,
-  getAnalysesByDomain,
-  updateFixAction,
-} from '../repository/analyses.repository'
-import {
-  getPageHtmlByUrl,
-  getPageSummaryByUrl,
-  updatePageSummary,
-} from '../repository/pageCache.repository'
+import { addFixToAnalysis, getAnalysesByDomain, updateFixAction } from '../repository/analyses.repository'
+import { getPageHtmlByUrl, getPageSummaryByUrl, updatePageSummary } from '../repository/pageCache.repository'
+import { extractTextFromHtml, generatePageSummary } from '../services/pageSummary/pageSummary.service'
 import { getSuggestedFixes } from '../services/suggestedFixes/suggestedFixes.service'
-import {
-  extractTextFromHtml,
-  generatePageSummary,
-} from '../services/pageSummary/pageSummary.service'
 import { normalizeDomain } from '../utils/domain.utils'
 
 export async function getDomainAnalyses(req: Request, res: Response) {
@@ -115,7 +104,12 @@ export async function getPageHtml(req: Request, res: Response) {
 
 export async function postSuggestedFixes(req: Request, res: Response) {
   try {
-    const { url, html, existingFixes, domain: domainFromBody } = req.body as {
+    const {
+      url,
+      html,
+      existingFixes,
+      domain: domainFromBody,
+    } = req.body as {
       url?: string
       html?: string
       existingFixes?: unknown[]
@@ -129,10 +123,7 @@ export async function postSuggestedFixes(req: Request, res: Response) {
       return res.status(400).json({ error: 'html is required' })
     }
     const fixes = Array.isArray(existingFixes) ? existingFixes : []
-    const domain =
-      typeof domainFromBody === 'string' && domainFromBody.trim()
-        ? normalizeDomain(domainFromBody.trim())
-        : normalizeDomain(url)
+    const domain = typeof domainFromBody === 'string' && domainFromBody.trim() ? normalizeDomain(domainFromBody.trim()) : normalizeDomain(url)
     console.log('[SuggestedFixes] Request received, starting GPT processing', { url: url.trim(), htmlLength: html?.length ?? 0 })
     const suggestedFixes = await getSuggestedFixes({
       url: url.trim(),

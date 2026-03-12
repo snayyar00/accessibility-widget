@@ -3,7 +3,6 @@ import Stripe from 'stripe'
 
 import { UserLogined } from '../../services/authentication/get-user-logined.service'
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 export async function createBillingPortalSession(req: Request & { user: UserLogined }, res: Response) {

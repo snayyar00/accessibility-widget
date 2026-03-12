@@ -7,8 +7,8 @@ import { sign } from '../../helpers/jwt.helper'
 import { findUser, updateUser } from '../../repository/user.repository'
 import { ApolloError, UserInputError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { changePasswordValidation } from '../../validations/authenticate.validation'
 import { getOrganizationSmtpConfig } from '../../utils/organizationSmtp.utils'
+import { changePasswordValidation } from '../../validations/authenticate.validation'
 import { sendMail } from '../email/email.service'
 
 dayjs.extend(utc)
@@ -44,10 +44,7 @@ export async function changePasswordUser(userId: number, currentPassword: string
 
     const newToken = sign({ email: user.email, name: user.name })
 
-    const smtpConfig =
-      user.current_organization_id != null
-        ? await getOrganizationSmtpConfig(user.current_organization_id)
-        : null
+    const smtpConfig = user.current_organization_id != null ? await getOrganizationSmtpConfig(user.current_organization_id) : null
     const organizationName = smtpConfig?.organizationName ?? 'WebAbility'
 
     const template = await compileEmailTemplate({

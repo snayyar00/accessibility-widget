@@ -6,6 +6,7 @@ import { ORGANIZATION_USER_ROLE_MEMBER, ORGANIZATION_USER_STATUS_ACTIVE, ORGANIZ
 import { verifyGoogleIdToken } from '../../helpers/google-id-token.helper'
 import { generatePassword } from '../../helpers/hashing.helper'
 import { sign } from '../../helpers/jwt.helper'
+import { normalizeEmail } from '../../helpers/string.helper'
 import { getOrganizationInvitation, getWorkspaceInvitation } from '../../repository/invitations.repository'
 import { getOrganizationById as getOrganizationByIdRepo, Organization } from '../../repository/organization.repository'
 import { updateOrganizationUserByOrganizationAndUserId } from '../../repository/organization_user.repository'
@@ -13,7 +14,6 @@ import { createUser, findUser, findUserNotificationByUserId, insertUserNotificat
 import { getMatchingFrontendUrl } from '../../utils/env.utils'
 import { ApolloError, AuthenticationError, ForbiddenError } from '../../utils/graphql-errors.helper'
 import logger from '../../utils/logger'
-import { normalizeEmail } from '../../helpers/string.helper'
 import { sanitizeInput, validateNameField, validateNoLinks } from '../../utils/sanitization.helper'
 import { getOrganizationById } from '../organization/organization.service'
 import { addUserToOrganization } from '../organization/organization_users.service'
@@ -23,10 +23,7 @@ export type GoogleAuthResponse = {
   url: string
 }
 
-export async function loginOrRegisterWithGoogle(
-  idToken: string,
-  organization: Organization,
-): Promise<AuthenticationError | GoogleAuthResponse> {
+export async function loginOrRegisterWithGoogle(idToken: string, organization: Organization): Promise<AuthenticationError | GoogleAuthResponse> {
   // Input validation
   if (!idToken || typeof idToken !== 'string' || idToken.length < 100 || idToken.length > 5000) {
     logger.warn('Invalid idToken format received in loginOrRegisterWithGoogle')
@@ -41,7 +38,7 @@ export async function loginOrRegisterWithGoogle(
 
   const email = normalizeEmail(payload.email)
   let name = payload.name || email.split('@')[0]
-  
+
   // Sanitize and validate name
   name = sanitizeInput(name)
   if (!name || name.length === 0 || name.length > 100) {
@@ -50,19 +47,17 @@ export async function loginOrRegisterWithGoogle(
   if (!validateNameField(name) || !validateNoLinks(name)) {
     name = email.split('@')[0] // Fallback if name contains malicious content
   }
-  
+
   const providerId = payload.sub
   let avatarUrl = payload.picture ?? undefined
-  
+
   // Validate avatar URL if provided - use strict hostname matching to prevent bypass
   // (e.g. googleusercontent.com.evil.com must not pass)
   if (avatarUrl) {
     try {
       const url = new URL(avatarUrl)
       const hostname = url.hostname.toLowerCase()
-      const isGoogleHost =
-        hostname === 'googleusercontent.com' ||
-        hostname.endsWith('.googleusercontent.com')
+      const isGoogleHost = hostname === 'googleusercontent.com' || hostname.endsWith('.googleusercontent.com')
       if (url.protocol !== 'https:' || !isGoogleHost) {
         avatarUrl = undefined
       }
@@ -192,14 +187,7 @@ export async function loginOrRegisterWithGoogle(
     }
   } catch (error: any) {
     // Handle duplicate entry errors (race condition where two requests try to create the same user)
-    if (
-      error?.code === 'ER_DUP_ENTRY' ||
-      error?.errno === 1062 ||
-      (error?.message &&
-        typeof error.message === 'string' &&
-        error.message.includes('Duplicate entry') &&
-        (error.message.includes('for key') || error.message.includes('email') || error.message.includes('provider_id')))
-    ) {
+    if (error?.code === 'ER_DUP_ENTRY' || error?.errno === 1062 || (error?.message && typeof error.message === 'string' && error.message.includes('Duplicate entry') && (error.message.includes('for key') || error.message.includes('email') || error.message.includes('provider_id')))) {
       logger.warn('Duplicate Google sign-in attempt (race condition)', error)
       // Retry lookup - user may have been created by concurrent request
       const existingUser = await findUser({ provider_id: providerId, provider: 'google' })

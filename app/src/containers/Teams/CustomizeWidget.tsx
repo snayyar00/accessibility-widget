@@ -502,12 +502,21 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
     useState(colors.accessibilityStatementLinkUrl);
   const [logoUrl, setLogoUrl] = useState(colors.logoUrl);
   const [footerText, setFooterText] = useState(colors.footerText);
+  const [termsAndConditionsLink, setTermsAndConditionsLink] = useState(
+    colors.termsAndConditionsLink,
+  );
 
   useEffect(() => {
     setAccessibilityStatementLinkUrl(colors.accessibilityStatementLinkUrl);
     setLogoUrl(colors.logoUrl);
     setFooterText(colors.footerText);
-  }, [colors.accessibilityStatementLinkUrl, colors.logoUrl, colors.footerText]);
+    setTermsAndConditionsLink(colors.termsAndConditionsLink);
+  }, [
+    colors.accessibilityStatementLinkUrl,
+    colors.logoUrl,
+    colors.footerText,
+    colors.termsAndConditionsLink,
+  ]);
   const isBase64 = (str: any) => {
     const regex = /^data:image\/(png|jpg|jpeg|gif|bmp);base64,/;
     return regex.test(str);
@@ -3341,6 +3350,98 @@ const CustomizeWidget: React.FC<CustomizeWidgetProps> = ({
                           footerText: DefaultColors.footerText,
                         }));
                         setFooterText(DefaultColors.footerText);
+                      }}
+                      className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 shadow-sm hover:shadow-md"
+                    >
+                      Reset
+                    </button>
+                  </div>
+
+                  {/* Terms and Conditions – Link only */}
+                  <div className="bg-white rounded-xl shadow-sm border border-[#A2ADF3] p-6 mb-4">
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-[#1a1a1a] mb-2">
+                        Terms and Conditions
+                      </h3>
+                      <p className="text-sm text-[#666666] leading-relaxed">
+                        Provide a link to your Terms of Use page. This link can
+                        be used by the widget to direct users to your full
+                        terms.
+                      </p>
+                    </div>
+
+                    <div className="mb-6">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Link className="h-5 w-5 text-[#9CA3AF]" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter URL (e.g., https://yourwebsite.com/terms or /terms)"
+                          className="w-full pl-10 pr-4 py-3 border border-[#D1D5DB] rounded-lg text-sm focus:ring-2 focus:ring-[#808EEB]/20 focus:border-[#808EEB] transition-colors duration-200 bg-white placeholder:text-[#6E7788]"
+                          value={termsAndConditionsLink}
+                          onChange={(e) => {
+                            const inputValue = e.target.value.trim();
+                            let finalUrl = inputValue;
+
+                            // If the input is a relative path (starts with /) and we have a selected site
+                            if (inputValue.startsWith('/') && selectedSite) {
+                              // Remove any trailing slashes from the domain
+                              let domain = selectedSite.replace(/\/$/, '');
+
+                              // Add protocol if not present
+                              if (
+                                !domain.startsWith('http://') &&
+                                !domain.startsWith('https://')
+                              ) {
+                                domain = `https://${domain}`;
+                              }
+
+                              // Combine domain with relative path
+                              finalUrl = `${domain}${inputValue}`;
+                            }
+
+                            if (finalUrl) {
+                              setColors((prev) => ({
+                                ...prev,
+                                termsAndConditionsLink: finalUrl,
+                              }));
+                            }
+                            setTermsAndConditionsLink(inputValue);
+                          }}
+                        />
+                      </div>
+                      {termsAndConditionsLink.startsWith('/') && selectedSite && (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs text-blue-700">
+                            <span className="font-medium">Will be saved as: </span>
+                            <span className="font-mono">
+                              {(() => {
+                                let domain = selectedSite.replace(/\/$/, '');
+                                if (
+                                  !domain.startsWith('http://') &&
+                                  !domain.startsWith('https://')
+                                ) {
+                                  domain = `https://${domain}`;
+                                }
+                                return `${domain}${termsAndConditionsLink}`;
+                              })()}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setColors((prev) => ({
+                          ...prev,
+                          termsAndConditionsLink:
+                            DefaultColors.termsAndConditionsLink,
+                        }));
+                        setTermsAndConditionsLink(
+                          DefaultColors.termsAndConditionsLink,
+                        );
                       }}
                       className="px-6 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-[#2E3A9E] focus:ring-offset-2 shadow-sm hover:shadow-md"
                     >

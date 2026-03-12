@@ -5,7 +5,6 @@ import { findSiteById } from '../../repository/sites_allowed.repository'
 import { getSitePlanBySiteId } from '../../repository/sites_plans.repository'
 import { UserLogined } from '../../services/authentication/get-user-logined.service'
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const stripe = require('stripe')(process.env.STRIPE_PRIVATE_KEY)
 
 export async function applyRetentionDiscount(req: Request & { user: UserLogined }, res: Response) {

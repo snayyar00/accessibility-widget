@@ -123,11 +123,7 @@ export async function uploadWidgetIcon(req: Request, res: Response) {
 
     // Get current settings to check for existing icon
     const currentSettings = await getWidgetSettingsBySiteId(site.id)
-    const baseSettingsObj = currentSettings?.settings
-      ? typeof currentSettings.settings === 'string'
-        ? JSON.parse(currentSettings.settings)
-        : currentSettings.settings
-      : {}
+    const baseSettingsObj = currentSettings?.settings ? (typeof currentSettings.settings === 'string' ? JSON.parse(currentSettings.settings) : currentSettings.settings) : {}
 
     // Delete old icon from R2 if present
     if (baseSettingsObj.widgetIcon && typeof baseSettingsObj.widgetIcon === 'string' && baseSettingsObj.widgetIcon.startsWith('http')) {
@@ -178,11 +174,7 @@ export async function deleteWidgetIcon(req: Request, res: Response) {
     await deleteWidgetLogoFromR2(icon_url)
 
     const currentSettings = await getWidgetSettingsBySiteId(site.id)
-    const settingsWhenDeleting = currentSettings?.settings
-      ? typeof currentSettings.settings === 'string'
-        ? JSON.parse(currentSettings.settings)
-        : currentSettings.settings
-      : {}
+    const settingsWhenDeleting = currentSettings?.settings ? (typeof currentSettings.settings === 'string' ? JSON.parse(currentSettings.settings) : currentSettings.settings) : {}
 
     settingsWhenDeleting.widgetIcon = ''
 
