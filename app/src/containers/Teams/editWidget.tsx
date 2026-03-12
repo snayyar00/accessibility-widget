@@ -44,6 +44,8 @@ export interface Toggles {
   stopAnimations: boolean;
   bigCursor: boolean;
   voiceNavigation: boolean;
+  aiButton: boolean;
+  textSimplifier: boolean;
   darkContrast: boolean;
   lightContrast: boolean;
   highContrast: boolean;
@@ -89,6 +91,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     stopAnimations: true,
     bigCursor: true,
     voiceNavigation: true,
+    aiButton: true,
+    textSimplifier: true,
     darkContrast: true,
     lightContrast: true,
     highContrast: true,
@@ -173,6 +177,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     stopAnimations: true,
     bigCursor: true,
     voiceNavigation: true,
+    aiButton: true,
+    textSimplifier: true,
     darkContrast: true,
     lightContrast: true,
     highContrast: true,
@@ -265,6 +271,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
     'togglestop-animations': DefaultToggles.stopAnimations ? 1 : 0,
     'togglebig-cursor': DefaultToggles.bigCursor ? 1 : 0,
     'togglevoice-navigation': DefaultToggles.voiceNavigation ? 1 : 0,
+    'toggleai-button': DefaultToggles.aiButton ? 1 : 0,
+    'toggletext-simplifier': DefaultToggles.textSimplifier ? 1 : 0,
     'toggledark-contrast': DefaultToggles.darkContrast ? 1 : 0,
     'togglelight-contrast': DefaultToggles.lightContrast ? 1 : 0,
     'togglehigh-contrast': DefaultToggles.highContrast ? 1 : 0,
@@ -341,6 +349,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
       'togglestop-animations': toggles.stopAnimations ? 1 : 0,
       'togglebig-cursor': toggles.bigCursor ? 1 : 0,
       'togglevoice-navigation': toggles.voiceNavigation ? 1 : 0,
+      'toggleai-button': toggles.aiButton ? 1 : 0,
+      'toggletext-simplifier': toggles.textSimplifier ? 1 : 0,
       'toggledark-contrast': toggles.darkContrast ? 1 : 0,
       'togglelight-contrast': toggles.lightContrast ? 1 : 0,
       'togglehigh-contrast': toggles.highContrast ? 1 : 0,
@@ -597,6 +607,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           stopAnimations: fetchedSettings['togglestop-animations'] === 1,
           bigCursor: fetchedSettings['togglebig-cursor'] === 1,
           voiceNavigation: fetchedSettings['togglevoice-navigation'] === 1,
+          aiButton: fetchedSettings['toggleai-button'] !== 0,
+          textSimplifier: fetchedSettings['toggletext-simplifier'] !== 0,
           darkContrast: fetchedSettings['toggledark-contrast'] === 1,
           lightContrast: fetchedSettings['togglelight-contrast'] === 1,
           highContrast: fetchedSettings['togglehigh-contrast'] === 1,
@@ -793,6 +805,8 @@ const AccessibilityWidgetPage: React.FC<any> = ({
           stopAnimations: fetchedSettings['togglestop-animations'] === 1,
           bigCursor: fetchedSettings['togglebig-cursor'] === 1,
           voiceNavigation: fetchedSettings['togglevoice-navigation'] === 1,
+          aiButton: fetchedSettings['toggleai-button'] !== 0,
+          textSimplifier: fetchedSettings['toggletext-simplifier'] !== 0,
           darkContrast: fetchedSettings['toggledark-contrast'] === 1,
           lightContrast: fetchedSettings['togglelight-contrast'] === 1,
           highContrast: fetchedSettings['togglehigh-contrast'] === 1,
