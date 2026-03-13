@@ -24,6 +24,22 @@ const WIDGET_CHAT_TIMEOUT_MS = 20_000
 
 const DEFAULT_TIMEOUT_REPLY = "I'm taking a bit longer than usual. Please try again in a moment."
 
+/**
+ * Returns a safe origin (scheme + host + port) for use in LLM prompts, or null if invalid.
+ * Prevents prompt injection by never including path, query, or fragment from user input.
+ */
+function getSafeOriginForPrompt(url: string): string | null {
+  const trimmed = typeof url === 'string' ? url.trim() : ''
+  if (!trimmed || trimmed.length > 2048) return null
+  try {
+    const parsed = new URL(trimmed)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return parsed.origin
+  } catch {
+    return null
+  }
+}
+
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('WIDGET_CHAT_TIMEOUT')), ms)
@@ -597,8 +613,9 @@ export async function handleWidgetSimplifyRequest(req: Request, res: Response) {
     let systemPrompt =
       'You are an accessibility assistant that simplifies website text for easier reading. ' + 'Given some text from a web page, rewrite it in clearer, shorter, plain language while keeping the original meaning. ' + 'Do not explain your changes, just return the simplified text only.'
 
-    if (typeof currentUrl === 'string' && currentUrl.trim()) {
-      systemPrompt += ` The text comes from this page URL: ${currentUrl.trim()}.`
+    const safeOrigin = getSafeOriginForPrompt(currentUrl ?? '')
+    if (safeOrigin) {
+      systemPrompt += ` The text comes from this page: ${safeOrigin}.`
     }
 
     const messagesForModel = [
