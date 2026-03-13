@@ -586,10 +586,10 @@ export async function handleWidgetSimplifyRequest(req: Request, res: Response) {
     }
 
     const words = trimmedText.split(/\s+/).filter(Boolean)
-    if (words.length > 100) {
+    if (words.length > 200) {
       res.setHeader('Content-Type', 'application/json; charset=utf-8')
       res.status(200).json({
-        simplifiedText: 'The selected text is too long. Please select a smaller section (up to 100 words) to simplify.',
+        simplifiedText: 'The selected text is too long. Please select a smaller section (up to 200 words) to simplify.',
       } satisfies WidgetSimplifyResponseBody)
       return
     }
