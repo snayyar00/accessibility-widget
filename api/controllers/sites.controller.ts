@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 
 import { findSiteByURL } from '../repository/sites_allowed.repository'
+import { normalizeDomain } from '../utils/domain.utils'
 
 /**
  * Find if domain URL is added using query parameter
@@ -17,12 +18,20 @@ export async function searchSiteByURL(req: Request, res: Response): Promise<Resp
       })
     }
 
-    const site = await findSiteByURL(url)
+    const normalized = normalizeDomain(url)
+    if (!normalized) {
+      return res.status(400).json({
+        error: 'Invalid URL',
+        message: 'Please provide a valid domain or URL in the "url" query parameter',
+      })
+    }
+
+    const site = await findSiteByURL(normalized)
 
     if (!site) {
       return res.status(404).json({
         error: 'Site not found',
-        message: `No site found with URL: ${url}`,
+        message: `No site found with URL: ${normalized}`,
       })
     }
 
