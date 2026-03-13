@@ -1,6 +1,6 @@
 import { Router } from 'express'
 
-import { handleWidgetChatRequest } from '../controllers/widget-chat.controller'
+import { handleWidgetChatRequest, handleWidgetSimplifyRequest } from '../controllers/widget-chat.controller'
 import { moderateLimiter } from '../middlewares/limiters.middleware'
 
 const router = Router()
@@ -13,5 +13,13 @@ const router = Router()
  * Response: { reply: string; actions: Array<{ command: WidgetCommand; reply?: string }> }
  */
 router.post('/widget/chat', moderateLimiter, handleWidgetChatRequest)
+
+/**
+ * POST /widget/simplify
+ * Simple, open-ended text simplification endpoint for the widget.
+ * Body: { currentUrl?: string; text: string }
+ * Response: { simplifiedText: string }
+ */
+router.post('/widget/simplify', moderateLimiter, handleWidgetSimplifyRequest)
 
 export default router
