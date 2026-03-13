@@ -30,8 +30,8 @@ export function dynamicCors(req: Request, res: Response, next: NextFunction) {
         return callback(null, true)
       }
 
-      // Allow widget chat from any origin (same as validateToken, addImpressionsURL, etc.)
-      if (req.path === '/widget/chat') {
+      // Allow widget endpoints from any origin (public embeddable widget)
+      if (req.path === '/widget/chat' || req.path === '/widget/simplify') {
         return callback(null, true)
       }
 

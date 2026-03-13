@@ -24,6 +24,22 @@ const WIDGET_CHAT_TIMEOUT_MS = 20_000
 
 const DEFAULT_TIMEOUT_REPLY = "I'm taking a bit longer than usual. Please try again in a moment."
 
+/**
+ * Returns a safe origin (scheme + host + port) for use in LLM prompts, or null if invalid.
+ * Prevents prompt injection by never including path, query, or fragment from user input.
+ */
+function getSafeOriginForPrompt(url: string): string | null {
+  const trimmed = typeof url === 'string' ? url.trim() : ''
+  if (!trimmed || trimmed.length > 2048) return null
+  try {
+    const parsed = new URL(trimmed)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return parsed.origin
+  } catch {
+    return null
+  }
+}
+
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error('WIDGET_CHAT_TIMEOUT')), ms)
@@ -133,6 +149,18 @@ export interface WidgetChatRequestBody {
    */
   pageLinks?: PageLink[]
   links?: PageLink[]
+}
+
+export interface WidgetSimplifyRequestBody {
+  /** Full URL of the page where the text comes from (optional, for light context only). */
+  currentUrl?: string
+  /** Raw text that should be simplified for the user. */
+  text: string
+}
+
+export interface WidgetSimplifyResponseBody {
+  /** Simplified, user-friendly version of the input text. */
+  simplifiedText: string
 }
 
 /** Ensure replies are plain human-readable text (not JSON-looking). */
@@ -546,6 +574,114 @@ export async function handleWidgetChatRequest(req: Request, res: Response) {
     console.error('Widget chat API error:', error)
     res.status(500).json({
       error: 'An error occurred while processing your message.',
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
+    })
+  }
+}
+
+/**
+ * POST /widget/simplify
+ * Simple, open-ended text simplification endpoint for the embeddable widget.
+ * Body: { currentUrl?: string; text: string }
+ * Response: { simplifiedText: string }
+ */
+export async function handleWidgetSimplifyRequest(req: Request, res: Response) {
+  try {
+    const body = req.body as WidgetSimplifyRequestBody
+    const { currentUrl, text } = body
+
+    if (!text || typeof text !== 'string') {
+      res.status(400).json({ error: 'Missing or invalid "text" in request body.' })
+      return
+    }
+
+    const trimmedText = text.trim()
+    if (!trimmedText) {
+      res.status(400).json({ error: 'Text cannot be empty.' })
+      return
+    }
+
+    const words = trimmedText.split(/\s+/).filter(Boolean)
+    if (words.length > 200) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8')
+      res.status(200).json({
+        simplifiedText: 'The selected text is too long. Please select a smaller section (up to 200 words) to simplify.',
+      } satisfies WidgetSimplifyResponseBody)
+      return
+    }
+
+    let systemPrompt =
+      'You are an accessibility assistant that simplifies website text for easier reading. ' + 'Given some text from a web page, rewrite it in clearer, shorter, plain language while keeping the original meaning. ' + 'Do not explain your changes, just return the simplified text only.'
+
+    const safeOrigin = getSafeOriginForPrompt(currentUrl ?? '')
+    if (safeOrigin) {
+      systemPrompt += ` The text comes from this page: ${safeOrigin}.`
+    }
+
+    const messagesForModel = [
+      { role: 'system' as const, content: systemPrompt },
+      {
+        role: 'user' as const,
+        content: `Simplify this text for accessibility and easier reading:\n\n"${trimmedText}"`,
+      },
+    ]
+
+    let simplified = ''
+
+    try {
+      const completion = await withTimeout(
+        openrouter.chat.completions.create({
+          model: 'google/gemini-2.5-flash-lite',
+          messages: messagesForModel,
+        }),
+        WIDGET_CHAT_TIMEOUT_MS,
+      )
+
+      simplified = completion.choices?.[0]?.message?.content && typeof completion.choices[0].message.content === 'string' ? completion.choices[0].message.content : ''
+    } catch (primaryError) {
+      if ((primaryError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
+        console.warn('Widget simplify: primary model request timed out')
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.status(200).json({
+          simplifiedText: trimmedText,
+        } satisfies WidgetSimplifyResponseBody)
+        return
+      }
+
+      console.warn('Primary model failed, falling back to openai/gpt-4o-mini for widget simplify')
+
+      try {
+        const fallbackCompletion = await withTimeout(
+          openrouter.chat.completions.create({
+            model: 'openai/gpt-4o-mini',
+            messages: messagesForModel,
+          }),
+          WIDGET_CHAT_TIMEOUT_MS,
+        )
+
+        simplified = fallbackCompletion.choices?.[0]?.message?.content && typeof fallbackCompletion.choices[0].message.content === 'string' ? fallbackCompletion.choices[0].message.content : ''
+      } catch (fallbackError) {
+        if ((fallbackError as Error)?.message === 'WIDGET_CHAT_TIMEOUT') {
+          console.warn('Widget simplify: fallback model request timed out')
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.status(200).json({
+            simplifiedText: trimmedText,
+          } satisfies WidgetSimplifyResponseBody)
+          return
+        }
+        throw fallbackError
+      }
+    }
+
+    const cleaned = typeof simplified === 'string' ? simplified.trim() : ''
+    const simplifiedText = cleaned || trimmedText
+
+    res.setHeader('Content-Type', 'application/json; charset=utf-8')
+    res.status(200).json({ simplifiedText } satisfies WidgetSimplifyResponseBody)
+  } catch (error) {
+    console.error('Widget simplify API error:', error)
+    res.status(500).json({
+      error: 'An error occurred while simplifying your text.',
       details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined,
     })
   }
